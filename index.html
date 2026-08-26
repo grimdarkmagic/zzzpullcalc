@@ -1,11 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>ZZZ Universal Pull Planner</title>
+<script>
+  try {
+    const savedTheme = localStorage.getItem('zzz-universal-pull-planner-theme');
+    document.documentElement.dataset.theme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+</script>
 <style>:root {
   color-scheme: light dark;
   background-color: var(
@@ -898,8 +906,20 @@ html>body{padding:1rem}</style>
   <div class="planner-header">
     <h2 data-i18n="title">ZZZ universal pull planner</h2>
     <div class="planner-actions">
-      <button id="t-language-toggle" class="btn btn-secondary" type="button">Русский</button>
-      <button id="t-theme-toggle" class="btn btn-secondary" type="button">Dark theme</button>
+      <div class="language-control">
+        <label for="t-language-select" class="language-icon" aria-label="Language">🌐</label>
+        <select id="t-language-select" class="form-control" aria-label="Language / Язык">
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+        </select>
+      </div>
+      <div class="theme-control">
+        <label for="t-theme-select" class="theme-icon" aria-label="Theme">☀ / ☾</label>
+        <select id="t-theme-select" class="form-control" aria-label="Theme">
+          <option value="light" data-i18n="lightTheme">Light theme</option>
+          <option value="dark" data-i18n="darkTheme" selected>Dark theme</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -957,17 +977,153 @@ html>body{padding:1rem}</style>
 </div>
 
 <style>
-  #zzz-universal-planner { width: 100%; color: var(--foreground); }
-  #zzz-universal-planner .planner-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+  #zzz-universal-planner {
+    --planner-green: light-dark(#14804a, #57d68d);
+    --planner-surface: color-mix(in srgb, var(--card) 82%, transparent);
+    --planner-surface-strong: color-mix(in srgb, var(--foreground) 3%, var(--background));
+    --planner-row-alt: color-mix(in srgb, var(--foreground) 3.5%, transparent);
+    --planner-row-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding: clamp(1rem, 2.2vw, 2rem);
+    overflow: hidden;
+    border: 0;
+    color: var(--foreground);
+    background: var(--background);
+  }
+  #zzz-universal-planner,
+  #zzz-universal-planner *,
+  #zzz-universal-planner *::before,
+  #zzz-universal-planner *::after {
+    border-radius: 0 !important;
+    corner-shape: round !important;
+  }
+  #zzz-universal-planner .planner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 20%, var(--border));
+  }
   #zzz-universal-planner .planner-actions { display: flex; align-items: center; gap: 0.5rem; }
-  #zzz-universal-planner h2 { margin: 0; }
-  #zzz-universal-planner h3 { margin: 1rem 0 0.35rem; font-size: 1rem; }
-  #zzz-universal-planner .planner-actions .btn { flex: 0 0 auto; }
-  #zzz-universal-planner .available-now { display: block; max-width: 240px; margin-bottom: 0.75rem; }
+  #zzz-universal-planner :is(.language-control, .theme-control) { display: flex; align-items: center; gap: 0.45rem; }
+  #zzz-universal-planner :is(.language-icon, .theme-icon) { color: var(--muted-foreground); font-size: 1.15rem; line-height: 1; white-space: nowrap; }
+  #zzz-universal-planner :is(.language-control, .theme-control) .form-control { width: auto; min-width: 110px; min-height: 34px; }
+  #zzz-universal-planner h2 {
+    margin: 0;
+    color: var(--foreground);
+    letter-spacing: -0.035em;
+  }
+  #zzz-universal-planner h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 0.55rem;
+    font-size: 1rem;
+  }
+  #zzz-universal-planner h3::before {
+    width: 0.32rem;
+    height: 1.05rem;
+    background: color-mix(in srgb, var(--foreground) 68%, transparent);
+    content: "";
+  }
+  #zzz-universal-planner section {
+    margin-top: 1rem;
+    padding: clamp(0.75rem, 1.4vw, 1rem);
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, var(--border));
+    background: var(--planner-surface);
+  }
+  #zzz-universal-planner .planner-actions .btn {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding-inline: 0.75rem;
+    border-color: color-mix(in srgb, var(--foreground) 18%, var(--input));
+    background: var(--secondary);
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, background-color 150ms ease;
+  }
+  #zzz-universal-planner .planner-actions .btn:hover {
+    border-color: color-mix(in srgb, var(--foreground) 48%, var(--input));
+    background: color-mix(in srgb, var(--foreground) 8%, var(--secondary));
+    transform: translateY(-1px);
+  }
+  #zzz-universal-planner .btn:focus-visible {
+    outline-color: var(--foreground);
+  }
+  #zzz-universal-planner :is(#t-language-select, #t-theme-select) {
+    border-color: color-mix(in srgb, var(--foreground) 18%, var(--input));
+    background: var(--secondary);
+  }
+  #zzz-universal-planner .available-now {
+    display: block;
+    max-width: 280px;
+    margin-bottom: 0.5rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--foreground) 22%, var(--border));
+    border-left: 4px solid var(--foreground);
+    background: var(--planner-surface);
+  }
+  #zzz-universal-planner .available-now > span {
+    color: var(--foreground);
+    font-size: 1rem;
+    font-weight: 720;
+    letter-spacing: 0.01em;
+  }
+  #zzz-universal-planner .available-now .form-control {
+    margin-top: 0.5rem;
+    min-height: 40px;
+    border-color: color-mix(in srgb, var(--foreground) 28%, var(--input));
+    background: var(--planner-surface-strong);
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  #zzz-universal-planner .form-control {
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+  #zzz-universal-planner .form-control:hover { border-color: color-mix(in srgb, var(--foreground) 42%, var(--input)); }
+  #zzz-universal-planner .form-control:focus-visible {
+    border-color: var(--foreground);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 16%, transparent);
+  }
+  #zzz-universal-planner #t-income-note { margin: 0.35rem 0 0; color: var(--muted-foreground); }
   #zzz-universal-planner .configuration-table { margin-top: 0; }
   #zzz-universal-planner .configuration-table table { min-width: 760px; }
   #zzz-universal-planner .configuration-table th { white-space: nowrap; }
   #zzz-universal-planner .configuration-table td { vertical-align: middle; }
+  #zzz-universal-planner .table-responsive {
+    margin-top: 0.75rem;
+    overflow-x: auto;
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, var(--border));
+    background: var(--planner-surface-strong);
+  }
+  #zzz-universal-planner .table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  #zzz-universal-planner .table :is(th, td) { padding: 0.68rem 0.75rem; }
+  #zzz-universal-planner .table :is(th, td):last-child { padding-inline-end: 0.75rem; }
+  #zzz-universal-planner .table thead th {
+    border-bottom-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--foreground) 5%, var(--planner-surface-strong));
+    font-size: var(--font-size-small);
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+  }
+  #zzz-universal-planner .table tbody tr:nth-child(even) td { background: var(--planner-row-alt); }
+  #zzz-universal-planner .table tbody tr td {
+    transition: background-color 140ms ease, box-shadow 140ms ease;
+  }
+  #zzz-universal-planner .table tbody tr:is(:hover, :focus-within) td {
+    background: var(--planner-row-hover);
+    box-shadow: inset 0 1px color-mix(in srgb, var(--foreground) 12%, transparent), inset 0 -1px color-mix(in srgb, var(--foreground) 12%, transparent);
+  }
+  #zzz-universal-planner .table tbody tr:is(:hover, :focus-within) td:first-child {
+    box-shadow: inset 3px 0 color-mix(in srgb, var(--foreground) 65%, transparent), inset 0 1px color-mix(in srgb, var(--foreground) 12%, transparent), inset 0 -1px color-mix(in srgb, var(--foreground) 12%, transparent);
+  }
   #zzz-universal-planner .config-number { width: 92px; min-width: 92px; }
   #zzz-universal-planner .config-checks { display: grid; gap: 0.25rem; min-width: 185px; }
   #zzz-universal-planner .config-checks .form-check { margin: 0; }
@@ -978,26 +1134,26 @@ html>body{padding:1rem}</style>
     flex: 0 0 auto;
     margin: 0;
     border: 1px solid color-mix(in srgb, var(--foreground) 42%, transparent);
-    border-radius: var(--radius-sm);
     background-color: var(--secondary);
     box-shadow: var(--shadow-sm);
     cursor: pointer;
   }
   #zzz-universal-planner .form-check-input[type="checkbox"]:checked {
-    border-color: var(--primary);
-    background-color: var(--primary);
+    border-color: var(--foreground);
+    background: var(--foreground);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 10%, transparent);
   }
   #zzz-universal-planner .form-check-input[type="checkbox"]:checked::before {
     display: block;
     width: 100%;
     height: 100%;
-    background: var(--primary-foreground);
+    background: var(--background);
     content: "";
     -webkit-mask: var(--checkmark-image) center / 13px 13px no-repeat;
     mask: var(--checkmark-image) center / 13px 13px no-repeat;
   }
   #zzz-universal-planner .form-check-input[type="checkbox"]:focus-visible {
-    outline: 2px solid var(--ring);
+    outline: 2px solid var(--foreground);
     outline-offset: 2px;
   }
   #zzz-universal-planner .config-subtext { display: block; margin-top: 0.2rem; white-space: nowrap; }
@@ -1008,19 +1164,62 @@ html>body{padding:1rem}</style>
     display: inline-block;
     margin-left: 0.4rem;
     padding: 0.05rem 0.35rem;
-    border: 1px solid var(--destructive);
-    border-radius: var(--radius-full);
-    color: var(--destructive);
+    border: 1px solid color-mix(in srgb, var(--foreground) 36%, transparent);
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
     font-size: var(--font-size-small);
     line-height: 1.35;
     white-space: nowrap;
   }
   #zzz-universal-planner .config-rules { white-space: nowrap; }
   #zzz-universal-planner .move-buttons { display: flex; gap: 0.3rem; }
-  #zzz-universal-planner .move-buttons .btn { min-width: 2rem; padding: 0.2rem 0.45rem; }
-  #zzz-universal-planner .table-responsive { margin-top: 0.75rem; }
-  #zzz-universal-planner #t-order { margin: 0.35rem 0 0.75rem; }
+  #zzz-universal-planner .move-buttons .btn {
+    min-width: 2rem;
+    padding: 0.2rem 0.45rem;
+    border-color: color-mix(in srgb, var(--foreground) 18%, var(--input));
+    background: var(--secondary);
+    transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  }
+  #zzz-universal-planner .move-buttons .btn:not(:disabled):hover {
+    border-color: var(--foreground);
+    background: color-mix(in srgb, var(--foreground) 10%, var(--secondary));
+    transform: translateY(-1px);
+  }
+  #zzz-universal-planner #t-order {
+    width: fit-content;
+    margin: 0.5rem 0 0.85rem;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--foreground) 16%, var(--border));
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  }
+  #zzz-universal-planner .viz-grid { gap: 0.75rem; }
+  #zzz-universal-planner .viz-stat {
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, var(--border));
+    background: var(--planner-surface);
+  }
+  #zzz-universal-planner .viz-stat::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: color-mix(in srgb, var(--foreground) 60%, transparent);
+    content: "";
+  }
+  #zzz-universal-planner .viz-stat-value { color: var(--foreground); }
+  #zzz-universal-planner .viz-stat:nth-child(1) .viz-stat-value,
+  #zzz-universal-planner .viz-stat:nth-child(2) .viz-stat-value,
+  #zzz-universal-planner .viz-stat:nth-child(4) .viz-stat-value,
+  #zzz-universal-planner #t-target-chances td:nth-child(2),
+  #zzz-universal-planner #t-target-chances td:nth-child(3),
+  #zzz-universal-planner #t-outcomes td:last-child { color: var(--planner-green); font-weight: 650; }
+  #zzz-universal-planner #t-target-chances td:nth-child(4) { color: var(--destructive); font-weight: 650; }
+  #zzz-universal-planner .outcome-help { margin: 0.75rem 0 -0.15rem; }
+  @media (prefers-reduced-motion: reduce) {
+    #zzz-universal-planner *, #zzz-universal-planner *::before { scroll-behavior: auto !important; transition: none !important; }
+  }
   @media (max-width: 520px) {
+    html > body { padding: 0.5rem; }
+    #zzz-universal-planner { padding: 0.85rem; }
     #zzz-universal-planner .planner-header { align-items: flex-start; }
     #zzz-universal-planner .planner-actions { flex-direction: column; align-items: stretch; }
     #zzz-universal-planner .available-now { max-width: none; }
@@ -1080,8 +1279,8 @@ html>body{padding:1rem}</style>
       expectedLeft: 'expected left', futureSuffix: 'future', beforePulls: 'before pulls', likely: 'likely', expired: 'Expired',
       selectedTarget: 'Selected target', chanceNow: 'Obtain now', byDeadline: 'Obtain by deadline', missByDeadline: 'Miss by deadline',
       outcomeHelp: '“Miss by deadline” is the complement of that target’s acquisition chance. Each row below is one mutually exclusive complete result of the selected strategy.',
-      exactRoster: 'Obtained selected targets', missedTargets: 'Missed selected targets', chance: 'Exact chance', languageButton: 'Русский', languageLabel: 'Switch to Russian',
-      lightTheme: 'Light theme', darkTheme: 'Dark theme', lightThemeLabel: 'Switch to light theme', darkThemeLabel: 'Switch to dark theme',
+      exactRoster: 'Obtained selected targets', missedTargets: 'Missed selected targets', chance: 'Exact chance',
+      lightTheme: 'Light theme', darkTheme: 'Dark theme', themeLabel: 'Theme',
       invalidConfig: 'Use nonnegative available searches, with pity from 0–89.', invalidAppConfig: 'The embedded banner config is invalid.',
       selectCharacter: 'Select at least one character to pull.', pullOrder: 'Pull order', allTargets: 'All selected targets', anyTarget: 'At least one selected target',
       expectedCharacters: 'Expected selected characters', anyCurrentNow: 'At least one current target now', noCharacter: 'No selected character', phaseSeparator: 'then'
@@ -1097,8 +1296,8 @@ html>body{padding:1rem}</style>
       expectedLeft: 'ожидаемый остаток', futureSuffix: 'будущих', beforePulls: 'до круток', likely: 'обычно', expired: 'Завершено',
       selectedTarget: 'Цель', chanceNow: 'Получить сейчас', byDeadline: 'Получить к концу баннера', missByDeadline: 'Не получить к концу',
       outcomeHelp: '«Не получить к концу» — это дополнение до 100% к шансу получить цель. Каждая строка ниже — один взаимоисключающий полный исход выбранной стратегии.',
-      exactRoster: 'Полученные выбранные цели', missedTargets: 'Пропущенные выбранные цели', chance: 'Точный шанс', languageButton: 'English', languageLabel: 'Переключить на английский',
-      lightTheme: 'Светлая тема', darkTheme: 'Тёмная тема', lightThemeLabel: 'Переключить на светлую тему', darkThemeLabel: 'Переключить на тёмную тему',
+      exactRoster: 'Полученные выбранные цели', missedTargets: 'Пропущенные выбранные цели', chance: 'Точный шанс',
+      lightTheme: 'Светлая тема', darkTheme: 'Тёмная тема', themeLabel: 'Тема',
       invalidConfig: 'Задайте неотрицательное число доступных круток; пити — от 0 до 89.', invalidAppConfig: 'Встроенная конфигурация баннеров некорректна.',
       selectCharacter: 'Выберите хотя бы одного персонажа.', pullOrder: 'Порядок круток', allTargets: 'Все выбранные цели', anyTarget: 'Хотя бы одна выбранная цель',
       expectedCharacters: 'Ожидаемое число выбранных персонажей', anyCurrentNow: 'Хотя бы одна текущая цель сейчас', noCharacter: 'Никто из выбранных персонажей', phaseSeparator: 'затем'
@@ -1106,7 +1305,7 @@ html>body{padding:1rem}</style>
   };
 
   const els = {
-    languageToggle: root.querySelector('#t-language-toggle'), themeToggle: root.querySelector('#t-theme-toggle'), now: root.querySelector('#t-now'),
+    languageSelect: root.querySelector('#t-language-select'), themeSelect: root.querySelector('#t-theme-select'), now: root.querySelector('#t-now'),
     incomeNote: root.querySelector('#t-income-note'), bannerRows: root.querySelector('#t-banner-rows'), characterRows: root.querySelector('#t-character-rows'), error: root.querySelector('#t-error'),
     order: root.querySelector('#t-order'), summary: root.querySelector('#t-summary'), targetChances: root.querySelector('#t-target-chances'), outcomes: root.querySelector('#t-outcomes')
   };
@@ -1180,14 +1379,13 @@ html>body{padding:1rem}</style>
   };
   const validAppConfig = configIsValid();
 
-  const preferredTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   const storedLanguage = () => { try { const stored = localStorage.getItem(languageStorageKey); return stored === 'ru' || stored === 'en' ? stored : null; } catch { return null; } };
   const storedTheme = () => { try { const stored = localStorage.getItem(themeStorageKey); return stored === 'dark' || stored === 'light' ? stored : null; } catch { return null; } };
   const applyTheme = (theme, persist = false) => {
     const nextTheme = theme === 'dark' ? 'dark' : 'light';
     document.documentElement.dataset.theme = nextTheme;
-    els.themeToggle.textContent = nextTheme === 'dark' ? t('lightTheme') : t('darkTheme');
-    els.themeToggle.setAttribute('aria-label', nextTheme === 'dark' ? t('lightThemeLabel') : t('darkThemeLabel'));
+    els.themeSelect.value = nextTheme;
+    els.themeSelect.setAttribute('aria-label', t('themeLabel'));
     if (persist) { try { localStorage.setItem(themeStorageKey, nextTheme); } catch {} }
   };
   const formatDate = value => {
@@ -1264,8 +1462,7 @@ html>body{padding:1rem}</style>
     document.documentElement.lang = language;
     document.title = t('pageTitle');
     root.querySelectorAll('[data-i18n]').forEach(element => { element.textContent = t(element.dataset.i18n); });
-    els.languageToggle.textContent = t('languageButton');
-    els.languageToggle.setAttribute('aria-label', t('languageLabel'));
+    els.languageSelect.value = language;
     applyTheme(document.documentElement.dataset.theme);
     renderBannerTable(); renderCharacterTable();
     if (persist) { try { localStorage.setItem(languageStorageKey, language); } catch {} }
@@ -1534,9 +1731,9 @@ html>body{padding:1rem}</style>
     renderCharacterTable(); updateAndPersist();
   });
 
-  applyTheme(storedTheme() || preferredTheme());
-  els.languageToggle.addEventListener('click', () => applyLanguage(language === 'ru' ? 'en' : 'ru', true));
-  els.themeToggle.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true));
+  applyTheme(storedTheme() || 'dark');
+  els.languageSelect.addEventListener('change', event => applyLanguage(event.currentTarget.value, true));
+  els.themeSelect.addEventListener('change', event => applyTheme(event.currentTarget.value, true));
   applyPlannerState(storedPlannerState());
   els.now.value = runtime.availableNow;
   applyLanguage(storedLanguage() || preferredLanguage(), false, false);
