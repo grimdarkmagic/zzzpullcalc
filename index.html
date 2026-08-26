@@ -1,0 +1,1552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>ZZZ Universal Pull Planner</title>
+<style>:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: var(--border-radius-lg, 12.5px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z'/%3E%3C/svg%3E");
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html > body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive > .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align="right"]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align="center"]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget > :not(.card, .progress) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress {
+  display: flex;
+  height: 6px;
+  margin-block: calc((var(--line-height-normal, 1.5em) - 6px) / 2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+}
+
+.progress-bar {
+  height: 100%;
+  flex-shrink: 0;
+  border: 0;
+  background: var(--viz-series-1);
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls > .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls > .form-label > :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type="file"] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type="file"]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type="file"]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type="checkbox"]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: "";
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type="radio"]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+  [aria-pressed="true"],
+  [aria-selected="true"],
+  .is-selected
+) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed="true"], [aria-selected="true"], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget > svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: 16px !important;
+  height: 16px !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html>body{padding:1rem}</style>
+</head>
+<body>
+<div id="zzz-universal-planner">
+  <div class="planner-header">
+    <h2 data-i18n="title">ZZZ universal pull planner</h2>
+    <div class="planner-actions">
+      <button id="t-language-toggle" class="btn btn-secondary" type="button">Русский</button>
+      <button id="t-theme-toggle" class="btn btn-secondary" type="button">Dark theme</button>
+    </div>
+  </div>
+
+  <label class="form-label available-now"><span data-i18n="availableNow">Searches available now</span>
+    <input id="t-now" class="form-control" type="number" min="0" max="600" value="90">
+  </label>
+  <p id="t-income-note" class="text-small text-muted"></p>
+
+  <section aria-labelledby="t-banners-heading">
+    <h3 id="t-banners-heading" data-i18n="banners">Banners</h3>
+    <div class="table-responsive configuration-table">
+      <table class="table table-sm">
+        <thead><tr>
+          <th data-i18n="banner">Banner</th><th data-i18n="channel">Channel</th><th data-i18n="pityNow">Pity now</th>
+          <th data-i18n="startingGuarantees">Starting guarantees</th><th data-i18n="pityRules">Pity rules</th>
+        </tr></thead>
+        <tbody id="t-banner-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-characters-heading">
+    <h3 id="t-characters-heading" data-i18n="charactersToPull">Characters to pull</h3>
+    <div class="table-responsive configuration-table">
+      <table class="table table-sm">
+        <thead><tr>
+          <th data-i18n="enabled">Enabled</th><th class="text-end" data-i18n="priority">Priority</th>
+          <th data-i18n="character">Character</th><th data-i18n="banner">Banner</th><th data-i18n="dates">Dates</th>
+          <th data-i18n="estimatedSearches">Projected searches by deadline</th><th data-i18n="move">Move</th>
+        </tr></thead>
+        <tbody id="t-character-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div id="t-error" class="text-destructive" role="alert"></div>
+  <p class="text-small text-muted" data-i18n="budgetHelp">Future searches are estimated cumulatively from the current time to each character deadline. Earlier spending is still subtracted before later targets. Character order is the pull priority when availability overlaps; dates and deadlines take precedence.</p>
+  <p id="t-order" class="text-small" aria-live="polite"></p>
+
+  <div class="viz-grid" id="t-summary" aria-live="polite"></div>
+
+  <div class="table-responsive">
+    <table class="table table-sm">
+      <thead><tr><th data-i18n="selectedTarget">Selected target</th><th class="text-end" data-i18n="chanceNow">Obtain now</th><th class="text-end" data-i18n="byDeadline">Obtain by deadline</th><th class="text-end" data-i18n="missByDeadline">Miss by deadline</th></tr></thead>
+      <tbody id="t-target-chances"></tbody>
+    </table>
+  </div>
+  <p class="text-small text-muted outcome-help" data-i18n="outcomeHelp">“Miss by deadline” is the complement of that target’s acquisition chance. Each row below is one mutually exclusive complete result of the selected strategy.</p>
+  <div class="table-responsive">
+    <table class="table table-sm">
+      <thead><tr><th data-i18n="exactRoster">Obtained selected targets</th><th data-i18n="missedTargets">Missed selected targets</th><th class="text-end" data-i18n="chance">Exact chance</th></tr></thead>
+      <tbody id="t-outcomes"></tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  #zzz-universal-planner { width: 100%; color: var(--foreground); }
+  #zzz-universal-planner .planner-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+  #zzz-universal-planner .planner-actions { display: flex; align-items: center; gap: 0.5rem; }
+  #zzz-universal-planner h2 { margin: 0; }
+  #zzz-universal-planner h3 { margin: 1rem 0 0.35rem; font-size: 1rem; }
+  #zzz-universal-planner .planner-actions .btn { flex: 0 0 auto; }
+  #zzz-universal-planner .available-now { display: block; max-width: 240px; margin-bottom: 0.75rem; }
+  #zzz-universal-planner .configuration-table { margin-top: 0; }
+  #zzz-universal-planner .configuration-table table { min-width: 760px; }
+  #zzz-universal-planner .configuration-table th { white-space: nowrap; }
+  #zzz-universal-planner .configuration-table td { vertical-align: middle; }
+  #zzz-universal-planner .config-number { width: 92px; min-width: 92px; }
+  #zzz-universal-planner .config-checks { display: grid; gap: 0.25rem; min-width: 185px; }
+  #zzz-universal-planner .config-checks .form-check { margin: 0; }
+  #zzz-universal-planner .form-check-input[type="checkbox"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    margin: 0;
+    border: 1px solid color-mix(in srgb, var(--foreground) 42%, transparent);
+    border-radius: var(--radius-sm);
+    background-color: var(--secondary);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+  }
+  #zzz-universal-planner .form-check-input[type="checkbox"]:checked {
+    border-color: var(--primary);
+    background-color: var(--primary);
+  }
+  #zzz-universal-planner .form-check-input[type="checkbox"]:checked::before {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--primary-foreground);
+    content: "";
+    -webkit-mask: var(--checkmark-image) center / 13px 13px no-repeat;
+    mask: var(--checkmark-image) center / 13px 13px no-repeat;
+  }
+  #zzz-universal-planner .form-check-input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  #zzz-universal-planner .config-subtext { display: block; margin-top: 0.2rem; white-space: nowrap; }
+  #zzz-universal-planner .t-character-estimate { min-width: 190px; }
+  #zzz-universal-planner .t-character-estimate strong { white-space: nowrap; }
+  #zzz-universal-planner .t-character-estimate .config-subtext { line-height: 1.35; white-space: normal; }
+  #zzz-universal-planner .unconfirmed-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.35rem;
+    border: 1px solid var(--destructive);
+    border-radius: var(--radius-full);
+    color: var(--destructive);
+    font-size: var(--font-size-small);
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+  #zzz-universal-planner .config-rules { white-space: nowrap; }
+  #zzz-universal-planner .move-buttons { display: flex; gap: 0.3rem; }
+  #zzz-universal-planner .move-buttons .btn { min-width: 2rem; padding: 0.2rem 0.45rem; }
+  #zzz-universal-planner .table-responsive { margin-top: 0.75rem; }
+  #zzz-universal-planner #t-order { margin: 0.35rem 0 0.75rem; }
+  @media (max-width: 520px) {
+    #zzz-universal-planner .planner-header { align-items: flex-start; }
+    #zzz-universal-planner .planner-actions { flex-direction: column; align-items: stretch; }
+    #zzz-universal-planner .available-now { max-width: none; }
+  }
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById('zzz-universal-planner');
+
+  // JSON-compatible source of truth. Replace this object to update banners,
+  // dates, pity rules, defaults, character assignments, and initial priority.
+  const PLANNER_CONFIG = {
+    version: 3,
+    currentPhase: 0,
+    maxCharacters: 15,
+    availableNow: 90,
+    incomeEstimate: {
+      limitedPullsPerDay: 3,
+      roundDown: true,
+      deadlineTime: 'start-of-day-local',
+      refreshMinutes: 60,
+      basis: 'Realistic active-player F2P average including recurring modes, events, and ordinary update rewards.'
+    },
+    banners: [
+      {
+        id: 'exclusive', name: 'Exclusive',
+        pity: { groupId: 'normal-exclusive', channel: 'normal', count: 0, guaranteed: false, specialGuaranteed: false, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
+        characters: [
+          { id: 'remielle', name: 'Remielle', enabled: false, priority: 4, confirmed: true, startDate: '2026-07-29', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
+          { id: 'sigrid', name: 'Sigrid', enabled: false, priority: 5, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
+          { id: 'claret', name: 'Claret', enabled: true, priority: 6, confirmed: false, startDate: '2026-09-08', endDate: '2026-09-29', budget: { periodId: 'claret-end', phase: 1 } },
+          { id: 'roxy', name: 'Roxy', enabled: true, priority: 7, confirmed: false, startDate: '2026-09-29', endDate: '2026-10-20', budget: { periodId: 'roxy-end', phase: 2 } }
+        ]
+      },
+      {
+        id: 'exclusive-rescreening', name: 'Special Rescreening',
+        pity: { groupId: 'exclusive-rescreening', channel: 'rescreen', count: 0, guaranteed: false, specialGuaranteed: true, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
+        characters: [
+          { id: 'dialyn', name: 'Dialyn', enabled: true, priority: 1, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
+          { id: 'yuzuha', name: 'Yuzuha', enabled: false, priority: 2, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
+          { id: 'harumasa', name: 'Harumasa', enabled: false, priority: 3, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } }
+        ]
+      }
+    ]
+  };
+
+  const translations = {
+    en: {
+      pageTitle: 'ZZZ Universal Pull Planner', title: 'ZZZ universal pull planner', availableNow: 'Searches available now',
+      banners: 'Banners', banner: 'Banner', dates: 'Dates', channel: 'Channel', estimatedSearches: 'Projected searches by deadline', pityNow: 'Pity now',
+      startingGuarantees: 'Starting guarantees', pityRules: 'Pity rules', charactersToPull: 'Characters to pull', enabled: 'Enabled', priority: 'Priority', character: 'Character', move: 'Move',
+      normalChannel: 'Normal Exclusive', rescreenChannel: 'Exclusive Rescreening', normalGuarantee: 'Next S-rank guaranteed', specialGuarantee: 'First S-rank special guarantee',
+      hardPity: 'hard', softPity: 'soft', featuredRate: 'featured', dateTbd: 'TBD', unconfirmed: 'Unconfirmed', moveUp: 'Move up', moveDown: 'Move down', daysLeft: 'days left', pullsPerDay: 'pull/day',
+      incomeNote: 'Automatic active-player income: {rate} limited pulls per day × time remaining to the start of the listed end date, rounded down. Rewards arrive unevenly, so this is a blended average rather than a daily promise.',
+      budgetHelp: 'The bold value in each character row is the expected balance after the enabled pull plan. The smaller line shows cumulative budget (+ future income) before pulls and the central 80% remaining range. Earlier spending is subtracted before later targets; dates and deadlines take precedence.',
+      expectedLeft: 'expected left', futureSuffix: 'future', beforePulls: 'before pulls', likely: 'likely', expired: 'Expired',
+      selectedTarget: 'Selected target', chanceNow: 'Obtain now', byDeadline: 'Obtain by deadline', missByDeadline: 'Miss by deadline',
+      outcomeHelp: '“Miss by deadline” is the complement of that target’s acquisition chance. Each row below is one mutually exclusive complete result of the selected strategy.',
+      exactRoster: 'Obtained selected targets', missedTargets: 'Missed selected targets', chance: 'Exact chance', languageButton: 'Русский', languageLabel: 'Switch to Russian',
+      lightTheme: 'Light theme', darkTheme: 'Dark theme', lightThemeLabel: 'Switch to light theme', darkThemeLabel: 'Switch to dark theme',
+      invalidConfig: 'Use nonnegative available searches, with pity from 0–89.', invalidAppConfig: 'The embedded banner config is invalid.',
+      selectCharacter: 'Select at least one character to pull.', pullOrder: 'Pull order', allTargets: 'All selected targets', anyTarget: 'At least one selected target',
+      expectedCharacters: 'Expected selected characters', anyCurrentNow: 'At least one current target now', noCharacter: 'No selected character', phaseSeparator: 'then'
+    },
+    ru: {
+      pageTitle: 'Универсальный планировщик круток ZZZ', title: 'Универсальный планировщик круток ZZZ', availableNow: 'Круток доступно сейчас',
+      banners: 'Баннеры', banner: 'Баннер', dates: 'Даты', channel: 'Канал', estimatedSearches: 'Прогноз круток к сроку', pityNow: 'Пити сейчас',
+      startingGuarantees: 'Начальные гаранты', pityRules: 'Правила пити', charactersToPull: 'Кого крутим', enabled: 'Крутим', priority: 'Приоритет', character: 'Персонаж', move: 'Переместить',
+      normalChannel: 'Обычный эксклюзивный', rescreenChannel: 'Эксклюзивный показ', normalGuarantee: 'Следующий S-ранг — гарант', specialGuarantee: 'Первый S-ранг — бонусный гарант',
+      hardPity: 'гарант', softPity: 'софт', featuredRate: 'ивентовый', dateTbd: 'Пока неизвестно', unconfirmed: 'Не подтверждено', moveUp: 'Переместить выше', moveDown: 'Переместить ниже', daysLeft: 'дней осталось', pullsPerDay: 'крутки/день',
+      incomeNote: 'Автоматический доход активного игрока: {rate} лимитированные крутки в день × время до начала указанной даты окончания, с округлением вниз. Награды выдаются неравномерно, поэтому это усреднённая оценка, а не ежедневная гарантия.',
+      budgetHelp: 'Жирное значение в строке персонажа — ожидаемый остаток после выбранного плана круток. Строка ниже показывает совокупный бюджет (+ будущий доход) до круток и центральный диапазон 80%. Более ранние траты вычитаются перед следующими целями; даты и сроки важнее.',
+      expectedLeft: 'ожидаемый остаток', futureSuffix: 'будущих', beforePulls: 'до круток', likely: 'обычно', expired: 'Завершено',
+      selectedTarget: 'Цель', chanceNow: 'Получить сейчас', byDeadline: 'Получить к концу баннера', missByDeadline: 'Не получить к концу',
+      outcomeHelp: '«Не получить к концу» — это дополнение до 100% к шансу получить цель. Каждая строка ниже — один взаимоисключающий полный исход выбранной стратегии.',
+      exactRoster: 'Полученные выбранные цели', missedTargets: 'Пропущенные выбранные цели', chance: 'Точный шанс', languageButton: 'English', languageLabel: 'Переключить на английский',
+      lightTheme: 'Светлая тема', darkTheme: 'Тёмная тема', lightThemeLabel: 'Переключить на светлую тему', darkThemeLabel: 'Переключить на тёмную тему',
+      invalidConfig: 'Задайте неотрицательное число доступных круток; пити — от 0 до 89.', invalidAppConfig: 'Встроенная конфигурация баннеров некорректна.',
+      selectCharacter: 'Выберите хотя бы одного персонажа.', pullOrder: 'Порядок круток', allTargets: 'Все выбранные цели', anyTarget: 'Хотя бы одна выбранная цель',
+      expectedCharacters: 'Ожидаемое число выбранных персонажей', anyCurrentNow: 'Хотя бы одна текущая цель сейчас', noCharacter: 'Никто из выбранных персонажей', phaseSeparator: 'затем'
+    }
+  };
+
+  const els = {
+    languageToggle: root.querySelector('#t-language-toggle'), themeToggle: root.querySelector('#t-theme-toggle'), now: root.querySelector('#t-now'),
+    incomeNote: root.querySelector('#t-income-note'), bannerRows: root.querySelector('#t-banner-rows'), characterRows: root.querySelector('#t-character-rows'), error: root.querySelector('#t-error'),
+    order: root.querySelector('#t-order'), summary: root.querySelector('#t-summary'), targetChances: root.querySelector('#t-target-chances'), outcomes: root.querySelector('#t-outcomes')
+  };
+  let language = 'en';
+  const t = key => translations[language][key];
+  const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+  const preferredLanguage = () => navigator.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+  const themeStorageKey = 'zzz-universal-pull-planner-theme';
+  const languageStorageKey = 'zzz-universal-pull-planner-language';
+  const plannerStateStorageKey = 'zzz-universal-pull-planner-state-v3';
+  const previousPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v2';
+  const legacyPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v1';
+
+  const banners = PLANNER_CONFIG.banners;
+  const bannerById = new Map(banners.map(banner => [banner.id, banner]));
+  const characters = banners.flatMap(banner => banner.characters.map(character => ({ ...character, bannerId: banner.id })));
+  const characterById = new Map(characters.map(character => [character.id, character]));
+  const bits = Object.fromEntries(characters.map((character, index) => [character.id, 1 << index]));
+  const chronologyPrecedes = (earlier, later) => earlier.endDate <= later.startDate;
+  const runsOverlap = (first, second) => first.startDate < second.endDate && second.startDate < first.endDate;
+  const constrainOrder = preferredOrder => {
+    const preference = new Map(preferredOrder.map((id, index) => [id, index]));
+    const remaining = new Set(preferredOrder);
+    const result = [];
+    while (remaining.size) {
+      const available = [...remaining].filter(id => ![...remaining].some(otherId => otherId !== id && chronologyPrecedes(characterById.get(otherId), characterById.get(id))));
+      available.sort((a, b) => preference.get(a) - preference.get(b));
+      if (!available.length) return preferredOrder.slice();
+      const next = available[0];
+      remaining.delete(next);
+      result.push(next);
+    }
+    return result;
+  };
+  const defaultOrder = constrainOrder(characters.slice().sort((a, b) => a.priority - b.priority).map(character => character.id));
+  const periodDefaults = new Map();
+  const pityDefaults = new Map();
+  banners.forEach(banner => {
+    if (!pityDefaults.has(banner.pity.groupId)) pityDefaults.set(banner.pity.groupId, { channel: banner.pity.channel, count: banner.pity.count, guaranteed: banner.pity.guaranteed, specialGuaranteed: banner.pity.specialGuaranteed });
+    banner.characters.forEach(character => {
+      if (!periodDefaults.has(character.budget.periodId)) periodDefaults.set(character.budget.periodId, { phase: character.budget.phase, endDate: character.endDate });
+    });
+  });
+  const runtime = {
+    availableNow: PLANNER_CONFIG.availableNow,
+    pityGroups: Object.fromEntries([...pityDefaults].map(([id, value]) => [id, { count: value.count, guaranteed: value.guaranteed, specialGuaranteed: value.specialGuaranteed }])),
+    enabled: Object.fromEntries(characters.map(character => [character.id, character.enabled])), order: defaultOrder.slice()
+  };
+
+  const configIsValid = () => {
+    if (!characters.length || characters.length > PLANNER_CONFIG.maxCharacters || characters.length > 15) return false;
+    if (bannerById.size !== banners.length || characterById.size !== characters.length || new Set(defaultOrder).size !== characters.length) return false;
+    const income = PLANNER_CONFIG.incomeEstimate;
+    if (!income || !Number.isFinite(income.limitedPullsPerDay) || income.limitedPullsPerDay <= 0 || income.roundDown !== true || !Number.isFinite(income.refreshMinutes) || income.refreshMinutes <= 0) return false;
+    const bannersValid = banners.every(banner => {
+      const pity = banner.pity;
+      const group = pityDefaults.get(pity.groupId);
+      const charactersValid = banner.characters.every(character => {
+        const period = periodDefaults.get(character.budget.periodId);
+        const characterDatesValid = /^\d{4}-\d{2}-\d{2}$/.test(character.startDate) && /^\d{4}-\d{2}-\d{2}$/.test(character.endDate);
+        return characterDatesValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
+          period.endDate === character.endDate && Number.isInteger(character.budget.phase) && character.budget.phase >= 0;
+      });
+      return charactersValid && group && group.channel === pity.channel && (pity.channel === 'normal' || pity.channel === 'rescreen') &&
+        Number.isFinite(pity.hardPity) && Number.isFinite(pity.baseRate) && Number.isFinite(pity.softPityStartsAt) && Number.isFinite(pity.softPityStep) && Number.isFinite(pity.featuredRate);
+    });
+    if (!bannersValid) return false;
+    const periods = [...periodDefaults.values()].sort((a, b) => a.phase - b.phase);
+    if (new Set(periods.map(period => period.phase)).size !== periods.length) return false;
+    return periods.every((period, index) => index === 0 || period.endDate > periods[index - 1].endDate);
+  };
+  const validAppConfig = configIsValid();
+
+  const preferredTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  const storedLanguage = () => { try { const stored = localStorage.getItem(languageStorageKey); return stored === 'ru' || stored === 'en' ? stored : null; } catch { return null; } };
+  const storedTheme = () => { try { const stored = localStorage.getItem(themeStorageKey); return stored === 'dark' || stored === 'light' ? stored : null; } catch { return null; } };
+  const applyTheme = (theme, persist = false) => {
+    const nextTheme = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = nextTheme;
+    els.themeToggle.textContent = nextTheme === 'dark' ? t('lightTheme') : t('darkTheme');
+    els.themeToggle.setAttribute('aria-label', nextTheme === 'dark' ? t('lightThemeLabel') : t('darkThemeLabel'));
+    if (persist) { try { localStorage.setItem(themeStorageKey, nextTheme); } catch {} }
+  };
+  const formatDate = value => {
+    if (!value) return t('dateTbd');
+    const [year, month, day] = value.split('-').map(Number);
+    return new Intl.DateTimeFormat(language === 'ru' ? 'ru-RU' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(Date.UTC(year, month - 1, day)));
+  };
+  const characterDates = character => `${formatDate(character.startDate)} – ${formatDate(character.endDate)}`;
+  const channelLabel = channel => t(channel === 'rescreen' ? 'rescreenChannel' : 'normalChannel');
+  const percentLabel = value => `${new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits: 1 }).format(value * 100)}%`;
+  const numberLabel = (value, maximumFractionDigits = 1) => new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits }).format(value);
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const localDeadline = value => {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day).getTime();
+  };
+  const daysRemaining = endDate => Math.max(0, (localDeadline(endDate) - Date.now()) / millisecondsPerDay);
+  const estimatedSearches = endDate => Math.floor(daysRemaining(endDate) * PLANNER_CONFIG.incomeEstimate.limitedPullsPerDay);
+
+  function renderBannerTable() {
+    els.bannerRows.innerHTML = banners.map(banner => {
+      const pity = banner.pity;
+      const group = runtime.pityGroups[pity.groupId];
+      return `<tr>
+        <td>${escapeHtml(banner.name)}</td><td>${escapeHtml(channelLabel(pity.channel))}</td>
+        <td><input class="form-control config-number t-pity" data-pity-group="${escapeHtml(pity.groupId)}" type="number" min="0" max="${escapeHtml(pity.hardPity - 1)}" value="${escapeHtml(group.count)}"><span class="text-small text-muted config-subtext">${escapeHtml(pity.groupId)}</span></td>
+        <td><div class="config-checks">
+          <label class="form-check"><input class="form-check-input t-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.guaranteed ? ' checked' : ''}><span class="form-check-label">${t('normalGuarantee')}</span></label>
+          ${pity.channel === 'rescreen' ? `<label class="form-check"><input class="form-check-input t-special-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.specialGuaranteed ? ' checked' : ''}><span class="form-check-label">${t('specialGuarantee')}</span></label>` : ''}
+        </div></td>
+        <td class="config-rules">${percentLabel(pity.baseRate)} · ${t('softPity')} ${pity.softPityStartsAt} · ${t('hardPity')} ${pity.hardPity}<span class="text-small text-muted config-subtext">${t('featuredRate')} ${percentLabel(pity.featuredRate)}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderCharacterTable() {
+    els.incomeNote.textContent = t('incomeNote').replace('{rate}', numberLabel(PLANNER_CONFIG.incomeEstimate.limitedPullsPerDay));
+    els.characterRows.innerHTML = runtime.order.map((characterId, index) => {
+      const character = characterById.get(characterId);
+      const banner = bannerById.get(character.bannerId);
+      const remaining = daysRemaining(character.endDate);
+      const estimate = estimatedSearches(character.endDate);
+      const canMoveUp = index > 0 && runsOverlap(character, characterById.get(runtime.order[index - 1]));
+      const canMoveDown = index < runtime.order.length - 1 && runsOverlap(character, characterById.get(runtime.order[index + 1]));
+      return `<tr>
+        <td><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''} aria-label="${escapeHtml(character.name)}"></td>
+        <td class="text-end">${index + 1}</td><td>${escapeHtml(character.name)}${character.confirmed ? '' : `<span class="unconfirmed-badge">${t('unconfirmed')}</span>`}</td>
+        <td>${escapeHtml(banner.name)}</td><td>${escapeHtml(characterDates(character))}</td>
+        <td class="t-character-estimate" data-character-id="${escapeHtml(character.id)}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${numberLabel(PLANNER_CONFIG.incomeEstimate.limitedPullsPerDay)} ${t('pullsPerDay')}</span></td>
+        <td><div class="move-buttons">
+          <button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${character.name}`)}">↑</button>
+          <button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${character.name}`)}">↓</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderCharacterProjections(phaseBalances) {
+    const balancesByPhase = new Map(phaseBalances.map(phase => [phase.phase, phase]));
+    root.querySelectorAll('.t-character-estimate').forEach(cell => {
+      const character = characterById.get(cell.dataset.characterId);
+      const phase = balancesByPhase.get(character.budget.phase);
+      if (!phase?.stats) {
+        cell.innerHTML = `<strong>${t('expired')}</strong>`;
+        return;
+      }
+      const stats = phase.stats;
+      cell.innerHTML = `<strong>≈${numberLabel(stats.expected)} ${t('expectedLeft')}</strong><span class="text-small text-muted config-subtext">${numberLabel(phase.cap, 0)} (+${numberLabel(phase.estimatedGain, 0)} ${t('futureSuffix')}) ${t('beforePulls')} · ${t('likely')} ${numberLabel(stats.low, 0)}–${numberLabel(stats.high, 0)}</span>`;
+    });
+  }
+
+  const applyLanguage = (nextLanguage, persist = false, rerender = true) => {
+    language = nextLanguage === 'ru' ? 'ru' : 'en';
+    document.documentElement.lang = language;
+    document.title = t('pageTitle');
+    root.querySelectorAll('[data-i18n]').forEach(element => { element.textContent = t(element.dataset.i18n); });
+    els.languageToggle.textContent = t('languageButton');
+    els.languageToggle.setAttribute('aria-label', t('languageLabel'));
+    applyTheme(document.documentElement.dataset.theme);
+    renderBannerTable(); renderCharacterTable();
+    if (persist) { try { localStorage.setItem(languageStorageKey, language); } catch {} }
+    if (rerender) render();
+  };
+
+  const plannerState = () => ({
+    availableNow: runtime.availableNow,
+    pityGroups: Object.fromEntries(Object.entries(runtime.pityGroups).map(([id, value]) => [id, { ...value }])),
+    enabled: { ...runtime.enabled }, order: runtime.order.slice()
+  });
+  const persistPlannerState = () => { try { localStorage.setItem(plannerStateStorageKey, JSON.stringify(plannerState())); } catch {} };
+  const applyPlannerState = state => {
+    if (!state || typeof state !== 'object' || Array.isArray(state)) return false;
+    if (Number.isFinite(+state.availableNow)) runtime.availableNow = +state.availableNow;
+    Object.keys(runtime.pityGroups).forEach(id => {
+      const stored = state.pityGroups?.[id];
+      if (!stored || typeof stored !== 'object') return;
+      if (Number.isFinite(+stored.count)) runtime.pityGroups[id].count = +stored.count;
+      if (typeof stored.guaranteed === 'boolean') runtime.pityGroups[id].guaranteed = stored.guaranteed;
+      if (typeof stored.specialGuaranteed === 'boolean') runtime.pityGroups[id].specialGuaranteed = stored.specialGuaranteed;
+    });
+    characters.forEach(character => { if (typeof state.enabled?.[character.id] === 'boolean') runtime.enabled[character.id] = state.enabled[character.id]; });
+    if (Array.isArray(state.order) && state.order.length === characters.length && new Set(state.order).size === characters.length && state.order.every(id => characterById.has(id))) runtime.order = constrainOrder(state.order);
+    return true;
+  };
+  const legacyState = () => {
+    try {
+      const old = JSON.parse(localStorage.getItem(legacyPlannerStateStorageKey) || 'null');
+      if (!old || typeof old !== 'object' || Array.isArray(old)) return null;
+      const rescreenOrder = [...String(old['t-rescreen-order'] || 'DYH')].map(code => ({ D: 'dialyn', Y: 'yuzuha', H: 'harumasa' })[code]).filter(Boolean);
+      const normalOrder = [...String(old['t-normal-order'] || 'MS')].map(code => ({ M: 'remielle', S: 'sigrid' })[code]).filter(Boolean);
+      const currentOrder = old['t-current-priority'] === 'normal' ? [...normalOrder, ...rescreenOrder] : [...rescreenOrder, ...normalOrder];
+      return {
+        availableNow: old['t-now'],
+        pityGroups: {
+          'normal-exclusive': { count: old['t-normal-pity'], guaranteed: old['t-normal-guarantee'], specialGuaranteed: false },
+          'exclusive-rescreening': { count: old['t-rescreen-pity'], guaranteed: old['t-rescreen-guarantee'], specialGuaranteed: old['t-special-guarantee'] }
+        },
+        enabled: { dialyn: old['t-dialyn'], yuzuha: old['t-yuzuha'], harumasa: old['t-harumasa'], remielle: old['t-remielle'], sigrid: old['t-sigrid'], claret: old['t-claret-target'], roxy: old['t-roxy-target'] },
+        order: [...currentOrder, 'claret', 'roxy']
+      };
+    } catch { return null; }
+  };
+  const storedPlannerState = () => {
+    try { const state = JSON.parse(localStorage.getItem(plannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
+    try { const state = JSON.parse(localStorage.getItem(previousPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
+    return legacyState();
+  };
+
+  const pct = probability => {
+    if (probability === 0) return language === 'ru' ? '0,0%' : '0.0%';
+    const percent = 100 * probability;
+    if (percent < 0.001) return language === 'ru' ? '&lt;0,001%' : '&lt;0.001%';
+    const decimals = percent < 0.1 ? 3 : 1;
+    return `${new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(percent)}%`;
+  };
+  const decimal = value => new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  const add = (map, state, probability) => { if (probability > 0) map.set(state, (map.get(state) || 0) + probability); };
+  const addBucket = (buckets, index, state, probability) => { if (probability > 0) { if (!buckets[index]) buckets[index] = new Map(); add(buckets[index], state, probability); } };
+  const hazard = (pity, rules) => {
+    const pull = pity + 1;
+    if (pull >= rules.hardPity) return 1;
+    if (pull < rules.softPityStartsAt) return rules.baseRate;
+    return Math.min(1, rules.baseRate + rules.softPityStep * (pull - rules.softPityStartsAt + 1));
+  };
+  const packCore = (np, ng, rp, rg, rs, mask) => (np | (ng << 7) | (rp << 8) | (rg << 15) | (rs << 16) | (mask << 17)) >>> 0;
+  const unpackCore = state => ({ np: state & 127, ng: (state >>> 7) & 1, rp: (state >>> 8) & 127, rg: (state >>> 15) & 1, rs: (state >>> 16) & 1, mask: state >>> 17 });
+  const packActive = (core, index) => (core >>> 0) * 32 + index;
+  const unpackActive = state => ({ core: Math.floor(state / 32) >>> 0, index: state % 32 });
+
+  function runPhase(arrivals, targets, cap) {
+    if (!targets.length) return arrivals;
+    const done = Array(cap + 1);
+    let active = new Map();
+    for (let spent = 0; spent <= cap; spent += 1) {
+      const arriving = arrivals[spent];
+      if (arriving) arriving.forEach((probability, core) => add(active, packActive(core, 0), probability));
+      if (spent === cap) {
+        active.forEach((probability, packed) => addBucket(done, cap, unpackActive(packed).core, probability));
+        break;
+      }
+      const next = new Map();
+      active.forEach((probability, packed) => {
+        const activeState = unpackActive(packed);
+        const state = unpackCore(activeState.core);
+        const target = characterById.get(targets[activeState.index]);
+        const banner = bannerById.get(target.bannerId);
+        const rules = banner.pity;
+        const rescreen = rules.channel === 'rescreen';
+        const pity = rescreen ? state.rp : state.np;
+        const hitRate = hazard(pity, rules);
+        if (hitRate < 1) {
+          const core = packCore(rescreen ? state.np : state.np + 1, state.ng, rescreen ? state.rp + 1 : state.rp, state.rg, state.rs, state.mask);
+          add(next, packActive(core, activeState.index), probability * (1 - hitRate));
+        }
+        const win = (np, ng, rp, rg, rs, chance) => {
+          const core = packCore(np, ng, rp, rg, rs, state.mask | bits[target.id]);
+          const nextIndex = activeState.index + 1;
+          if (nextIndex >= targets.length) addBucket(done, spent + 1, core, probability * chance);
+          else add(next, packActive(core, nextIndex), probability * chance);
+        };
+        if (rescreen) {
+          if (state.rs) win(state.np, state.ng, 0, state.rg, 0, hitRate);
+          else if (state.rg) win(state.np, state.ng, 0, 0, state.rs, hitRate);
+          else {
+            win(state.np, state.ng, 0, 0, state.rs, hitRate * rules.featuredRate);
+            add(next, packActive(packCore(state.np, state.ng, 0, 1, state.rs, state.mask), activeState.index), probability * hitRate * (1 - rules.featuredRate));
+          }
+        } else if (state.ng) {
+          win(0, 0, state.rp, state.rg, state.rs, hitRate);
+        } else {
+          win(0, 0, state.rp, state.rg, state.rs, hitRate * rules.featuredRate);
+          add(next, packActive(packCore(0, 1, state.rp, state.rg, state.rs, state.mask), activeState.index), probability * hitRate * (1 - rules.featuredRate));
+        }
+      });
+      active = next;
+    }
+    return done;
+  }
+
+  function getConfig() {
+    runtime.availableNow = +els.now.value;
+    const pityCounts = Object.values(runtime.pityGroups).map(group => group.count);
+    if (![runtime.availableNow, ...pityCounts].every(Number.isFinite)) return null;
+    if (runtime.availableNow < 0) return null;
+    if (banners.some(banner => runtime.pityGroups[banner.pity.groupId].count < 0 || runtime.pityGroups[banner.pity.groupId].count >= banner.pity.hardPity)) return null;
+    const normal = [...pityDefaults].find(([, value]) => value.channel === 'normal')?.[0];
+    const rescreen = [...pityDefaults].find(([, value]) => value.channel === 'rescreen')?.[0];
+    return {
+      now: runtime.availableNow,
+      np: normal ? runtime.pityGroups[normal].count : 0, ng: normal && runtime.pityGroups[normal].guaranteed ? 1 : 0,
+      rp: rescreen ? runtime.pityGroups[rescreen].count : 0, rg: rescreen && runtime.pityGroups[rescreen].guaranteed ? 1 : 0,
+      rs: rescreen && runtime.pityGroups[rescreen].specialGuaranteed ? 1 : 0
+    };
+  }
+  const getPlan = () => {
+    const selected = new Set(runtime.order.filter(id => runtime.enabled[id]));
+    const phases = [...periodDefaults.values()].sort((a, b) => a.phase - b.phase).map(period => ({
+      phase: period.phase,
+      endDate: period.endDate,
+      estimatedGain: estimatedSearches(period.endDate),
+      expired: localDeadline(period.endDate) <= Date.now(),
+      targets: runtime.order.filter(id => selected.has(id) && characterById.get(id).budget.phase === period.phase)
+    }));
+    const currentPhase = phases.find(item => item.phase === PLANNER_CONFIG.currentPhase);
+    return { selected, phases, current: currentPhase && !currentPhase.expired ? currentPhase.targets : [] };
+  };
+
+  function summarize(arrivals, selected) {
+    const outcomes = new Map();
+    arrivals.forEach(bucket => bucket && bucket.forEach((probability, core) => {
+      const mask = unpackCore(core).mask;
+      outcomes.set(mask, (outcomes.get(mask) || 0) + probability);
+    }));
+    const marginal = id => [...outcomes].reduce((sum, [mask, probability]) => sum + ((mask & bits[id]) ? probability : 0), 0);
+    const intended = [...selected].reduce((mask, id) => mask | bits[id], 0);
+    const complete = [...outcomes].reduce((sum, [mask, probability]) => sum + ((mask & intended) === intended ? probability : 0), 0);
+    return { outcomes, marginal, complete, any: 1 - (outcomes.get(0) || 0), expected: [...selected].reduce((sum, id) => sum + marginal(id), 0) };
+  }
+  function balanceStats(arrivals, cap) {
+    const distribution = new Map();
+    let totalProbability = 0;
+    arrivals.forEach((bucket, spent) => bucket && bucket.forEach(probability => {
+      const remaining = Math.max(0, cap - spent);
+      distribution.set(remaining, (distribution.get(remaining) || 0) + probability);
+      totalProbability += probability;
+    }));
+    if (!totalProbability) return { expected: 0, low: 0, high: 0 };
+    const ordered = [...distribution].sort((a, b) => a[0] - b[0]);
+    const quantile = threshold => {
+      let cumulative = 0;
+      for (const [remaining, probability] of ordered) {
+        cumulative += probability / totalProbability;
+        if (cumulative + 1e-12 >= threshold) return remaining;
+      }
+      return ordered[ordered.length - 1][0];
+    };
+    const expected = ordered.reduce((sum, [remaining, probability]) => sum + remaining * probability / totalProbability, 0);
+    return { expected, low: quantile(0.1), high: quantile(0.9) };
+  }
+  function simulate(cfg, plan) {
+    let arrivals = [];
+    const phaseBalances = [];
+    addBucket(arrivals, 0, packCore(cfg.np, cfg.ng, cfg.rp, cfg.rg, cfg.rs, 0), 1);
+    plan.phases.forEach(phase => {
+      const cap = cfg.now + phase.estimatedGain;
+      if (phase.expired) {
+        phaseBalances.push({ ...phase, cap, stats: null });
+        return;
+      }
+      arrivals = runPhase(arrivals, phase.targets, cap);
+      phaseBalances.push({ ...phase, cap, stats: balanceStats(arrivals, cap) });
+    });
+    return { ...summarize(arrivals, plan.selected), phaseBalances };
+  }
+  function simulateNow(cfg, plan) {
+    let arrivals = [];
+    addBucket(arrivals, 0, packCore(cfg.np, cfg.ng, cfg.rp, cfg.rg, cfg.rs, 0), 1);
+    arrivals = runPhase(arrivals, plan.current, cfg.now);
+    return summarize(arrivals, new Set(plan.current));
+  }
+
+  function render() {
+    if (!validAppConfig) { els.error.textContent = t('invalidAppConfig'); return; }
+    const cfg = getConfig();
+    const plan = getPlan();
+    if (!cfg) { els.error.textContent = t('invalidConfig'); return; }
+    const result = simulate(cfg, plan);
+    renderCharacterProjections(result.phaseBalances);
+    if (!plan.selected.size) {
+      els.error.textContent = t('selectCharacter'); els.order.textContent = ''; els.summary.innerHTML = ''; els.targetChances.innerHTML = ''; els.outcomes.innerHTML = ''; return;
+    }
+    els.error.textContent = '';
+    const nowResult = simulateNow(cfg, plan);
+    const orderedSelected = runtime.order.filter(id => plan.selected.has(id));
+    const phaseLabels = plan.phases.filter(phase => phase.targets.length).map(phase => phase.targets.map(id => characterById.get(id).name).join(' → '));
+    els.order.textContent = `${t('pullOrder')}: ${phaseLabels.join(`  ${t('phaseSeparator')}  `)}`;
+    els.summary.innerHTML = `
+      <div class="card viz-stat"><div class="text-muted">${t('allTargets')}</div><div class="viz-stat-value">${pct(result.complete)}</div></div>
+      <div class="card viz-stat"><div class="text-muted">${t('anyTarget')}</div><div class="viz-stat-value">${pct(result.any)}</div></div>
+      <div class="card viz-stat"><div class="text-muted">${t('expectedCharacters')}</div><div class="viz-stat-value">${decimal(result.expected)}</div></div>
+      <div class="card viz-stat"><div class="text-muted">${t('anyCurrentNow')}</div><div class="viz-stat-value">${plan.current.length ? pct(nowResult.any) : '—'}</div></div>`;
+    els.targetChances.innerHTML = orderedSelected.map(id => {
+      const obtained = result.marginal(id);
+      const character = characterById.get(id);
+      return `<tr><td>${escapeHtml(character.name)}</td><td class="text-end">${plan.current.includes(id) ? pct(nowResult.marginal(id)) : '—'}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(Math.max(0, 1 - obtained))}</td></tr>`;
+    }).join('');
+    const roster = mask => orderedSelected.filter(id => mask & bits[id]).map(id => characterById.get(id).name).join(' + ') || t('noCharacter');
+    const missed = mask => orderedSelected.filter(id => !(mask & bits[id])).map(id => characterById.get(id).name).join(' + ') || '—';
+    els.outcomes.innerHTML = [...result.outcomes].filter(([, probability]) => probability > 1e-12).sort((a, b) => b[1] - a[1])
+      .map(([mask, probability]) => `<tr><td>${escapeHtml(roster(mask))}</td><td>${escapeHtml(missed(mask))}</td><td class="text-end">${pct(probability)}</td></tr>`).join('');
+  }
+
+  const updateAndPersist = () => { persistPlannerState(); render(); };
+  root.addEventListener('input', event => {
+    const target = event.target;
+    if (target === els.now) runtime.availableNow = +target.value;
+    if (target.matches('.t-pity')) {
+      runtime.pityGroups[target.dataset.pityGroup].count = +target.value;
+      root.querySelectorAll(`.t-pity[data-pity-group="${target.dataset.pityGroup}"]`).forEach(input => { if (input !== target) input.value = target.value; });
+    }
+    if (target === els.now || target.matches('.t-pity')) updateAndPersist();
+  });
+  root.addEventListener('change', event => {
+    const target = event.target;
+    if (target.matches('.t-character-enabled')) runtime.enabled[target.dataset.characterId] = target.checked;
+    if (target.matches('.t-guaranteed')) {
+      runtime.pityGroups[target.dataset.pityGroup].guaranteed = target.checked;
+      root.querySelectorAll(`.t-guaranteed[data-pity-group="${target.dataset.pityGroup}"]`).forEach(input => { input.checked = target.checked; });
+    }
+    if (target.matches('.t-special-guaranteed')) {
+      runtime.pityGroups[target.dataset.pityGroup].specialGuaranteed = target.checked;
+      root.querySelectorAll(`.t-special-guaranteed[data-pity-group="${target.dataset.pityGroup}"]`).forEach(input => { input.checked = target.checked; });
+    }
+    if (target.matches('.t-character-enabled, .t-guaranteed, .t-special-guaranteed')) updateAndPersist();
+  });
+  root.addEventListener('click', event => {
+    const button = event.target.closest('.t-move-character');
+    if (!button) return;
+    const index = runtime.order.indexOf(button.dataset.characterId);
+    const nextIndex = index + Number(button.dataset.direction);
+    if (index < 0 || nextIndex < 0 || nextIndex >= runtime.order.length) return;
+    if (!runsOverlap(characterById.get(runtime.order[index]), characterById.get(runtime.order[nextIndex]))) return;
+    [runtime.order[index], runtime.order[nextIndex]] = [runtime.order[nextIndex], runtime.order[index]];
+    renderCharacterTable(); updateAndPersist();
+  });
+
+  applyTheme(storedTheme() || preferredTheme());
+  els.languageToggle.addEventListener('click', () => applyLanguage(language === 'ru' ? 'en' : 'ru', true));
+  els.themeToggle.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true));
+  applyPlannerState(storedPlannerState());
+  els.now.value = runtime.availableNow;
+  applyLanguage(storedLanguage() || preferredLanguage(), false, false);
+  persistPlannerState();
+  render();
+  window.setInterval(() => {
+    renderCharacterTable();
+    render();
+  }, PLANNER_CONFIG.incomeEstimate.refreshMinutes * 60 * 1000);
+})();
+</script>
+</body>
+</html>
