@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>ZZZ Universal Pull Planner</title>
+<title>ZZZ Signal Search Planner</title>
 <script>
   try {
     const savedTheme = localStorage.getItem('zzz-universal-pull-planner-theme');
@@ -904,7 +904,7 @@ html>body{padding:1rem}</style>
 <body>
 <div id="zzz-universal-planner">
   <div class="planner-header">
-    <h2 data-i18n="title">ZZZ universal pull planner</h2>
+    <h2 data-i18n="title">ZZZ Signal Search planner</h2>
     <div class="planner-actions">
       <div class="language-control">
         <label for="t-language-select" class="language-icon" aria-label="Language">🌐</label>
@@ -923,47 +923,72 @@ html>body{padding:1rem}</style>
     </div>
   </div>
 
-  <label class="form-label available-now"><span data-i18n="availableNow">Searches available now</span>
+  <label class="form-label available-now"><span data-i18n="availableNow">Signal Searches available now</span>
     <input id="t-now" class="form-control" type="number" min="0" max="600" value="90">
   </label>
   <p id="t-income-note" class="text-small text-muted"></p>
 
-  <section aria-labelledby="t-banners-heading">
-    <h3 id="t-banners-heading" data-i18n="banners">Banners</h3>
+  <section aria-labelledby="t-channels-heading">
+    <h3 id="t-channels-heading" data-i18n="channels">Channels</h3>
     <div class="table-responsive configuration-table">
       <table class="table table-sm">
         <thead><tr>
-          <th data-i18n="banner">Banner</th><th data-i18n="channel">Channel</th><th data-i18n="pityNow">Pity now</th>
-          <th data-i18n="startingGuarantees">Starting guarantees</th><th data-i18n="pityRules">Pity rules</th>
+          <th data-i18n="channel">Channel</th><th data-i18n="currentPity">Current S-Rank pity</th>
+          <th data-i18n="guaranteeStatus">Guarantee status</th><th data-i18n="searchRules">Signal Search rules</th>
         </tr></thead>
-        <tbody id="t-banner-rows"></tbody>
+        <tbody id="t-channel-rows"></tbody>
       </table>
     </div>
   </section>
 
-  <section aria-labelledby="t-characters-heading">
-    <h3 id="t-characters-heading" data-i18n="charactersToPull">Characters to pull</h3>
+  <section aria-labelledby="t-agents-heading">
+    <h3 id="t-agents-heading" data-i18n="agentTargets">Agent targets</h3>
     <div class="table-responsive configuration-table">
       <table class="table table-sm">
         <thead><tr>
-          <th data-i18n="enabled">Enabled</th><th class="text-end" data-i18n="priority">Priority</th>
-          <th data-i18n="character">Character</th><th data-i18n="banner">Banner</th><th data-i18n="dates">Dates</th>
-          <th data-i18n="estimatedSearches">Projected searches by deadline</th><th data-i18n="move">Move</th>
+          <th data-i18n="target">Target</th><th class="text-end" data-i18n="priority">Priority</th>
+          <th data-i18n="agent">Agent</th><th data-i18n="channel">Channel</th><th data-i18n="availability">Availability</th>
+          <th data-i18n="estimatedSearches">Projected searches by deadline</th><th data-i18n="actions">Actions</th>
         </tr></thead>
-        <tbody id="t-character-rows"></tbody>
+        <tbody id="t-agent-rows"></tbody>
       </table>
+    </div>
+    <div class="provisional-controls">
+      <button id="t-add-provisional" class="btn provisional-trigger" type="button" data-i18n="addProvisional">+ Add custom target</button>
+      <form id="t-provisional-form" class="provisional-form" hidden>
+        <div class="provisional-form-heading">
+          <strong id="t-provisional-form-title">Add custom target</strong>
+          <span id="t-provisional-count" class="text-small text-muted"></span>
+        </div>
+        <input id="t-provisional-id" type="hidden">
+        <div class="provisional-form-grid">
+          <label><span data-i18n="provisionalName">Agent name</span><input id="t-provisional-name" class="form-control" type="text" maxlength="60" required></label>
+          <label><span data-i18n="provisionalChannel">Channel</span><select id="t-provisional-channel" class="form-control"></select></label>
+          <label><span data-i18n="provisionalSchedule">Availability</span><select id="t-provisional-schedule" class="form-control"></select></label>
+        </div>
+        <div id="t-provisional-custom-dates" class="provisional-date-grid" hidden>
+          <label><span data-i18n="starts">Starts</span><input id="t-provisional-start" class="form-control" type="date"></label>
+          <label><span data-i18n="ends">Ends</span><input id="t-provisional-end" class="form-control" type="date"></label>
+        </div>
+        <p id="t-provisional-note" class="text-small text-muted provisional-note"></p>
+        <div id="t-provisional-error" class="text-small text-destructive" role="alert"></div>
+        <div class="provisional-form-actions">
+          <button class="btn btn-primary" type="submit" data-i18n="saveTarget">Save target</button>
+          <button id="t-cancel-provisional" class="btn btn-secondary" type="button" data-i18n="cancel">Cancel</button>
+        </div>
+      </form>
     </div>
   </section>
 
   <div id="t-error" class="text-destructive" role="alert"></div>
-  <p class="text-small text-muted" data-i18n="budgetHelp">Future searches are estimated cumulatively from the current time to each character deadline. Earlier spending is still subtracted before later targets. Character order is the pull priority when availability overlaps; dates and deadlines take precedence.</p>
+  <p class="text-small text-muted" data-i18n="budgetHelp">Each Agent row shows the expected Signal Search balance after earlier targets. Future income accumulates to that Agent's deadline, while availability dates determine which targets can be prioritized against each other.</p>
   <p id="t-order" class="text-small" aria-live="polite"></p>
 
   <div class="viz-grid" id="t-summary" aria-live="polite"></div>
 
   <div class="table-responsive">
     <table class="table table-sm">
-      <thead><tr><th data-i18n="selectedTarget">Selected target</th><th class="text-end" data-i18n="chanceNow">Obtain now</th><th class="text-end" data-i18n="byDeadline">Obtain by deadline</th><th class="text-end" data-i18n="missByDeadline">Miss by deadline</th></tr></thead>
+      <thead><tr><th data-i18n="selectedTarget">Selected target</th><th class="text-end" data-i18n="chanceNow">With current balance</th><th class="text-end" data-i18n="byDeadline">Obtain by deadline</th><th class="text-end" data-i18n="missByDeadline">Miss by deadline</th></tr></thead>
       <tbody id="t-target-chances"></tbody>
     </table>
   </div>
@@ -1157,9 +1182,9 @@ html>body{padding:1rem}</style>
     outline-offset: 2px;
   }
   #zzz-universal-planner .config-subtext { display: block; margin-top: 0.2rem; white-space: nowrap; }
-  #zzz-universal-planner .t-character-estimate { min-width: 190px; }
-  #zzz-universal-planner .t-character-estimate strong { white-space: nowrap; }
-  #zzz-universal-planner .t-character-estimate .config-subtext { line-height: 1.35; white-space: normal; }
+  #zzz-universal-planner .t-agent-estimate { min-width: 190px; }
+  #zzz-universal-planner .t-agent-estimate strong { white-space: nowrap; }
+  #zzz-universal-planner .t-agent-estimate .config-subtext { line-height: 1.35; white-space: normal; }
   #zzz-universal-planner .unconfirmed-badge {
     display: inline-block;
     margin-left: 0.4rem;
@@ -1170,6 +1195,11 @@ html>body{padding:1rem}</style>
     font-size: var(--font-size-small);
     line-height: 1.35;
     white-space: nowrap;
+  }
+  #zzz-universal-planner .provisional-badge {
+    border-color: color-mix(in srgb, var(--muted-foreground) 52%, transparent);
+    color: var(--muted-foreground);
+    background: color-mix(in srgb, var(--muted-foreground) 8%, transparent);
   }
   #zzz-universal-planner .config-rules { white-space: nowrap; }
   #zzz-universal-planner .move-buttons { display: flex; gap: 0.3rem; }
@@ -1185,6 +1215,45 @@ html>body{padding:1rem}</style>
     background: color-mix(in srgb, var(--foreground) 10%, var(--secondary));
     transform: translateY(-1px);
   }
+  #zzz-universal-planner .move-buttons .provisional-row-action {
+    min-width: 1.75rem;
+    color: var(--muted-foreground);
+    background: transparent;
+  }
+  #zzz-universal-planner .provisional-controls { margin-top: 0.65rem; }
+  #zzz-universal-planner .provisional-trigger {
+    padding: 0.25rem 0;
+    border: 0;
+    color: var(--muted-foreground);
+    background: transparent;
+    font-size: var(--font-size-small);
+  }
+  #zzz-universal-planner .provisional-trigger:hover { color: var(--foreground); text-decoration: underline; }
+  #zzz-universal-planner .provisional-form {
+    margin-top: 0.65rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed color-mix(in srgb, var(--foreground) 18%, var(--border));
+  }
+  #zzz-universal-planner .provisional-form-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.65rem;
+  }
+  #zzz-universal-planner :is(.provisional-form-grid, .provisional-date-grid) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+  #zzz-universal-planner .provisional-date-grid {
+    grid-template-columns: repeat(2, minmax(0, 220px));
+    margin-top: 0.65rem;
+  }
+  #zzz-universal-planner :is(.provisional-form-grid, .provisional-date-grid) label { font-size: var(--font-size-small); }
+  #zzz-universal-planner :is(.provisional-form-grid, .provisional-date-grid) .form-control { margin-top: 0.25rem; }
+  #zzz-universal-planner .provisional-note { min-height: 1.35em; margin: 0.55rem 0 0; }
+  #zzz-universal-planner .provisional-form-actions { display: flex; gap: 0.45rem; margin-top: 0.65rem; }
   #zzz-universal-planner #t-order {
     width: fit-content;
     margin: 0.5rem 0 0.85rem;
@@ -1223,6 +1292,7 @@ html>body{padding:1rem}</style>
     #zzz-universal-planner .planner-header { align-items: flex-start; }
     #zzz-universal-planner .planner-actions { flex-direction: column; align-items: stretch; }
     #zzz-universal-planner .available-now { max-width: none; }
+    #zzz-universal-planner :is(.provisional-form-grid, .provisional-date-grid) { grid-template-columns: 1fr; }
   }
 </style>
 
@@ -1230,25 +1300,25 @@ html>body{padding:1rem}</style>
 (() => {
   const root = document.getElementById('zzz-universal-planner');
 
-  // JSON-compatible source of truth. Replace this object to update banners,
-  // dates, pity rules, defaults, character assignments, and initial priority.
+  // JSON-compatible source of truth. Replace this object to update channels,
+  // dates, pity rules, defaults, Agent assignments, and initial priority.
   const PLANNER_CONFIG = {
-    version: 3,
+    version: 4,
     currentPhase: 0,
-    maxCharacters: 15,
+    maxAgents: 15,
     availableNow: 90,
     incomeEstimate: {
-      limitedPullsPerDay: 3,
+      limitedSearchesPerDay: 3,
       roundDown: true,
       deadlineTime: 'start-of-day-local',
       refreshMinutes: 60,
       basis: 'Realistic active-player F2P average including recurring modes, events, and ordinary update rewards.'
     },
-    banners: [
+    channels: [
       {
-        id: 'exclusive', name: 'Exclusive',
-        pity: { groupId: 'normal-exclusive', channel: 'normal', count: 0, guaranteed: false, specialGuaranteed: false, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
-        characters: [
+        id: 'exclusive', name: 'Exclusive Channel',
+        pity: { groupId: 'exclusive', mode: 'exclusive', count: 0, guaranteed: false, specialGuaranteed: false, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
+        agents: [
           { id: 'remielle', name: 'Remielle', enabled: false, priority: 4, confirmed: true, startDate: '2026-07-29', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
           { id: 'sigrid', name: 'Sigrid', enabled: false, priority: 5, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
           { id: 'claret', name: 'Claret', enabled: true, priority: 6, confirmed: false, startDate: '2026-09-08', endDate: '2026-09-29', budget: { periodId: 'claret-end', phase: 1 } },
@@ -1256,9 +1326,9 @@ html>body{padding:1rem}</style>
         ]
       },
       {
-        id: 'exclusive-rescreening', name: 'Special Rescreening',
-        pity: { groupId: 'exclusive-rescreening', channel: 'rescreen', count: 0, guaranteed: false, specialGuaranteed: true, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
-        characters: [
+        id: 'exclusive-rescreening', name: 'Exclusive Rescreening',
+        pity: { groupId: 'exclusive-rescreening', mode: 'rescreening', count: 0, guaranteed: false, specialGuaranteed: true, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
+        agents: [
           { id: 'dialyn', name: 'Dialyn', enabled: true, priority: 1, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
           { id: 'yuzuha', name: 'Yuzuha', enabled: false, priority: 2, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
           { id: 'harumasa', name: 'Harumasa', enabled: false, priority: 3, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } }
@@ -1269,45 +1339,60 @@ html>body{padding:1rem}</style>
 
   const translations = {
     en: {
-      pageTitle: 'ZZZ Universal Pull Planner', title: 'ZZZ universal pull planner', availableNow: 'Searches available now',
-      banners: 'Banners', banner: 'Banner', dates: 'Dates', channel: 'Channel', estimatedSearches: 'Projected searches by deadline', pityNow: 'Pity now',
-      startingGuarantees: 'Starting guarantees', pityRules: 'Pity rules', charactersToPull: 'Characters to pull', enabled: 'Enabled', priority: 'Priority', character: 'Character', move: 'Move',
-      normalChannel: 'Normal Exclusive', rescreenChannel: 'Exclusive Rescreening', normalGuarantee: 'Next S-rank guaranteed', specialGuarantee: 'First S-rank special guarantee',
-      hardPity: 'hard', softPity: 'soft', featuredRate: 'featured', dateTbd: 'TBD', unconfirmed: 'Unconfirmed', moveUp: 'Move up', moveDown: 'Move down', daysLeft: 'days left', pullsPerDay: 'pull/day',
-      incomeNote: 'Automatic active-player income: {rate} limited pulls per day × time remaining to the start of the listed end date, rounded down. Rewards arrive unevenly, so this is a blended average rather than a daily promise.',
-      budgetHelp: 'The bold value in each character row is the expected balance after the enabled pull plan. The smaller line shows cumulative budget (+ future income) before pulls and the central 80% remaining range. Earlier spending is subtracted before later targets; dates and deadlines take precedence.',
-      expectedLeft: 'expected left', futureSuffix: 'future', beforePulls: 'before pulls', likely: 'likely', expired: 'Expired',
-      selectedTarget: 'Selected target', chanceNow: 'Obtain now', byDeadline: 'Obtain by deadline', missByDeadline: 'Miss by deadline',
+      pageTitle: 'ZZZ Signal Search Planner', title: 'ZZZ Signal Search planner', availableNow: 'Signal Searches available now',
+      channels: 'Channels', channel: 'Channel', availability: 'Availability', estimatedSearches: 'Projected searches by deadline', currentPity: 'Current S-Rank pity',
+      guaranteeStatus: 'Guarantee status', searchRules: 'Signal Search rules', agentTargets: 'Agent targets', target: 'Target', priority: 'Priority', agent: 'Agent', actions: 'Actions',
+      exclusiveChannel: 'Exclusive Channel', exclusiveRescreening: 'Exclusive Rescreening', normalGuarantee: 'Next S-Rank is the selected Agent', specialGuarantee: 'Special Guarantee available',
+      baseRate: 'base rate', guaranteedBy: 'S-Rank guaranteed by', softPity: 'soft pity from', featuredRate: 'selected Agent', independentPity: 'Tracked separately from other channels', dateTbd: 'TBD', unconfirmed: 'Unconfirmed', provisional: 'Custom', moveUp: 'Move up', moveDown: 'Move down', daysLeft: 'days left', searchesPerDay: 'searches/day',
+      addProvisional: '+ Add custom target', editProvisional: 'Edit custom target', provisionalName: 'Agent name', provisionalChannel: 'Channel', provisionalSchedule: 'Availability',
+      starts: 'Starts', ends: 'Ends', saveTarget: 'Save target', cancel: 'Cancel', editTarget: 'Edit target', removeTarget: 'Remove target',
+      nextThreeWeeks: 'Next 3-week period', customDates: 'Custom dates…', futureTarget: 'Future Agent', targetLimit: '{used} of {limit} Agent slots used',
+      sharedSchedule: 'Changing these dates will update {count} custom targets sharing this availability window.', invalidProvisional: 'Enter an Agent name and valid dates, with the end after the start.',
+      maxAgentsReached: 'The 15-Agent calculation limit has been reached.', removeProvisionalConfirm: 'Remove {name} from this planner?',
+      incomeNote: 'Automatic active-player income estimate: {rate} limited Signal Searches per day × time remaining until 00:00 local time on the listed end date, rounded down. Rewards arrive unevenly, so this is a blended average rather than a daily promise.',
+      budgetHelp: 'Each Agent row shows the expected Signal Search balance after earlier targets. Future income accumulates to that Agent\'s deadline, while availability dates determine which targets can be prioritized against each other.',
+      expectedLeft: 'expected remaining', futureSuffix: 'by then', beforeSearches: 'before searches', likely: '80% range', expired: 'Ended',
+      selectedTarget: 'Selected target', chanceNow: 'With current balance', byDeadline: 'Obtain by deadline', missByDeadline: 'Miss by deadline',
       outcomeHelp: '“Miss by deadline” is the complement of that target’s acquisition chance. Each row below is one mutually exclusive complete result of the selected strategy.',
       exactRoster: 'Obtained selected targets', missedTargets: 'Missed selected targets', chance: 'Exact chance',
       lightTheme: 'Light theme', darkTheme: 'Dark theme', themeLabel: 'Theme',
-      invalidConfig: 'Use nonnegative available searches, with pity from 0–89.', invalidAppConfig: 'The embedded banner config is invalid.',
-      selectCharacter: 'Select at least one character to pull.', pullOrder: 'Pull order', allTargets: 'All selected targets', anyTarget: 'At least one selected target',
-      expectedCharacters: 'Expected selected characters', anyCurrentNow: 'At least one current target now', noCharacter: 'No selected character', phaseSeparator: 'then'
+      invalidConfig: 'Use a nonnegative Signal Search balance, with pity from 0–89.', invalidAppConfig: 'The embedded channel configuration is invalid.',
+      selectAgent: 'Select at least one Agent target.', targetPriority: 'Target priority', allTargets: 'Obtain all selected targets', anyTarget: 'Obtain at least one selected target',
+      expectedAgents: 'Expected number of selected Agents obtained', anyCurrentNow: 'Obtain at least one current target with the current balance', noAgent: 'No selected Agent obtained', phaseSeparator: 'then'
     },
     ru: {
       pageTitle: 'Универсальный планировщик круток ZZZ', title: 'Универсальный планировщик круток ZZZ', availableNow: 'Круток доступно сейчас',
-      banners: 'Баннеры', banner: 'Баннер', dates: 'Даты', channel: 'Канал', estimatedSearches: 'Прогноз круток к сроку', pityNow: 'Пити сейчас',
-      startingGuarantees: 'Начальные гаранты', pityRules: 'Правила пити', charactersToPull: 'Кого крутим', enabled: 'Крутим', priority: 'Приоритет', character: 'Персонаж', move: 'Переместить',
-      normalChannel: 'Обычный эксклюзивный', rescreenChannel: 'Эксклюзивный показ', normalGuarantee: 'Следующий S-ранг — гарант', specialGuarantee: 'Первый S-ранг — бонусный гарант',
-      hardPity: 'гарант', softPity: 'софт', featuredRate: 'ивентовый', dateTbd: 'Пока неизвестно', unconfirmed: 'Не подтверждено', moveUp: 'Переместить выше', moveDown: 'Переместить ниже', daysLeft: 'дней осталось', pullsPerDay: 'крутки/день',
-      incomeNote: 'Автоматический доход активного игрока: {rate} лимитированные крутки в день × время до начала указанной даты окончания, с округлением вниз. Награды выдаются неравномерно, поэтому это усреднённая оценка, а не ежедневная гарантия.',
-      budgetHelp: 'Жирное значение в строке персонажа — ожидаемый остаток после выбранного плана круток. Строка ниже показывает совокупный бюджет (+ будущий доход) до круток и центральный диапазон 80%. Более ранние траты вычитаются перед следующими целями; даты и сроки важнее.',
-      expectedLeft: 'ожидаемый остаток', futureSuffix: 'будущих', beforePulls: 'до круток', likely: 'обычно', expired: 'Завершено',
-      selectedTarget: 'Цель', chanceNow: 'Получить сейчас', byDeadline: 'Получить к концу баннера', missByDeadline: 'Не получить к концу',
-      outcomeHelp: '«Не получить к концу» — это дополнение до 100% к шансу получить цель. Каждая строка ниже — один взаимоисключающий полный исход выбранной стратегии.',
+      channels: 'Каналы', channel: 'Канал', availability: 'Период доступности', estimatedSearches: 'Прогноз круток к сроку', currentPity: 'Текущее пити S-ранга',
+      guaranteeStatus: 'Состояние гарантов', searchRules: 'Правила круток', agentTargets: 'Целевые агенты', target: 'Цель', priority: 'Приоритет', agent: 'Агент', actions: 'Действия',
+      exclusiveChannel: 'Эксклюзивный канал', exclusiveRescreening: 'Эксклюзивный реран', normalGuarantee: 'Следующий S-ранг — выбранный агент', specialGuarantee: 'Особый гарант доступен',
+      baseRate: 'базовый шанс', guaranteedBy: 'S-ранг гарантирован на', softPity: 'софт-пити с', featuredRate: 'выбранный агент', independentPity: 'Счётчик отдельный от других каналов', dateTbd: 'Пока неизвестно', unconfirmed: 'Не подтверждено', provisional: 'Своя цель', moveUp: 'Переместить выше', moveDown: 'Переместить ниже', daysLeft: 'дней осталось', searchesPerDay: 'крутки/день',
+      addProvisional: '+ Добавить свою цель', editProvisional: 'Изменить свою цель', provisionalName: 'Имя агента', provisionalChannel: 'Канал', provisionalSchedule: 'Период доступности',
+      starts: 'Начало', ends: 'Конец', saveTarget: 'Сохранить', cancel: 'Отмена', editTarget: 'Изменить цель', removeTarget: 'Удалить цель',
+      nextThreeWeeks: 'Следующий трёхнедельный период', customDates: 'Другие даты…', futureTarget: 'Будущий агент', targetLimit: 'Занято мест для агентов: {used} из {limit}',
+      sharedSchedule: 'Изменение дат затронет {count} своих целей с тем же периодом доступности.', invalidProvisional: 'Укажите имя агента и корректные даты, где конец позже начала.',
+      maxAgentsReached: 'Достигнут предел расчёта в 15 агентов.', removeProvisionalConfirm: 'Удалить {name} из планировщика?',
+      incomeNote: 'Автоматическая оценка дохода активного игрока: {rate} лимитированные крутки в день × время до 00:00 по местному времени в указанную дату окончания, с округлением вниз. Награды выдаются неравномерно, поэтому это средняя оценка, а не ежедневная гарантия.',
+      budgetHelp: 'В каждой строке агента показан ожидаемый остаток круток после более ранних целей. Будущий доход накапливается до срока этого агента, а периоды доступности определяют, какие цели можно переставлять по приоритету.',
+      expectedLeft: 'ожидаемый остаток', futureSuffix: 'к сроку', beforeSearches: 'до круток', likely: 'диапазон 80%', expired: 'Период завершён',
+      selectedTarget: 'Цель', chanceNow: 'С текущим балансом', byDeadline: 'Получить к сроку', missByDeadline: 'Не получить к сроку',
+      outcomeHelp: '«Не получить к сроку» — это дополнение до 100% к шансу получить цель. Каждая строка ниже — один взаимоисключающий полный исход выбранной стратегии.',
       exactRoster: 'Полученные выбранные цели', missedTargets: 'Пропущенные выбранные цели', chance: 'Точный шанс',
       lightTheme: 'Светлая тема', darkTheme: 'Тёмная тема', themeLabel: 'Тема',
-      invalidConfig: 'Задайте неотрицательное число доступных круток; пити — от 0 до 89.', invalidAppConfig: 'Встроенная конфигурация баннеров некорректна.',
-      selectCharacter: 'Выберите хотя бы одного персонажа.', pullOrder: 'Порядок круток', allTargets: 'Все выбранные цели', anyTarget: 'Хотя бы одна выбранная цель',
-      expectedCharacters: 'Ожидаемое число выбранных персонажей', anyCurrentNow: 'Хотя бы одна текущая цель сейчас', noCharacter: 'Никто из выбранных персонажей', phaseSeparator: 'затем'
+      invalidConfig: 'Задайте неотрицательный баланс круток; пити — от 0 до 89.', invalidAppConfig: 'Встроенная конфигурация каналов некорректна.',
+      selectAgent: 'Выберите хотя бы одного целевого агента.', targetPriority: 'Приоритет целей', allTargets: 'Получить все выбранные цели', anyTarget: 'Получить хотя бы одну выбранную цель',
+      expectedAgents: 'Ожидаемое число полученных целевых агентов', anyCurrentNow: 'Получить хотя бы одну текущую цель с нынешним балансом', noAgent: 'Ни один выбранный агент не получен', phaseSeparator: 'затем'
     }
   };
 
   const els = {
     languageSelect: root.querySelector('#t-language-select'), themeSelect: root.querySelector('#t-theme-select'), now: root.querySelector('#t-now'),
-    incomeNote: root.querySelector('#t-income-note'), bannerRows: root.querySelector('#t-banner-rows'), characterRows: root.querySelector('#t-character-rows'), error: root.querySelector('#t-error'),
-    order: root.querySelector('#t-order'), summary: root.querySelector('#t-summary'), targetChances: root.querySelector('#t-target-chances'), outcomes: root.querySelector('#t-outcomes')
+    incomeNote: root.querySelector('#t-income-note'), channelRows: root.querySelector('#t-channel-rows'), agentRows: root.querySelector('#t-agent-rows'), error: root.querySelector('#t-error'),
+    order: root.querySelector('#t-order'), summary: root.querySelector('#t-summary'), targetChances: root.querySelector('#t-target-chances'), outcomes: root.querySelector('#t-outcomes'),
+    addProvisional: root.querySelector('#t-add-provisional'), provisionalForm: root.querySelector('#t-provisional-form'), provisionalFormTitle: root.querySelector('#t-provisional-form-title'),
+    provisionalCount: root.querySelector('#t-provisional-count'), provisionalId: root.querySelector('#t-provisional-id'), provisionalName: root.querySelector('#t-provisional-name'),
+    provisionalChannel: root.querySelector('#t-provisional-channel'), provisionalSchedule: root.querySelector('#t-provisional-schedule'), provisionalCustomDates: root.querySelector('#t-provisional-custom-dates'),
+    provisionalStart: root.querySelector('#t-provisional-start'), provisionalEnd: root.querySelector('#t-provisional-end'), provisionalNote: root.querySelector('#t-provisional-note'),
+    provisionalError: root.querySelector('#t-provisional-error'), cancelProvisional: root.querySelector('#t-cancel-provisional')
   };
   let language = 'en';
   const t = key => translations[language][key];
@@ -1315,15 +1400,18 @@ html>body{padding:1rem}</style>
   const preferredLanguage = () => navigator.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
   const themeStorageKey = 'zzz-universal-pull-planner-theme';
   const languageStorageKey = 'zzz-universal-pull-planner-language';
-  const plannerStateStorageKey = 'zzz-universal-pull-planner-state-v3';
-  const previousPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v2';
+  const plannerStateStorageKey = 'zzz-universal-pull-planner-state-v5';
+  const previousPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v4';
+  const olderPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v3';
+  const earlierPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v2';
   const legacyPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v1';
 
-  const banners = PLANNER_CONFIG.banners;
-  const bannerById = new Map(banners.map(banner => [banner.id, banner]));
-  const characters = banners.flatMap(banner => banner.characters.map(character => ({ ...character, bannerId: banner.id })));
-  const characterById = new Map(characters.map(character => [character.id, character]));
-  const bits = Object.fromEntries(characters.map((character, index) => [character.id, 1 << index]));
+  const channels = PLANNER_CONFIG.channels;
+  const channelById = new Map(channels.map(channel => [channel.id, channel]));
+  const builtInCharacters = channels.flatMap(channel => channel.agents.map(character => ({ ...character, channelId: channel.id, provisional: false })));
+  let characters = builtInCharacters.slice();
+  let characterById = new Map(characters.map(character => [character.id, character]));
+  let bits = Object.fromEntries(characters.map((character, index) => [character.id, 1 << index]));
   const chronologyPrecedes = (earlier, later) => earlier.endDate <= later.startDate;
   const runsOverlap = (first, second) => first.startDate < second.endDate && second.startDate < first.endDate;
   const constrainOrder = preferredOrder => {
@@ -1340,44 +1428,62 @@ html>body{padding:1rem}</style>
     }
     return result;
   };
-  const defaultOrder = constrainOrder(characters.slice().sort((a, b) => a.priority - b.priority).map(character => character.id));
+  const defaultOrder = constrainOrder(builtInCharacters.slice().sort((a, b) => a.priority - b.priority).map(character => character.id));
   const periodDefaults = new Map();
   const pityDefaults = new Map();
-  banners.forEach(banner => {
-    if (!pityDefaults.has(banner.pity.groupId)) pityDefaults.set(banner.pity.groupId, { channel: banner.pity.channel, count: banner.pity.count, guaranteed: banner.pity.guaranteed, specialGuaranteed: banner.pity.specialGuaranteed });
-    banner.characters.forEach(character => {
+  channels.forEach(channel => {
+    if (!pityDefaults.has(channel.pity.groupId)) pityDefaults.set(channel.pity.groupId, { mode: channel.pity.mode, count: channel.pity.count, guaranteed: channel.pity.guaranteed, specialGuaranteed: channel.pity.specialGuaranteed });
+    channel.agents.forEach(character => {
       if (!periodDefaults.has(character.budget.periodId)) periodDefaults.set(character.budget.periodId, { phase: character.budget.phase, endDate: character.endDate });
     });
   });
   const runtime = {
     availableNow: PLANNER_CONFIG.availableNow,
     pityGroups: Object.fromEntries([...pityDefaults].map(([id, value]) => [id, { count: value.count, guaranteed: value.guaranteed, specialGuaranteed: value.specialGuaranteed }])),
-    enabled: Object.fromEntries(characters.map(character => [character.id, character.enabled])), order: defaultOrder.slice()
+    customPeriods: [], customCharacters: [],
+    enabled: Object.fromEntries(builtInCharacters.map(character => [character.id, character.enabled])), order: defaultOrder.slice()
+  };
+
+  const rebuildCharacterRegistry = (preferredOrder = runtime.order) => {
+    const customPeriodById = new Map(runtime.customPeriods.map(period => [period.id, period]));
+    const resolvedCustomCharacters = runtime.customCharacters.map(character => {
+      const period = customPeriodById.get(character.scheduleId);
+      return { ...character, confirmed: false, provisional: true, enabled: false, startDate: period.startDate, endDate: period.endDate };
+    });
+    characters = [...builtInCharacters, ...resolvedCustomCharacters];
+    characterById = new Map(characters.map(character => [character.id, character]));
+    bits = Object.fromEntries(characters.map((character, index) => [character.id, 1 << index]));
+    const knownIds = new Set(characters.map(character => character.id));
+    const completeOrder = [...preferredOrder.filter(id => knownIds.has(id)), ...characters.map(character => character.id).filter(id => !preferredOrder.includes(id))];
+    runtime.order = constrainOrder(completeOrder);
+    runtime.enabled = Object.fromEntries(characters.map(character => [character.id,
+      typeof runtime.enabled[character.id] === 'boolean' ? runtime.enabled[character.id] : Boolean(character.enabled)]));
   };
 
   const configIsValid = () => {
-    if (!characters.length || characters.length > PLANNER_CONFIG.maxCharacters || characters.length > 15) return false;
-    if (bannerById.size !== banners.length || characterById.size !== characters.length || new Set(defaultOrder).size !== characters.length) return false;
+    if (!builtInCharacters.length || builtInCharacters.length > PLANNER_CONFIG.maxAgents || builtInCharacters.length > 15) return false;
+    if (channelById.size !== channels.length || new Set(builtInCharacters.map(character => character.id)).size !== builtInCharacters.length || new Set(defaultOrder).size !== builtInCharacters.length) return false;
     const income = PLANNER_CONFIG.incomeEstimate;
-    if (!income || !Number.isFinite(income.limitedPullsPerDay) || income.limitedPullsPerDay <= 0 || income.roundDown !== true || !Number.isFinite(income.refreshMinutes) || income.refreshMinutes <= 0) return false;
-    const bannersValid = banners.every(banner => {
-      const pity = banner.pity;
+    if (!income || !Number.isFinite(income.limitedSearchesPerDay) || income.limitedSearchesPerDay <= 0 || income.roundDown !== true || !Number.isFinite(income.refreshMinutes) || income.refreshMinutes <= 0) return false;
+    const channelsValid = channels.every(channel => {
+      const pity = channel.pity;
       const group = pityDefaults.get(pity.groupId);
-      const charactersValid = banner.characters.every(character => {
+      const agentsValid = channel.agents.every(character => {
         const period = periodDefaults.get(character.budget.periodId);
         const characterDatesValid = /^\d{4}-\d{2}-\d{2}$/.test(character.startDate) && /^\d{4}-\d{2}-\d{2}$/.test(character.endDate);
         return characterDatesValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
           period.endDate === character.endDate && Number.isInteger(character.budget.phase) && character.budget.phase >= 0;
       });
-      return charactersValid && group && group.channel === pity.channel && (pity.channel === 'normal' || pity.channel === 'rescreen') &&
+      return agentsValid && group && group.mode === pity.mode && (pity.mode === 'exclusive' || pity.mode === 'rescreening') &&
         Number.isFinite(pity.hardPity) && Number.isFinite(pity.baseRate) && Number.isFinite(pity.softPityStartsAt) && Number.isFinite(pity.softPityStep) && Number.isFinite(pity.featuredRate);
     });
-    if (!bannersValid) return false;
+    if (!channelsValid) return false;
     const periods = [...periodDefaults.values()].sort((a, b) => a.phase - b.phase);
     if (new Set(periods.map(period => period.phase)).size !== periods.length) return false;
     return periods.every((period, index) => index === 0 || period.endDate > periods[index - 1].endDate);
   };
   const validAppConfig = configIsValid();
+  const runtimeCharactersValid = () => characters.length > 0 && characters.length <= PLANNER_CONFIG.maxAgents && characters.length <= 15 && characterById.size === characters.length;
 
   const storedLanguage = () => { try { const stored = localStorage.getItem(languageStorageKey); return stored === 'ru' || stored === 'en' ? stored : null; } catch { return null; } };
   const storedTheme = () => { try { const stored = localStorage.getItem(themeStorageKey); return stored === 'dark' || stored === 'light' ? stored : null; } catch { return null; } };
@@ -1394,7 +1500,9 @@ html>body{padding:1rem}</style>
     return new Intl.DateTimeFormat(language === 'ru' ? 'ru-RU' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(Date.UTC(year, month - 1, day)));
   };
   const characterDates = character => `${formatDate(character.startDate)} – ${formatDate(character.endDate)}`;
-  const channelLabel = channel => t(channel === 'rescreen' ? 'rescreenChannel' : 'normalChannel');
+  const channelLabel = channel => channel.id === 'exclusive'
+    ? t('exclusiveChannel')
+    : channel.id === 'exclusive-rescreening' ? t('exclusiveRescreening') : channel.name;
   const percentLabel = value => `${new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits: 1 }).format(value * 100)}%`;
   const numberLabel = (value, maximumFractionDigits = 1) => new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits }).format(value);
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
@@ -1403,68 +1511,189 @@ html>body{padding:1rem}</style>
     return new Date(year, month - 1, day).getTime();
   };
   const daysRemaining = endDate => Math.max(0, (localDeadline(endDate) - Date.now()) / millisecondsPerDay);
-  const estimatedSearches = endDate => Math.floor(daysRemaining(endDate) * PLANNER_CONFIG.incomeEstimate.limitedPullsPerDay);
+  const estimatedSearches = endDate => Math.floor(daysRemaining(endDate) * PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay);
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  const validIsoDate = value => {
+    if (!datePattern.test(value)) return false;
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  };
+  const validDateRange = (startDate, endDate) => validIsoDate(startDate) && validIsoDate(endDate) && startDate < endDate;
+  const addIsoDays = (value, days) => {
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day + days));
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+  };
+  const windowValue = (startDate, endDate) => `window:${startDate}|${endDate}`;
+  const parseWindowValue = value => {
+    const match = /^window:(\d{4}-\d{2}-\d{2})\|(\d{4}-\d{2}-\d{2})$/.exec(value);
+    return match ? { startDate: match[1], endDate: match[2] } : null;
+  };
+  const nextScheduleDates = () => {
+    const startDate = characters.reduce((latest, character) => character.endDate > latest ? character.endDate : latest, characters[0]?.endDate || new Date().toISOString().slice(0, 10));
+    return { startDate, endDate: addIsoDays(startDate, 21) };
+  };
+  const scheduleWindows = () => {
+    const windows = new Map();
+    characters.forEach(character => {
+      const key = windowValue(character.startDate, character.endDate);
+      if (!windows.has(key)) windows.set(key, { startDate: character.startDate, endDate: character.endDate, names: [] });
+      windows.get(key).names.push(character.name);
+    });
+    return [...windows].sort(([, first], [, second]) => first.startDate.localeCompare(second.startDate) || first.endDate.localeCompare(second.endDate));
+  };
+  const uniqueCustomId = prefix => {
+    const suffix = globalThis.crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `${prefix}-${suffix}`;
+  };
+  const findOrCreateCustomPeriod = (startDate, endDate) => {
+    let period = runtime.customPeriods.find(item => item.startDate === startDate && item.endDate === endDate);
+    if (!period) {
+      period = { id: uniqueCustomId('custom-period'), startDate, endDate };
+      runtime.customPeriods.push(period);
+    }
+    return period;
+  };
+  const removeUnusedCustomPeriods = () => {
+    const used = new Set(runtime.customCharacters.map(character => character.scheduleId));
+    runtime.customPeriods = runtime.customPeriods.filter(period => used.has(period.id));
+  };
 
-  function renderBannerTable() {
-    els.bannerRows.innerHTML = banners.map(banner => {
-      const pity = banner.pity;
+  function renderProvisionalFormOptions(selectedSchedule = els.provisionalSchedule.value) {
+    els.provisionalChannel.innerHTML = channels.map(channel => `<option value="${escapeHtml(channel.id)}">${escapeHtml(channelLabel(channel))}</option>`).join('');
+    const next = nextScheduleDates();
+    const options = [
+      `<option value="__next__">${escapeHtml(`${t('nextThreeWeeks')} · ${characterDates(next)}`)}</option>`,
+      ...scheduleWindows().map(([value, window]) => {
+        const names = window.names.length > 2 ? `${window.names.slice(0, 2).join(', ')} +${window.names.length - 2}` : window.names.join(', ');
+        return `<option value="${escapeHtml(value)}">${escapeHtml(`${characterDates(window)} · ${names}`)}</option>`;
+      }),
+      `<option value="__custom__">${escapeHtml(t('customDates'))}</option>`
+    ];
+    els.provisionalSchedule.innerHTML = options.join('');
+    els.provisionalSchedule.value = [...els.provisionalSchedule.options].some(option => option.value === selectedSchedule) ? selectedSchedule : '__next__';
+    els.provisionalCount.textContent = t('targetLimit').replace('{used}', characters.length).replace('{limit}', PLANNER_CONFIG.maxAgents);
+    updateProvisionalDateFields();
+  }
+
+  function updateProvisionalDateFields() {
+    const custom = els.provisionalSchedule.value === '__custom__';
+    els.provisionalCustomDates.hidden = !custom;
+    els.provisionalStart.required = custom;
+    els.provisionalEnd.required = custom;
+    els.provisionalNote.textContent = '';
+    if (!custom) return;
+    const editing = runtime.customCharacters.find(character => character.id === els.provisionalId.value);
+    if (!editing) return;
+    const sharedCount = runtime.customCharacters.filter(character => character.scheduleId === editing.scheduleId).length;
+    if (sharedCount > 1) els.provisionalNote.textContent = t('sharedSchedule').replace('{count}', sharedCount);
+  }
+
+  function closeProvisionalForm() {
+    els.provisionalForm.hidden = true;
+    els.provisionalError.textContent = '';
+    els.provisionalId.value = '';
+  }
+
+  function openProvisionalForm(characterId = '') {
+    const editing = characterId ? runtime.customCharacters.find(character => character.id === characterId) : null;
+    if (!editing && characters.length >= PLANNER_CONFIG.maxAgents) {
+      els.error.textContent = t('maxAgentsReached');
+      return;
+    }
+    els.provisionalId.value = editing?.id || '';
+    els.provisionalFormTitle.textContent = t(editing ? 'editProvisional' : 'addProvisional').replace(/^\+\s*/, '');
+    els.provisionalName.value = editing?.name || `${t('futureTarget')} ${runtime.customCharacters.length + 1}`;
+    const period = editing ? runtime.customPeriods.find(item => item.id === editing.scheduleId) : null;
+    const selectedSchedule = period ? windowValue(period.startDate, period.endDate) : '__next__';
+    renderProvisionalFormOptions(selectedSchedule);
+    els.provisionalChannel.value = editing?.channelId || channels[0].id;
+    const suggested = period || nextScheduleDates();
+    els.provisionalStart.value = suggested.startDate;
+    els.provisionalEnd.value = suggested.endDate;
+    els.provisionalForm.hidden = false;
+    els.provisionalError.textContent = '';
+    updateProvisionalDateFields();
+    els.provisionalName.focus();
+  }
+
+  function renderChannelTable() {
+    els.channelRows.innerHTML = channels.map(channel => {
+      const pity = channel.pity;
       const group = runtime.pityGroups[pity.groupId];
       return `<tr>
-        <td>${escapeHtml(banner.name)}</td><td>${escapeHtml(channelLabel(pity.channel))}</td>
-        <td><input class="form-control config-number t-pity" data-pity-group="${escapeHtml(pity.groupId)}" type="number" min="0" max="${escapeHtml(pity.hardPity - 1)}" value="${escapeHtml(group.count)}"><span class="text-small text-muted config-subtext">${escapeHtml(pity.groupId)}</span></td>
+        <td>${escapeHtml(channelLabel(channel))}</td>
+        <td><input class="form-control config-number t-pity" data-pity-group="${escapeHtml(pity.groupId)}" type="number" min="0" max="${escapeHtml(pity.hardPity - 1)}" value="${escapeHtml(group.count)}"><span class="text-small text-muted config-subtext">${t('independentPity')}</span></td>
         <td><div class="config-checks">
           <label class="form-check"><input class="form-check-input t-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.guaranteed ? ' checked' : ''}><span class="form-check-label">${t('normalGuarantee')}</span></label>
-          ${pity.channel === 'rescreen' ? `<label class="form-check"><input class="form-check-input t-special-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.specialGuaranteed ? ' checked' : ''}><span class="form-check-label">${t('specialGuarantee')}</span></label>` : ''}
+          ${pity.mode === 'rescreening' ? `<label class="form-check"><input class="form-check-input t-special-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.specialGuaranteed ? ' checked' : ''}><span class="form-check-label">${t('specialGuarantee')}</span></label>` : ''}
         </div></td>
-        <td class="config-rules">${percentLabel(pity.baseRate)} · ${t('softPity')} ${pity.softPityStartsAt} · ${t('hardPity')} ${pity.hardPity}<span class="text-small text-muted config-subtext">${t('featuredRate')} ${percentLabel(pity.featuredRate)}</span></td>
+        <td class="config-rules">${t('baseRate')} ${percentLabel(pity.baseRate)} · ${t('softPity')} ${pity.softPityStartsAt} · ${t('guaranteedBy')} ${pity.hardPity}<span class="text-small text-muted config-subtext">${t('featuredRate')} ${percentLabel(pity.featuredRate)}</span></td>
       </tr>`;
     }).join('');
   }
 
   function renderCharacterTable() {
-    els.incomeNote.textContent = t('incomeNote').replace('{rate}', numberLabel(PLANNER_CONFIG.incomeEstimate.limitedPullsPerDay));
-    els.characterRows.innerHTML = runtime.order.map((characterId, index) => {
+    els.incomeNote.textContent = t('incomeNote').replace('{rate}', numberLabel(PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay));
+    els.agentRows.innerHTML = runtime.order.map((characterId, index) => {
       const character = characterById.get(characterId);
-      const banner = bannerById.get(character.bannerId);
+      const channel = channelById.get(character.channelId);
       const remaining = daysRemaining(character.endDate);
       const estimate = estimatedSearches(character.endDate);
       const canMoveUp = index > 0 && runsOverlap(character, characterById.get(runtime.order[index - 1]));
       const canMoveDown = index < runtime.order.length - 1 && runsOverlap(character, characterById.get(runtime.order[index + 1]));
+      const badge = character.provisional
+        ? `<span class="unconfirmed-badge provisional-badge">${t('provisional')}</span>`
+        : character.confirmed ? '' : `<span class="unconfirmed-badge">${t('unconfirmed')}</span>`;
+      const provisionalActions = character.provisional ? `
+          <button class="btn provisional-row-action t-edit-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('editTarget')}: ${character.name}`)}" title="${escapeHtml(t('editTarget'))}">✎</button>
+          <button class="btn provisional-row-action t-delete-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('removeTarget')}: ${character.name}`)}" title="${escapeHtml(t('removeTarget'))}">×</button>` : '';
       return `<tr>
         <td><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''} aria-label="${escapeHtml(character.name)}"></td>
-        <td class="text-end">${index + 1}</td><td>${escapeHtml(character.name)}${character.confirmed ? '' : `<span class="unconfirmed-badge">${t('unconfirmed')}</span>`}</td>
-        <td>${escapeHtml(banner.name)}</td><td>${escapeHtml(characterDates(character))}</td>
-        <td class="t-character-estimate" data-character-id="${escapeHtml(character.id)}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${numberLabel(PLANNER_CONFIG.incomeEstimate.limitedPullsPerDay)} ${t('pullsPerDay')}</span></td>
+        <td class="text-end">${index + 1}</td><td>${escapeHtml(character.name)}${badge}</td>
+        <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(character))}</td>
+        <td class="t-agent-estimate" data-character-id="${escapeHtml(character.id)}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${numberLabel(PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay)} ${t('searchesPerDay')}</span></td>
         <td><div class="move-buttons">
           <button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${character.name}`)}">↑</button>
           <button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${character.name}`)}">↓</button>
+          ${provisionalActions}
         </div></td>
       </tr>`;
     }).join('');
+    els.addProvisional.disabled = characters.length >= PLANNER_CONFIG.maxAgents;
+    els.addProvisional.title = els.addProvisional.disabled ? t('maxAgentsReached') : '';
   }
 
   function renderCharacterProjections(phaseBalances) {
-    const balancesByPhase = new Map(phaseBalances.map(phase => [phase.phase, phase]));
-    root.querySelectorAll('.t-character-estimate').forEach(cell => {
+    const balancesByDeadline = new Map(phaseBalances.map(phase => [phase.endDate, phase]));
+    root.querySelectorAll('.t-agent-estimate').forEach(cell => {
       const character = characterById.get(cell.dataset.characterId);
-      const phase = balancesByPhase.get(character.budget.phase);
+      const phase = balancesByDeadline.get(character.endDate);
       if (!phase?.stats) {
         cell.innerHTML = `<strong>${t('expired')}</strong>`;
         return;
       }
       const stats = phase.stats;
-      cell.innerHTML = `<strong>≈${numberLabel(stats.expected)} ${t('expectedLeft')}</strong><span class="text-small text-muted config-subtext">${numberLabel(phase.cap, 0)} (+${numberLabel(phase.estimatedGain, 0)} ${t('futureSuffix')}) ${t('beforePulls')} · ${t('likely')} ${numberLabel(stats.low, 0)}–${numberLabel(stats.high, 0)}</span>`;
+      cell.innerHTML = `<strong>≈${numberLabel(stats.expected)} ${t('expectedLeft')}</strong><span class="text-small text-muted config-subtext">${numberLabel(phase.cap, 0)} (+${numberLabel(phase.estimatedGain, 0)} ${t('futureSuffix')}) ${t('beforeSearches')} · ${t('likely')} ${numberLabel(stats.low, 0)}–${numberLabel(stats.high, 0)}</span>`;
     });
   }
 
   const applyLanguage = (nextLanguage, persist = false, rerender = true) => {
+    const openSchedule = els.provisionalSchedule.value;
+    const openChannel = els.provisionalChannel.value;
     language = nextLanguage === 'ru' ? 'ru' : 'en';
     document.documentElement.lang = language;
     document.title = t('pageTitle');
     root.querySelectorAll('[data-i18n]').forEach(element => { element.textContent = t(element.dataset.i18n); });
     els.languageSelect.value = language;
     applyTheme(document.documentElement.dataset.theme);
-    renderBannerTable(); renderCharacterTable();
+    renderChannelTable(); renderCharacterTable();
+    if (!els.provisionalForm.hidden) {
+      els.provisionalFormTitle.textContent = t(els.provisionalId.value ? 'editProvisional' : 'addProvisional').replace(/^\+\s*/, '');
+      renderProvisionalFormOptions(openSchedule);
+      if ([...els.provisionalChannel.options].some(option => option.value === openChannel)) els.provisionalChannel.value = openChannel;
+    }
     if (persist) { try { localStorage.setItem(languageStorageKey, language); } catch {} }
     if (rerender) render();
   };
@@ -1472,19 +1701,46 @@ html>body{padding:1rem}</style>
   const plannerState = () => ({
     availableNow: runtime.availableNow,
     pityGroups: Object.fromEntries(Object.entries(runtime.pityGroups).map(([id, value]) => [id, { ...value }])),
+    customPeriods: runtime.customPeriods.map(period => ({ ...period })),
+    customCharacters: runtime.customCharacters.map(character => ({ ...character })),
     enabled: { ...runtime.enabled }, order: runtime.order.slice()
   });
   const persistPlannerState = () => { try { localStorage.setItem(plannerStateStorageKey, JSON.stringify(plannerState())); } catch {} };
+  const sanitizedCustomState = state => {
+    const periods = [];
+    const periodIds = new Set();
+    (Array.isArray(state.customPeriods) ? state.customPeriods : []).forEach(period => {
+      if (!period || typeof period !== 'object' || typeof period.id !== 'string' || period.id.length > 100 || periodIds.has(period.id) || !validDateRange(period.startDate, period.endDate)) return;
+      periodIds.add(period.id);
+      periods.push({ id: period.id, startDate: period.startDate, endDate: period.endDate });
+    });
+    const customCharacters = [];
+    const characterIds = new Set(builtInCharacters.map(character => character.id));
+    (Array.isArray(state.customCharacters) ? state.customCharacters : []).forEach(character => {
+      const name = typeof character?.name === 'string' ? character.name.trim() : '';
+      const channelId = character?.channelId || character?.bannerId;
+      if (!character || typeof character.id !== 'string' || character.id.length > 100 || characterIds.has(character.id) || !name || name.length > 60 || !channelById.has(channelId) || !periodIds.has(character.scheduleId)) return;
+      if (builtInCharacters.length + customCharacters.length >= PLANNER_CONFIG.maxAgents) return;
+      characterIds.add(character.id);
+      customCharacters.push({ id: character.id, name, channelId, scheduleId: character.scheduleId });
+    });
+    const usedPeriodIds = new Set(customCharacters.map(character => character.scheduleId));
+    return { periods: periods.filter(period => usedPeriodIds.has(period.id)), customCharacters };
+  };
   const applyPlannerState = state => {
     if (!state || typeof state !== 'object' || Array.isArray(state)) return false;
     if (Number.isFinite(+state.availableNow)) runtime.availableNow = +state.availableNow;
     Object.keys(runtime.pityGroups).forEach(id => {
-      const stored = state.pityGroups?.[id];
+      const stored = state.pityGroups?.[id] || (id === 'exclusive' ? state.pityGroups?.['normal-exclusive'] : null);
       if (!stored || typeof stored !== 'object') return;
       if (Number.isFinite(+stored.count)) runtime.pityGroups[id].count = +stored.count;
       if (typeof stored.guaranteed === 'boolean') runtime.pityGroups[id].guaranteed = stored.guaranteed;
       if (typeof stored.specialGuaranteed === 'boolean') runtime.pityGroups[id].specialGuaranteed = stored.specialGuaranteed;
     });
+    const restoredCustom = sanitizedCustomState(state);
+    runtime.customPeriods = restoredCustom.periods;
+    runtime.customCharacters = restoredCustom.customCharacters;
+    rebuildCharacterRegistry(Array.isArray(state.order) ? state.order : runtime.order);
     characters.forEach(character => { if (typeof state.enabled?.[character.id] === 'boolean') runtime.enabled[character.id] = state.enabled[character.id]; });
     if (Array.isArray(state.order) && state.order.length === characters.length && new Set(state.order).size === characters.length && state.order.every(id => characterById.has(id))) runtime.order = constrainOrder(state.order);
     return true;
@@ -1499,7 +1755,7 @@ html>body{padding:1rem}</style>
       return {
         availableNow: old['t-now'],
         pityGroups: {
-          'normal-exclusive': { count: old['t-normal-pity'], guaranteed: old['t-normal-guarantee'], specialGuaranteed: false },
+          exclusive: { count: old['t-normal-pity'], guaranteed: old['t-normal-guarantee'], specialGuaranteed: false },
           'exclusive-rescreening': { count: old['t-rescreen-pity'], guaranteed: old['t-rescreen-guarantee'], specialGuaranteed: old['t-special-guarantee'] }
         },
         enabled: { dialyn: old['t-dialyn'], yuzuha: old['t-yuzuha'], harumasa: old['t-harumasa'], remielle: old['t-remielle'], sigrid: old['t-sigrid'], claret: old['t-claret-target'], roxy: old['t-roxy-target'] },
@@ -1510,6 +1766,8 @@ html>body{padding:1rem}</style>
   const storedPlannerState = () => {
     try { const state = JSON.parse(localStorage.getItem(plannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
     try { const state = JSON.parse(localStorage.getItem(previousPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
+    try { const state = JSON.parse(localStorage.getItem(olderPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
+    try { const state = JSON.parse(localStorage.getItem(earlierPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
     return legacyState();
   };
 
@@ -1550,9 +1808,9 @@ html>body{padding:1rem}</style>
         const activeState = unpackActive(packed);
         const state = unpackCore(activeState.core);
         const target = characterById.get(targets[activeState.index]);
-        const banner = bannerById.get(target.bannerId);
-        const rules = banner.pity;
-        const rescreen = rules.channel === 'rescreen';
+        const channel = channelById.get(target.channelId);
+        const rules = channel.pity;
+        const rescreen = rules.mode === 'rescreening';
         const pity = rescreen ? state.rp : state.np;
         const hitRate = hazard(pity, rules);
         if (hitRate < 1) {
@@ -1589,26 +1847,28 @@ html>body{padding:1rem}</style>
     const pityCounts = Object.values(runtime.pityGroups).map(group => group.count);
     if (![runtime.availableNow, ...pityCounts].every(Number.isFinite)) return null;
     if (runtime.availableNow < 0) return null;
-    if (banners.some(banner => runtime.pityGroups[banner.pity.groupId].count < 0 || runtime.pityGroups[banner.pity.groupId].count >= banner.pity.hardPity)) return null;
-    const normal = [...pityDefaults].find(([, value]) => value.channel === 'normal')?.[0];
-    const rescreen = [...pityDefaults].find(([, value]) => value.channel === 'rescreen')?.[0];
+    if (channels.some(channel => runtime.pityGroups[channel.pity.groupId].count < 0 || runtime.pityGroups[channel.pity.groupId].count >= channel.pity.hardPity)) return null;
+    const exclusive = [...pityDefaults].find(([, value]) => value.mode === 'exclusive')?.[0];
+    const rescreening = [...pityDefaults].find(([, value]) => value.mode === 'rescreening')?.[0];
     return {
       now: runtime.availableNow,
-      np: normal ? runtime.pityGroups[normal].count : 0, ng: normal && runtime.pityGroups[normal].guaranteed ? 1 : 0,
-      rp: rescreen ? runtime.pityGroups[rescreen].count : 0, rg: rescreen && runtime.pityGroups[rescreen].guaranteed ? 1 : 0,
-      rs: rescreen && runtime.pityGroups[rescreen].specialGuaranteed ? 1 : 0
+      np: exclusive ? runtime.pityGroups[exclusive].count : 0, ng: exclusive && runtime.pityGroups[exclusive].guaranteed ? 1 : 0,
+      rp: rescreening ? runtime.pityGroups[rescreening].count : 0, rg: rescreening && runtime.pityGroups[rescreening].guaranteed ? 1 : 0,
+      rs: rescreening && runtime.pityGroups[rescreening].specialGuaranteed ? 1 : 0
     };
   }
   const getPlan = () => {
     const selected = new Set(runtime.order.filter(id => runtime.enabled[id]));
-    const phases = [...periodDefaults.values()].sort((a, b) => a.phase - b.phase).map(period => ({
-      phase: period.phase,
-      endDate: period.endDate,
-      estimatedGain: estimatedSearches(period.endDate),
-      expired: localDeadline(period.endDate) <= Date.now(),
-      targets: runtime.order.filter(id => selected.has(id) && characterById.get(id).budget.phase === period.phase)
+    const deadlines = [...new Set(characters.map(character => character.endDate))].sort();
+    const phases = deadlines.map((endDate, phase) => ({
+      phase,
+      endDate,
+      estimatedGain: estimatedSearches(endDate),
+      expired: localDeadline(endDate) <= Date.now(),
+      targets: runtime.order.filter(id => selected.has(id) && characterById.get(id).endDate === endDate)
     }));
-    const currentPhase = phases.find(item => item.phase === PLANNER_CONFIG.currentPhase);
+    const currentEndDate = [...periodDefaults.values()].find(period => period.phase === PLANNER_CONFIG.currentPhase)?.endDate;
+    const currentPhase = phases.find(item => item.endDate === currentEndDate);
     return { selected, phases, current: currentPhase && !currentPhase.expired ? currentPhase.targets : [] };
   };
 
@@ -1667,37 +1927,92 @@ html>body{padding:1rem}</style>
   }
 
   function render() {
-    if (!validAppConfig) { els.error.textContent = t('invalidAppConfig'); return; }
+    if (!validAppConfig || !runtimeCharactersValid()) { els.error.textContent = t('invalidAppConfig'); return; }
     const cfg = getConfig();
     const plan = getPlan();
     if (!cfg) { els.error.textContent = t('invalidConfig'); return; }
     const result = simulate(cfg, plan);
     renderCharacterProjections(result.phaseBalances);
     if (!plan.selected.size) {
-      els.error.textContent = t('selectCharacter'); els.order.textContent = ''; els.summary.innerHTML = ''; els.targetChances.innerHTML = ''; els.outcomes.innerHTML = ''; return;
+      els.error.textContent = t('selectAgent'); els.order.textContent = ''; els.summary.innerHTML = ''; els.targetChances.innerHTML = ''; els.outcomes.innerHTML = ''; return;
     }
     els.error.textContent = '';
     const nowResult = simulateNow(cfg, plan);
     const orderedSelected = runtime.order.filter(id => plan.selected.has(id));
     const phaseLabels = plan.phases.filter(phase => phase.targets.length).map(phase => phase.targets.map(id => characterById.get(id).name).join(' → '));
-    els.order.textContent = `${t('pullOrder')}: ${phaseLabels.join(`  ${t('phaseSeparator')}  `)}`;
+    els.order.textContent = `${t('targetPriority')}: ${phaseLabels.join(`  ${t('phaseSeparator')}  `)}`;
     els.summary.innerHTML = `
       <div class="card viz-stat"><div class="text-muted">${t('allTargets')}</div><div class="viz-stat-value">${pct(result.complete)}</div></div>
       <div class="card viz-stat"><div class="text-muted">${t('anyTarget')}</div><div class="viz-stat-value">${pct(result.any)}</div></div>
-      <div class="card viz-stat"><div class="text-muted">${t('expectedCharacters')}</div><div class="viz-stat-value">${decimal(result.expected)}</div></div>
+      <div class="card viz-stat"><div class="text-muted">${t('expectedAgents')}</div><div class="viz-stat-value">${decimal(result.expected)}</div></div>
       <div class="card viz-stat"><div class="text-muted">${t('anyCurrentNow')}</div><div class="viz-stat-value">${plan.current.length ? pct(nowResult.any) : '—'}</div></div>`;
     els.targetChances.innerHTML = orderedSelected.map(id => {
       const obtained = result.marginal(id);
       const character = characterById.get(id);
       return `<tr><td>${escapeHtml(character.name)}</td><td class="text-end">${plan.current.includes(id) ? pct(nowResult.marginal(id)) : '—'}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(Math.max(0, 1 - obtained))}</td></tr>`;
     }).join('');
-    const roster = mask => orderedSelected.filter(id => mask & bits[id]).map(id => characterById.get(id).name).join(' + ') || t('noCharacter');
+    const roster = mask => orderedSelected.filter(id => mask & bits[id]).map(id => characterById.get(id).name).join(' + ') || t('noAgent');
     const missed = mask => orderedSelected.filter(id => !(mask & bits[id])).map(id => characterById.get(id).name).join(' + ') || '—';
     els.outcomes.innerHTML = [...result.outcomes].filter(([, probability]) => probability > 1e-12).sort((a, b) => b[1] - a[1])
       .map(([mask, probability]) => `<tr><td>${escapeHtml(roster(mask))}</td><td>${escapeHtml(missed(mask))}</td><td class="text-end">${pct(probability)}</td></tr>`).join('');
   }
 
   const updateAndPersist = () => { persistPlannerState(); render(); };
+  els.addProvisional.addEventListener('click', () => openProvisionalForm());
+  els.cancelProvisional.addEventListener('click', closeProvisionalForm);
+  els.provisionalSchedule.addEventListener('change', () => {
+    if (els.provisionalSchedule.value === '__custom__' && (!els.provisionalStart.value || !els.provisionalEnd.value)) {
+      const suggested = nextScheduleDates();
+      els.provisionalStart.value = suggested.startDate;
+      els.provisionalEnd.value = suggested.endDate;
+    }
+    updateProvisionalDateFields();
+  });
+  els.provisionalForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const name = els.provisionalName.value.trim();
+    const channelId = els.provisionalChannel.value;
+    const editing = runtime.customCharacters.find(character => character.id === els.provisionalId.value);
+    let dates = els.provisionalSchedule.value === '__next__' ? nextScheduleDates() : parseWindowValue(els.provisionalSchedule.value);
+    if (els.provisionalSchedule.value === '__custom__') dates = { startDate: els.provisionalStart.value, endDate: els.provisionalEnd.value };
+    if (!name || name.length > 60 || !channelById.has(channelId) || !dates || !validDateRange(dates.startDate, dates.endDate)) {
+      els.provisionalError.textContent = t('invalidProvisional');
+      return;
+    }
+    if (!editing && characters.length >= PLANNER_CONFIG.maxAgents) {
+      els.provisionalError.textContent = t('maxAgentsReached');
+      return;
+    }
+
+    let scheduleId;
+    if (editing && els.provisionalSchedule.value === '__custom__') {
+      const currentPeriod = runtime.customPeriods.find(period => period.id === editing.scheduleId);
+      const matchingPeriod = runtime.customPeriods.find(period => period.id !== editing.scheduleId && period.startDate === dates.startDate && period.endDate === dates.endDate);
+      if (matchingPeriod) {
+        runtime.customCharacters.forEach(character => { if (character.scheduleId === editing.scheduleId) character.scheduleId = matchingPeriod.id; });
+        scheduleId = matchingPeriod.id;
+      } else {
+        currentPeriod.startDate = dates.startDate;
+        currentPeriod.endDate = dates.endDate;
+        scheduleId = currentPeriod.id;
+      }
+    } else {
+      scheduleId = findOrCreateCustomPeriod(dates.startDate, dates.endDate).id;
+    }
+
+    if (editing) {
+      editing.name = name;
+      editing.channelId = channelId;
+      editing.scheduleId = scheduleId;
+    } else {
+      runtime.customCharacters.push({ id: uniqueCustomId('custom-character'), name, channelId, scheduleId });
+    }
+    removeUnusedCustomPeriods();
+    rebuildCharacterRegistry();
+    closeProvisionalForm();
+    renderCharacterTable();
+    updateAndPersist();
+  });
   root.addEventListener('input', event => {
     const target = event.target;
     if (target === els.now) runtime.availableNow = +target.value;
@@ -1721,6 +2036,25 @@ html>body{padding:1rem}</style>
     if (target.matches('.t-character-enabled, .t-guaranteed, .t-special-guaranteed')) updateAndPersist();
   });
   root.addEventListener('click', event => {
+    const editButton = event.target.closest('.t-edit-provisional');
+    if (editButton) {
+      openProvisionalForm(editButton.dataset.characterId);
+      return;
+    }
+    const deleteButton = event.target.closest('.t-delete-provisional');
+    if (deleteButton) {
+      const character = characterById.get(deleteButton.dataset.characterId);
+      if (!character?.provisional || !window.confirm(t('removeProvisionalConfirm').replace('{name}', character.name))) return;
+      runtime.customCharacters = runtime.customCharacters.filter(item => item.id !== character.id);
+      delete runtime.enabled[character.id];
+      runtime.order = runtime.order.filter(id => id !== character.id);
+      removeUnusedCustomPeriods();
+      rebuildCharacterRegistry();
+      if (els.provisionalId.value === character.id) closeProvisionalForm();
+      renderCharacterTable();
+      updateAndPersist();
+      return;
+    }
     const button = event.target.closest('.t-move-character');
     if (!button) return;
     const index = runtime.order.indexOf(button.dataset.characterId);
