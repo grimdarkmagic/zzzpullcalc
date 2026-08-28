@@ -957,7 +957,7 @@ html>body{padding:1rem}</style>
     <div class="table-responsive configuration-table">
       <table class="table table-sm">
         <thead><tr>
-          <th data-i18n="agentTarget">Agent</th><th data-i18n="wEngineTarget">W-Engine</th><th class="text-end" data-i18n="priority">Priority</th>
+          <th data-i18n="agentTargetShort">Agent</th><th data-i18n="wEngineTargetShort">W-Engine</th><th class="text-end" data-i18n="priority">Priority</th>
           <th data-i18n="agent">Agent</th><th data-i18n="channel">Channel</th><th data-i18n="availability">Availability</th>
           <th data-i18n="estimatedSearches">Projected searches by deadline</th><th data-i18n="actions">Actions</th>
         </tr></thead>
@@ -1367,9 +1367,9 @@ html>body{padding:1rem}</style>
   // JSON-compatible source of truth. Replace this object to update channels,
   // dates, pity rules, defaults, Agent assignments, and initial priority.
   const PLANNER_CONFIG = {
-    version: 5,
+    version: 6,
     currentPhase: 0,
-    maxAgents: 15,
+    maxAgents: 30,
     maxSelectedTargets: 15,
     availableNow: 90,
     incomeEstimate: {
@@ -1382,32 +1382,34 @@ html>body{padding:1rem}</style>
     channels: [
       {
         id: 'exclusive', name: 'Exclusive Channel', wEngineChannelId: 'w-engine',
-        pity: { groupId: 'exclusive', mode: 'exclusive', targetType: 'agent', count: 0, guaranteed: false, specialGuaranteed: false, discountAvailable: false, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
+        pity: { groupId: 'exclusive', mode: 'exclusive', targetType: 'agent', count: 0, guaranteed: false, specialGuaranteed: false, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
         agents: [
-          { id: 'remielle', name: 'Remielle', enabled: false, priority: 4, confirmed: true, startDate: '2026-07-29', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
-          { id: 'sigrid', name: 'Sigrid', enabled: false, priority: 5, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
-          { id: 'claret', name: 'Claret', enabled: true, priority: 6, confirmed: false, startDate: '2026-09-08', endDate: '2026-09-29', budget: { periodId: 'claret-end', phase: 1 } },
-          { id: 'roxy', name: 'Roxy', enabled: true, priority: 7, confirmed: false, startDate: '2026-09-29', endDate: '2026-10-20', budget: { periodId: 'roxy-end', phase: 2 } }
+          { id: 'remielle', name: 'Remielle', enabled: false, priority: 4, confirmed: true, startDate: '2026-07-29', endDate: '2026-09-09', budget: { periodId: 'version-3-1-end', phase: 0 } },
+          { id: 'sigrid', name: 'Sigrid', enabled: false, priority: 5, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-09', budget: { periodId: 'version-3-1-end', phase: 0 } },
+          { id: 'claret', name: 'Claret', enabled: true, priority: 6, confirmed: false, startDate: '2026-09-09', endDate: '2026-09-30', budget: { periodId: 'claret-end', phase: 1 } },
+          { id: 'nangong-yu', name: 'Nangong Yu', enabled: false, priority: 7, confirmed: false, startDate: '2026-09-09', endDate: '2026-09-30', budget: { periodId: 'claret-end', phase: 1 } },
+          { id: 'roxy', name: 'Roxy', enabled: true, priority: 8, confirmed: false, startDate: '2026-09-30', endDate: '2026-10-21', budget: { periodId: 'roxy-end', phase: 2 } },
+          { id: 'promeia', name: 'Promeia', enabled: false, priority: 9, confirmed: false, startDate: '2026-09-30', endDate: '2026-10-21', budget: { periodId: 'roxy-end', phase: 2 } }
         ]
       },
       {
         id: 'exclusive-rescreening', name: 'Exclusive Rescreening', wEngineChannelId: 'w-engine-reverberation',
-        pity: { groupId: 'exclusive-rescreening', mode: 'rescreening', targetType: 'agent', count: 0, guaranteed: false, specialGuaranteed: true, discountAvailable: true, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
+        pity: { groupId: 'exclusive-rescreening', mode: 'rescreening', targetType: 'agent', count: 0, guaranteed: false, specialGuaranteed: true, hardPity: 90, baseRate: 0.006, softPityStartsAt: 74, softPityStep: 0.06, featuredRate: 0.5 },
         agents: [
-          { id: 'dialyn', name: 'Dialyn', enabled: true, priority: 1, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
-          { id: 'yuzuha', name: 'Yuzuha', enabled: false, priority: 2, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } },
-          { id: 'harumasa', name: 'Harumasa', enabled: false, priority: 3, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-08', budget: { periodId: 'version-3-1-end', phase: 0 } }
+          { id: 'dialyn', name: 'Dialyn', enabled: true, priority: 1, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-09', budget: { periodId: 'version-3-1-end', phase: 0 } },
+          { id: 'yuzuha', name: 'Yuzuha', enabled: false, priority: 2, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-09', budget: { periodId: 'version-3-1-end', phase: 0 } },
+          { id: 'harumasa', name: 'Harumasa', enabled: false, priority: 3, confirmed: true, startDate: '2026-08-19', endDate: '2026-09-09', budget: { periodId: 'version-3-1-end', phase: 0 } }
         ]
       }
     ],
     wEngineChannels: [
       {
         id: 'w-engine', name: 'W-Engine Channel',
-        pity: { groupId: 'w-engine', mode: 'w-engine', targetType: 'w-engine', count: 0, guaranteed: false, specialGuaranteed: false, discountAvailable: false, hardPity: 80, baseRate: 0.01, softPityStartsAt: 65, softPityStep: 0.07, featuredRate: 0.75 }
+        pity: { groupId: 'w-engine', mode: 'w-engine', targetType: 'w-engine', count: 0, guaranteed: false, specialGuaranteed: false, hardPity: 80, baseRate: 0.01, softPityStartsAt: 65, softPityStep: 0.07, featuredRate: 0.75 }
       },
       {
         id: 'w-engine-reverberation', name: 'W-Engine Reverberation',
-        pity: { groupId: 'w-engine-reverberation', mode: 'w-engine-reverberation', targetType: 'w-engine', count: 0, guaranteed: false, specialGuaranteed: true, discountAvailable: true, hardPity: 80, baseRate: 0.01, softPityStartsAt: 65, softPityStep: 0.07, featuredRate: 0.75 }
+        pity: { groupId: 'w-engine-reverberation', mode: 'w-engine-reverberation', targetType: 'w-engine', count: 0, guaranteed: false, specialGuaranteed: true, hardPity: 80, baseRate: 0.01, softPityStartsAt: 65, softPityStep: 0.07, featuredRate: 0.75 }
       }
     ]
   };
@@ -1416,14 +1418,14 @@ html>body{padding:1rem}</style>
     en: {
       pageTitle: 'ZZZ Signal Search Planner', title: 'ZZZ Signal Search planner', availableNow: 'Signal Searches available now',
       channels: 'Channels', agentChannels: 'Agent channels', wEngineChannels: 'W-Engine channels', channel: 'Channel', availability: 'Availability', estimatedSearches: 'Projected searches by deadline', currentPity: 'Current S-Rank pity',
-      guaranteeStatus: 'Guarantee status', searchRules: 'Signal Search rules', agentTargets: 'Agent targets', target: 'Target', agentTarget: 'Agent target', wEngineTarget: 'W-Engine target', priority: 'Priority', agent: 'Agent', actions: 'Actions',
-      exclusiveChannel: 'Exclusive Channel', exclusiveRescreening: 'Exclusive Rescreening', wEngineChannel: 'W-Engine Channel', wEngineReverberation: 'W-Engine Reverberation', normalAgentGuarantee: 'Next S-Rank is the selected Agent', normalWEngineGuarantee: 'Next S-Rank is the selected W-Engine', specialGuarantee: 'Special Guarantee available', discountAvailable: 'First 10-search discount available', discountDetail: '10 searches cost 8 tapes',
+      guaranteeStatus: 'Guarantee status', searchRules: 'Signal Search rules', agentTargets: 'Agent targets', target: 'Target', agentTarget: 'Agent target', wEngineTarget: 'W-Engine target', agentTargetShort: 'Agent', wEngineTargetShort: 'W-Engine', priority: 'Priority', agent: 'Agent', actions: 'Actions',
+      exclusiveChannel: 'Exclusive Channel', exclusiveRescreening: 'Exclusive Rescreening', wEngineChannel: 'W-Engine Channel', wEngineReverberation: 'W-Engine Reverberation', normalAgentGuarantee: 'Next S-Rank is the selected Agent', normalWEngineGuarantee: 'Next S-Rank is the selected W-Engine', specialGuarantee: 'Special Guarantee available',
       baseRate: 'base rate', guaranteedBy: 'S-Rank guaranteed by', softPity: 'soft pity from', featuredAgentRate: 'selected Agent', featuredWEngineRate: 'selected W-Engine', independentPity: 'Tracked separately from other channels', dateTbd: 'TBD', unconfirmed: 'Unconfirmed', provisional: 'Custom', moveUp: 'Move up', moveDown: 'Move down', daysLeft: 'days left', searchesPerDay: 'searches/day',
       addProvisional: '+ Add custom target', editProvisional: 'Edit custom target', provisionalName: 'Agent name', provisionalChannel: 'Channel', provisionalSchedule: 'Availability',
       starts: 'Starts', ends: 'Ends', saveTarget: 'Save target', cancel: 'Cancel', editTarget: 'Edit target', removeTarget: 'Remove target',
       nextThreeWeeks: 'Next 3-week period', customDates: 'Custom dates…', futureTarget: 'Future Agent', targetLimit: '{used} of {limit} Agent slots used',
       sharedSchedule: 'Changing these dates will update {count} custom targets sharing this availability window.', invalidProvisional: 'Enter an Agent name and valid dates, with the end after the start.',
-      maxAgentsReached: 'The 15-Agent list limit has been reached.', maxTargetsReached: 'The 15-target calculation limit has been reached.', removeProvisionalConfirm: 'Remove {name} from this planner?',
+      maxAgentsReached: 'The {limit}-Agent list limit has been reached.', maxTargetsReached: 'The 15-target calculation limit has been reached.', removeProvisionalConfirm: 'Remove {name} from this planner?',
       incomeNote: 'Automatic active-player income estimate: {rate} limited Signal Searches per day × time remaining until 00:00 local time on the listed end date, rounded down. Rewards arrive unevenly, so this is a blended average rather than a daily promise.',
       budgetHelp: 'Each Agent row shows the expected tape balance after earlier Agent and W-Engine targets. Future income accumulates to that deadline, while availability dates determine which targets can be prioritized against each other.',
       expectedLeft: 'expected remaining', futureSuffix: 'by then', beforeSearches: 'before searches', likely: '80% range', expired: 'Ended',
@@ -1439,14 +1441,14 @@ html>body{padding:1rem}</style>
     ru: {
       pageTitle: 'Универсальный планировщик круток ZZZ', title: 'Универсальный планировщик круток ZZZ', availableNow: 'Круток доступно сейчас',
       channels: 'Каналы', agentChannels: 'Каналы агентов', wEngineChannels: 'Каналы амплификаторов', channel: 'Канал', availability: 'Период доступности', estimatedSearches: 'Прогноз круток к сроку', currentPity: 'Текущее пити S-ранга',
-      guaranteeStatus: 'Состояние гарантов', searchRules: 'Правила круток', agentTargets: 'Целевые агенты', target: 'Цель', agentTarget: 'Агент-цель', wEngineTarget: 'Амплификатор-цель', priority: 'Приоритет', agent: 'Агент', actions: 'Действия',
-      exclusiveChannel: 'Эксклюзивный канал', exclusiveRescreening: 'Эксклюзивный реран', wEngineChannel: 'Канал амплификаторов', wEngineReverberation: 'Реверберация амплификаторов', normalAgentGuarantee: 'Следующий S-ранг — выбранный агент', normalWEngineGuarantee: 'Следующий S-ранг — выбранный амплификатор', specialGuarantee: 'Особый гарант доступен', discountAvailable: 'Скидка на первую десятку доступна', discountDetail: '10 круток стоят 8 кассет',
+      guaranteeStatus: 'Состояние гарантов', searchRules: 'Правила круток', agentTargets: 'Целевые агенты', target: 'Цель', agentTarget: 'Агент-цель', wEngineTarget: 'Амплификатор-цель', agentTargetShort: 'Агент', wEngineTargetShort: 'Ампл.', priority: 'Приоритет', agent: 'Агент', actions: 'Действия',
+      exclusiveChannel: 'Эксклюзивный канал', exclusiveRescreening: 'Эксклюзивный реран', wEngineChannel: 'Канал амплификаторов', wEngineReverberation: 'Реверберация амплификаторов', normalAgentGuarantee: 'Следующий S-ранг — выбранный агент', normalWEngineGuarantee: 'Следующий S-ранг — выбранный амплификатор', specialGuarantee: 'Особый гарант доступен',
       baseRate: 'базовый шанс', guaranteedBy: 'S-ранг гарантирован на', softPity: 'софт-пити с', featuredAgentRate: 'выбранный агент', featuredWEngineRate: 'выбранный амплификатор', independentPity: 'Счётчик отдельный от других каналов', dateTbd: 'Пока неизвестно', unconfirmed: 'Не подтверждено', provisional: 'Своя цель', moveUp: 'Переместить выше', moveDown: 'Переместить ниже', daysLeft: 'дней осталось', searchesPerDay: 'крутки/день',
       addProvisional: '+ Добавить свою цель', editProvisional: 'Изменить свою цель', provisionalName: 'Имя агента', provisionalChannel: 'Канал', provisionalSchedule: 'Период доступности',
       starts: 'Начало', ends: 'Конец', saveTarget: 'Сохранить', cancel: 'Отмена', editTarget: 'Изменить цель', removeTarget: 'Удалить цель',
       nextThreeWeeks: 'Следующий трёхнедельный период', customDates: 'Другие даты…', futureTarget: 'Будущий агент', targetLimit: 'Занято мест для агентов: {used} из {limit}',
       sharedSchedule: 'Изменение дат затронет {count} своих целей с тем же периодом доступности.', invalidProvisional: 'Укажите имя агента и корректные даты, где конец позже начала.',
-      maxAgentsReached: 'Достигнут предел списка в 15 агентов.', maxTargetsReached: 'Достигнут предел расчёта в 15 целей.', removeProvisionalConfirm: 'Удалить {name} из планировщика?',
+      maxAgentsReached: 'Достигнут предел списка в {limit} агентов.', maxTargetsReached: 'Достигнут предел расчёта в 15 целей.', removeProvisionalConfirm: 'Удалить {name} из планировщика?',
       incomeNote: 'Автоматическая оценка дохода активного игрока: {rate} лимитированные крутки в день × время до 00:00 по местному времени в указанную дату окончания, с округлением вниз. Награды выдаются неравномерно, поэтому это средняя оценка, а не ежедневная гарантия.',
       budgetHelp: 'В каждой строке агента показан ожидаемый остаток кассет после более ранних целей-агентов и амплификаторов. Будущий доход накапливается к этому сроку, а периоды доступности определяют, какие цели можно переставлять.',
       expectedLeft: 'ожидаемый остаток', futureSuffix: 'к сроку', beforeSearches: 'до круток', likely: 'диапазон 80%', expired: 'Период завершён',
@@ -1474,6 +1476,7 @@ html>body{padding:1rem}</style>
   };
   let language = 'en';
   const t = key => translations[language][key];
+  const maxAgentsReachedText = () => t('maxAgentsReached').replace('{limit}', PLANNER_CONFIG.maxAgents);
   const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
   const preferredLanguage = () => navigator.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
   const themeStorageKey = 'zzz-universal-pull-planner-theme';
@@ -1528,7 +1531,7 @@ html>body{padding:1rem}</style>
   allChannels.forEach(channel => {
     if (!pityDefaults.has(channel.pity.groupId)) pityDefaults.set(channel.pity.groupId, {
       mode: channel.pity.mode, count: channel.pity.count, guaranteed: channel.pity.guaranteed,
-      specialGuaranteed: channel.pity.specialGuaranteed, discountAvailable: channel.pity.discountAvailable
+      specialGuaranteed: channel.pity.specialGuaranteed
     });
   });
   agentChannels.forEach(channel => {
@@ -1538,7 +1541,7 @@ html>body{padding:1rem}</style>
   });
   const runtime = {
     availableNow: PLANNER_CONFIG.availableNow,
-    pityGroups: Object.fromEntries([...pityDefaults].map(([id, value]) => [id, { count: value.count, guaranteed: value.guaranteed, specialGuaranteed: value.specialGuaranteed, discountAvailable: value.discountAvailable }])),
+    pityGroups: Object.fromEntries([...pityDefaults].map(([id, value]) => [id, { count: value.count, guaranteed: value.guaranteed, specialGuaranteed: value.specialGuaranteed }])),
     customPeriods: [], customCharacters: [],
     enabled: Object.fromEntries(builtInCharacters.map(character => [character.id, character.enabled])),
     wEngineEnabled: Object.fromEntries(builtInCharacters.map(character => [character.id, false])),
@@ -1584,7 +1587,7 @@ html>body{padding:1rem}</style>
         return characterDatesValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
           period.endDate === character.endDate && Number.isInteger(character.budget.phase) && character.budget.phase >= 0;
       });
-      return agentsValid && group && group.mode === pity.mode && validModes.has(pity.mode) && typeof pity.targetType === 'string' && typeof pity.discountAvailable === 'boolean' &&
+      return agentsValid && group && group.mode === pity.mode && validModes.has(pity.mode) && typeof pity.targetType === 'string' &&
         Number.isFinite(pity.hardPity) && pity.hardPity > 1 && pity.hardPity <= 127 && Number.isFinite(pity.baseRate) && Number.isFinite(pity.softPityStartsAt) && Number.isFinite(pity.softPityStep) && Number.isFinite(pity.featuredRate);
     });
     if (!channelsValid) return false;
@@ -1716,7 +1719,7 @@ html>body{padding:1rem}</style>
   function openProvisionalForm(characterId = '') {
     const editing = characterId ? runtime.customCharacters.find(character => character.id === characterId) : null;
     if (!editing && characters.length >= PLANNER_CONFIG.maxAgents) {
-      els.error.textContent = t('maxAgentsReached');
+      els.error.textContent = maxAgentsReachedText();
       return;
     }
     els.provisionalId.value = editing?.id || '';
@@ -1746,8 +1749,7 @@ html>body{padding:1rem}</style>
         <td><input class="form-control config-number t-pity" data-pity-group="${escapeHtml(pity.groupId)}" type="number" min="0" max="${escapeHtml(pity.hardPity - 1)}" value="${escapeHtml(group.count)}"><span class="text-small text-muted config-subtext">${t('independentPity')}</span></td>
         <td><div class="config-checks">
           <label class="form-check"><input class="form-check-input t-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.guaranteed ? ' checked' : ''}><span class="form-check-label">${t(targetType === 'w-engine' ? 'normalWEngineGuarantee' : 'normalAgentGuarantee')}</span></label>
-          ${specialChannel ? `<label class="form-check"><input class="form-check-input t-special-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.specialGuaranteed ? ' checked' : ''}><span class="form-check-label">${t('specialGuarantee')}</span></label>
-          <label class="form-check"><input class="form-check-input t-discount-available" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.discountAvailable ? ' checked' : ''}><span class="form-check-label">${t('discountAvailable')}<span class="text-small text-muted config-subtext">${t('discountDetail')}</span></span></label>` : ''}
+          ${specialChannel ? `<label class="form-check"><input class="form-check-input t-special-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.specialGuaranteed ? ' checked' : ''}><span class="form-check-label">${t('specialGuarantee')}</span></label>` : ''}
         </div></td>
         <td class="config-rules">${t('baseRate')} ${percentLabel(pity.baseRate)} · ${t('softPity')} ${pity.softPityStartsAt} · ${t('guaranteedBy')} ${pity.hardPity}<span class="text-small text-muted config-subtext">${t(targetType === 'w-engine' ? 'featuredWEngineRate' : 'featuredAgentRate')} ${percentLabel(pity.featuredRate)}</span></td>
       </tr>`;
@@ -1787,7 +1789,7 @@ html>body{padding:1rem}</style>
       </tr>`;
     }).join('');
     els.addProvisional.disabled = characters.length >= PLANNER_CONFIG.maxAgents;
-    els.addProvisional.title = els.addProvisional.disabled ? t('maxAgentsReached') : '';
+    els.addProvisional.title = els.addProvisional.disabled ? maxAgentsReachedText() : '';
     els.separateWEnginePriorities.checked = runtime.separateWEnginePriorities;
     els.selectedTargetCount.textContent = t('selectedTargetCount').replace('{used}', selectedCount).replace('{limit}', PLANNER_CONFIG.maxSelectedTargets);
     renderTargetOrderTable();
@@ -1885,7 +1887,6 @@ html>body{padding:1rem}</style>
       if (Number.isFinite(+stored.count)) runtime.pityGroups[id].count = +stored.count;
       if (typeof stored.guaranteed === 'boolean') runtime.pityGroups[id].guaranteed = stored.guaranteed;
       if (typeof stored.specialGuaranteed === 'boolean') runtime.pityGroups[id].specialGuaranteed = stored.specialGuaranteed;
-      if (typeof stored.discountAvailable === 'boolean') runtime.pityGroups[id].discountAvailable = stored.discountAvailable;
     });
     const restoredCustom = sanitizedCustomState(state);
     runtime.customPeriods = restoredCustom.periods;
@@ -1941,6 +1942,7 @@ html>body{padding:1rem}</style>
     const decimals = percent < 0.1 ? 3 : 1;
     return `${new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(percent)}%`;
   };
+  const probabilityComplement = probability => 1 - probability < 1e-12 ? 0 : Math.max(0, 1 - probability);
   const decimal = value => new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
   const add = (map, state, probability) => { if (probability > 0) map.set(state, (map.get(state) || 0) + probability); };
   const addBucket = (buckets, index, state, probability) => { if (probability > 0) { if (!buckets[index]) buckets[index] = new Map(); add(buckets[index], state, probability); } };
@@ -1951,109 +1953,118 @@ html>body{padding:1rem}</style>
     return Math.min(1, rules.baseRate + rules.softPityStep * (pull - rules.softPityStartsAt + 1));
   };
   const pityPacking = allChannels.map(channel => ({ id: channel.pity.groupId, special: channel.pity.mode === 'rescreening' || channel.pity.mode === 'w-engine-reverberation' }));
-  const discountPacking = pityPacking.filter(field => field.special).map(field => field.id);
-  const packCore = (groups, discountUsed, mask) => {
-    let packed = mask;
+  let packingUnit = 1;
+  const groupPacking = {};
+  [...pityPacking].reverse().forEach(field => {
+    const specialFactor = field.special ? 2 : 1;
+    groupPacking[field.id] = {
+      countUnit: packingUnit * 2 * specialFactor,
+      guaranteedUnit: packingUnit * specialFactor,
+      specialGuaranteedUnit: field.special ? packingUnit : 0,
+      special: field.special
+    };
+    packingUnit *= 256 * specialFactor;
+  });
+  const maskUnit = packingUnit;
+  const packCore = (groups, mask) => {
+    let packed = mask * maskUnit;
     pityPacking.forEach(field => {
       const group = groups[field.id];
-      packed = packed * 128 + group.count;
-      packed = packed * 2 + (group.guaranteed ? 1 : 0);
-      if (field.special) packed = packed * 2 + (group.specialGuaranteed ? 1 : 0);
+      const layout = groupPacking[field.id];
+      packed += group.count * layout.countUnit;
+      if (group.guaranteed) packed += layout.guaranteedUnit;
+      if (field.special && group.specialGuaranteed) packed += layout.specialGuaranteedUnit;
     });
-    discountPacking.forEach(id => { packed = packed * 2 + (discountUsed[id] ? 1 : 0); });
     return packed;
   };
-  const unpackCore = packed => {
-    let cursor = packed;
-    const discountUsed = {};
-    [...discountPacking].reverse().forEach(id => { discountUsed[id] = Boolean(cursor % 2); cursor = Math.floor(cursor / 2); });
-    const groups = {};
-    [...pityPacking].reverse().forEach(field => {
-      const specialGuaranteed = field.special ? Boolean(cursor % 2) : false;
-      if (field.special) cursor = Math.floor(cursor / 2);
-      const guaranteed = Boolean(cursor % 2); cursor = Math.floor(cursor / 2);
-      const count = cursor % 128; cursor = Math.floor(cursor / 128);
-      groups[field.id] = { count, guaranteed, specialGuaranteed };
-    });
-    return { groups, discountUsed, mask: cursor };
+  const maskFromCore = core => Math.floor(core / maskUnit);
+  const clearGroupState = (core, groupId) => {
+    const layout = groupPacking[groupId];
+    let cleared = core;
+    cleared -= (Math.floor(core / layout.countUnit) % 128) * layout.countUnit;
+    if (Math.floor(core / layout.guaranteedUnit) % 2) cleared -= layout.guaranteedUnit;
+    if (layout.special && Math.floor(core / layout.specialGuaranteedUnit) % 2) cleared -= layout.specialGuaranteedUnit;
+    return cleared;
   };
-  const packActive = (core, index) => `${core}:${index}`;
-  const unpackActive = packed => {
-    const separator = packed.lastIndexOf(':');
-    return { core: Number(packed.slice(0, separator)), index: Number(packed.slice(separator + 1)) };
+  const compactArrivals = (arrivals, retainedGroupIds) => {
+    const discardedGroupIds = pityPacking.map(field => field.id).filter(id => !retainedGroupIds.has(id));
+    if (!discardedGroupIds.length) return arrivals;
+    return arrivals.map(bucket => {
+      if (!bucket) return bucket;
+      const compacted = new Map();
+      bucket.forEach((probability, core) => {
+        let compactedCore = core;
+        discardedGroupIds.forEach(id => { compactedCore = clearGroupState(compactedCore, id); });
+        add(compacted, compactedCore, probability);
+      });
+      return compacted;
+    });
   };
 
-  const pullTarget = (core, target, bit) => {
-    const channel = channelById.get(target.channelId);
-    const rules = channel.pity;
-    const current = unpackCore(core);
-    const group = current.groups[rules.groupId];
-    const hitRate = hazard(group.count, rules);
-    const outcomes = new Map();
-    const emit = (mutate, acquired, probability) => {
-      if (probability <= 0) return;
-      const next = unpackCore(core);
-      mutate(next.groups[rules.groupId]);
-      if (acquired) next.mask |= bit;
-      add(outcomes, packCore(next.groups, next.discountUsed, next.mask), probability);
-    };
-    if (hitRate < 1) emit(nextGroup => { nextGroup.count += 1; }, false, 1 - hitRate);
-    if (group.specialGuaranteed) {
-      emit(nextGroup => { nextGroup.count = 0; nextGroup.specialGuaranteed = false; }, true, hitRate);
-    } else if (group.guaranteed) {
-      emit(nextGroup => { nextGroup.count = 0; nextGroup.guaranteed = false; }, true, hitRate);
+  const pullTarget = (core, simulationTarget) => {
+    const { bit, layout, rules } = simulationTarget;
+    const count = Math.floor(core / layout.countUnit) % 128;
+    const guaranteed = Boolean(Math.floor(core / layout.guaranteedUnit) % 2);
+    const specialGuaranteed = layout.special && Boolean(Math.floor(core / layout.specialGuaranteedUnit) % 2);
+    const hitRate = hazard(count, rules);
+    const outcomes = [];
+    const maskDelta = (maskFromCore(core) & bit) ? 0 : bit * maskUnit;
+    const resetPityCore = core - count * layout.countUnit;
+    if (hitRate < 1) outcomes.push(core + layout.countUnit, 1 - hitRate);
+    if (specialGuaranteed) {
+      outcomes.push(resetPityCore - layout.specialGuaranteedUnit + maskDelta, hitRate);
+    } else if (guaranteed) {
+      outcomes.push(resetPityCore - layout.guaranteedUnit + maskDelta, hitRate);
     } else {
-      emit(nextGroup => { nextGroup.count = 0; }, true, hitRate * rules.featuredRate);
-      emit(nextGroup => { nextGroup.count = 0; nextGroup.guaranteed = true; }, false, hitRate * (1 - rules.featuredRate));
+      const featuredProbability = hitRate * rules.featuredRate;
+      const missedProbability = hitRate * (1 - rules.featuredRate);
+      if (featuredProbability > 0) outcomes.push(resetPityCore + maskDelta, featuredProbability);
+      if (missedProbability > 0) outcomes.push(resetPityCore + layout.guaranteedUnit, missedProbability);
     }
     return outcomes;
   };
 
-  const runDiscountBundle = (core, target, bit) => {
-    const state = unpackCore(core);
-    state.discountUsed[target.pityGroupId] = true;
-    let distribution = new Map([[packCore(state.groups, state.discountUsed, state.mask), 1]]);
-    for (let search = 0; search < 10; search += 1) {
-      const next = new Map();
-      distribution.forEach((probability, currentCore) => {
-        pullTarget(currentCore, target, bit).forEach((branchProbability, nextCore) => add(next, nextCore, probability * branchProbability));
-      });
-      distribution = next;
+  const runUnitCostPhase = (arrivals, simulationTargets, cap) => {
+    const done = Array(cap + 1);
+    let activeTargets = [];
+    for (let spent = 0; spent <= cap; spent += 1) {
+      const arriving = arrivals[spent];
+      if (arriving) {
+        if (!activeTargets[0]) activeTargets[0] = new Map();
+        arriving.forEach((probability, core) => add(activeTargets[0], core, probability));
+      }
+      if (spent === cap) {
+        activeTargets.forEach(active => active?.forEach((probability, core) => addBucket(done, cap, core, probability)));
+        break;
+      }
+      const nextTargets = [];
+      activeTargets.forEach((active, targetIndex) => active?.forEach((probability, core) => {
+        const simulationTarget = simulationTargets[targetIndex];
+        const branches = pullTarget(core, simulationTarget);
+        for (let index = 0; index < branches.length; index += 2) {
+          const nextCore = branches[index];
+          const nextIndex = (maskFromCore(nextCore) & simulationTarget.bit) ? targetIndex + 1 : targetIndex;
+          if (nextIndex >= simulationTargets.length) {
+            addBucket(done, spent + 1, nextCore, probability * branches[index + 1]);
+          } else {
+            if (!nextTargets[nextIndex]) nextTargets[nextIndex] = new Map();
+            add(nextTargets[nextIndex], nextCore, probability * branches[index + 1]);
+          }
+        }
+      }));
+      activeTargets = nextTargets;
     }
-    return distribution;
+    return done;
   };
 
   function runPhase(arrivals, targetIds, cap, bits) {
     if (!targetIds.length) return arrivals;
-    const done = Array(cap + 1);
-    const activeBySpent = Array.from({ length: cap + 1 }, () => new Map());
-    for (let spent = 0; spent <= cap; spent += 1) {
-      const arriving = arrivals[spent];
-      if (arriving) arriving.forEach((probability, core) => add(activeBySpent[spent], packActive(core, 0), probability));
-      const active = activeBySpent[spent];
-      if (!active.size) continue;
-      if (spent === cap) {
-        active.forEach((probability, packed) => addBucket(done, cap, unpackActive(packed).core, probability));
-        continue;
-      }
-      active.forEach((probability, packed) => {
-        const activeState = unpackActive(packed);
-        const target = targetById.get(targetIds[activeState.index]);
-        const bit = bits[target.id];
-        const state = unpackCore(activeState.core);
-        const canUseDiscount = discountPacking.includes(target.pityGroupId) && !state.discountUsed[target.pityGroupId] && spent + 8 <= cap;
-        const cost = canUseDiscount ? 8 : 1;
-        const branches = canUseDiscount ? runDiscountBundle(activeState.core, target, bit) : pullTarget(activeState.core, target, bit);
-        branches.forEach((branchProbability, nextCore) => {
-          const nextSpent = spent + cost;
-          const acquired = Boolean(unpackCore(nextCore).mask & bit);
-          const nextIndex = acquired ? activeState.index + 1 : activeState.index;
-          if (nextIndex >= targetIds.length) addBucket(done, nextSpent, nextCore, probability * branchProbability);
-          else add(activeBySpent[nextSpent], packActive(nextCore, nextIndex), probability * branchProbability);
-        });
-      });
-    }
-    return done;
+    const simulationTargets = targetIds.map(id => {
+      const target = targetById.get(id);
+      const rules = channelById.get(target.channelId).pity;
+      return { bit: bits[target.id], layout: groupPacking[rules.groupId], rules };
+    });
+    return runUnitCostPhase(arrivals, simulationTargets, cap);
   }
 
   function getConfig() {
@@ -2065,8 +2076,7 @@ html>body{padding:1rem}</style>
     if (selectedTargetIds().length > PLANNER_CONFIG.maxSelectedTargets) return null;
     return {
       now: runtime.availableNow,
-      groups: Object.fromEntries(Object.entries(runtime.pityGroups).map(([id, group]) => [id, { count: group.count, guaranteed: group.guaranteed, specialGuaranteed: group.specialGuaranteed }])),
-      discountUsed: Object.fromEntries(discountPacking.map(id => [id, !runtime.pityGroups[id].discountAvailable]))
+      groups: Object.fromEntries(Object.entries(runtime.pityGroups).map(([id, group]) => [id, { count: group.count, guaranteed: group.guaranteed, specialGuaranteed: group.specialGuaranteed }]))
     };
   }
   const getPlan = () => {
@@ -2089,7 +2099,7 @@ html>body{padding:1rem}</style>
   function summarize(arrivals, selected, bits) {
     const outcomes = new Map();
     arrivals.forEach(bucket => bucket && bucket.forEach((probability, core) => {
-      const mask = unpackCore(core).mask;
+      const mask = maskFromCore(core);
       outcomes.set(mask, (outcomes.get(mask) || 0) + probability);
     }));
     const marginal = id => [...outcomes].reduce((sum, [mask, probability]) => sum + ((mask & bits[id]) ? probability : 0), 0);
@@ -2121,21 +2131,23 @@ html>body{padding:1rem}</style>
   function simulate(cfg, plan) {
     let arrivals = [];
     const phaseBalances = [];
-    addBucket(arrivals, 0, packCore(cfg.groups, cfg.discountUsed, 0), 1);
-    plan.phases.forEach(phase => {
+    addBucket(arrivals, 0, packCore(cfg.groups, 0), 1);
+    plan.phases.forEach((phase, phaseIndex) => {
       const cap = cfg.now + phase.estimatedGain;
       if (phase.expired) {
         phaseBalances.push({ ...phase, cap, stats: null });
-        return;
+      } else {
+        arrivals = runPhase(arrivals, phase.targets, cap, plan.bits);
+        phaseBalances.push({ ...phase, cap, stats: balanceStats(arrivals, cap) });
       }
-      arrivals = runPhase(arrivals, phase.targets, cap, plan.bits);
-      phaseBalances.push({ ...phase, cap, stats: balanceStats(arrivals, cap) });
+      const retainedGroupIds = new Set(plan.phases.slice(phaseIndex + 1).flatMap(futurePhase => futurePhase.targets.map(id => targetById.get(id).pityGroupId)));
+      arrivals = compactArrivals(arrivals, retainedGroupIds);
     });
     return { ...summarize(arrivals, plan.selected, plan.bits), phaseBalances };
   }
   function simulateNow(cfg, plan) {
     let arrivals = [];
-    addBucket(arrivals, 0, packCore(cfg.groups, cfg.discountUsed, 0), 1);
+    addBucket(arrivals, 0, packCore(cfg.groups, 0), 1);
     arrivals = runPhase(arrivals, plan.current, cfg.now, plan.bits);
     return summarize(arrivals, new Set(plan.current), plan.bits);
   }
@@ -2163,7 +2175,7 @@ html>body{padding:1rem}</style>
     els.targetChances.innerHTML = orderedSelected.map(id => {
       const obtained = result.marginal(id);
       const target = targetById.get(id);
-      return `<tr><td>${escapeHtml(targetLabel(target))}</td><td class="text-end">${plan.current.includes(id) ? pct(nowResult.marginal(id)) : '—'}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(Math.max(0, 1 - obtained))}</td></tr>`;
+      return `<tr><td>${escapeHtml(targetLabel(target))}</td><td class="text-end">${plan.current.includes(id) ? pct(nowResult.marginal(id)) : '—'}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(probabilityComplement(obtained))}</td></tr>`;
     }).join('');
     const roster = mask => orderedSelected.filter(id => mask & plan.bits[id]).map(id => targetLabel(targetById.get(id))).join(' + ') || t('noTarget');
     const missed = mask => orderedSelected.filter(id => !(mask & plan.bits[id])).map(id => targetLabel(targetById.get(id))).join(' + ') || '—';
@@ -2194,7 +2206,7 @@ html>body{padding:1rem}</style>
       return;
     }
     if (!editing && characters.length >= PLANNER_CONFIG.maxAgents) {
-      els.provisionalError.textContent = t('maxAgentsReached');
+      els.provisionalError.textContent = maxAgentsReachedText();
       return;
     }
 
@@ -2270,8 +2282,7 @@ html>body{padding:1rem}</style>
       runtime.pityGroups[target.dataset.pityGroup].specialGuaranteed = target.checked;
       root.querySelectorAll(`.t-special-guaranteed[data-pity-group="${target.dataset.pityGroup}"]`).forEach(input => { input.checked = target.checked; });
     }
-    if (target.matches('.t-discount-available')) runtime.pityGroups[target.dataset.pityGroup].discountAvailable = target.checked;
-    if (target.matches('.t-guaranteed, .t-special-guaranteed, .t-discount-available')) updateAndPersist();
+    if (target.matches('.t-guaranteed, .t-special-guaranteed')) updateAndPersist();
   });
   root.addEventListener('click', event => {
     const editButton = event.target.closest('.t-edit-provisional');
