@@ -1236,6 +1236,16 @@ html>body{padding:1rem}</style>
     line-height: 1.35;
     white-space: nowrap;
   }
+  #zzz-universal-planner .current-balance-availability {
+    margin-left: 0;
+    margin-right: 0.4rem;
+    cursor: help;
+    vertical-align: 0.05em;
+  }
+  #zzz-universal-planner .current-balance-availability:focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
   #zzz-universal-planner .provisional-badge {
     border-color: color-mix(in srgb, var(--muted-foreground) 52%, transparent);
     color: var(--muted-foreground);
@@ -1429,7 +1439,7 @@ html>body{padding:1rem}</style>
       incomeNote: 'Automatic active-player income estimate: {rate} limited Signal Searches per day × time remaining until 00:00 local time on the listed end date, rounded down. Rewards arrive unevenly, so this is a blended average rather than a daily promise.',
       budgetHelp: 'Each Agent row shows the expected tape balance after earlier Agent and W-Engine targets. Future income accumulates to that deadline, while availability dates determine which targets can be prioritized against each other.',
       expectedLeft: 'expected remaining', futureSuffix: 'by then', beforeSearches: 'before searches', likely: '80% range', expired: 'Ended',
-      selectedTarget: 'Selected target', chanceNow: 'With current balance', byDeadline: 'Obtain by deadline', missByDeadline: 'Miss by deadline',
+      selectedTarget: 'Selected target', chanceNow: 'With current balance', notAvailableNowShort: '(N/A)', futureBalanceTooltip: 'This target’s Channel has not started yet. The probability uses only your current balance.', byDeadline: 'Obtain by deadline', missByDeadline: 'Miss by deadline',
       outcomeHelp: '“Miss by deadline” is the complement of that target’s acquisition chance. Each row below is one mutually exclusive complete result of the selected strategy.',
       exactRoster: 'Obtained selected targets', missedTargets: 'Missed selected targets', chance: 'Exact chance',
       separateWEnginePriorities: 'Use separate W-Engine priorities', separatePriorityHelp: 'When off, each selected W-Engine is searched immediately after its Agent. Turn this on to order every selected goal independently.', selectedTargetCount: '{used} of {limit} calculation targets selected', wEngineSuffix: 'W-Engine',
@@ -1452,7 +1462,7 @@ html>body{padding:1rem}</style>
       incomeNote: 'Автоматическая оценка дохода активного игрока: {rate} лимитированные крутки в день × время до 00:00 по местному времени в указанную дату окончания, с округлением вниз. Награды выдаются неравномерно, поэтому это средняя оценка, а не ежедневная гарантия.',
       budgetHelp: 'В каждой строке агента показан ожидаемый остаток кассет после более ранних целей-агентов и амплификаторов. Будущий доход накапливается к этому сроку, а периоды доступности определяют, какие цели можно переставлять.',
       expectedLeft: 'ожидаемый остаток', futureSuffix: 'к сроку', beforeSearches: 'до круток', likely: 'диапазон 80%', expired: 'Период завершён',
-      selectedTarget: 'Цель', chanceNow: 'С текущим балансом', byDeadline: 'Получить к сроку', missByDeadline: 'Не получить к сроку',
+      selectedTarget: 'Цель', chanceNow: 'С текущим балансом', notAvailableNowShort: '(N/A)', futureBalanceTooltip: 'Канал этой цели ещё не начался. Шанс рассчитан только по текущему балансу.', byDeadline: 'Получить к сроку', missByDeadline: 'Не получить к сроку',
       outcomeHelp: '«Не получить к сроку» — это дополнение до 100% к шансу получить цель. Каждая строка ниже — один взаимоисключающий полный исход выбранной стратегии.',
       exactRoster: 'Полученные выбранные цели', missedTargets: 'Пропущенные выбранные цели', chance: 'Точный шанс',
       separateWEnginePriorities: 'Настроить отдельный приоритет амплификаторов', separatePriorityHelp: 'Если выключено, выбранный амплификатор крутится сразу после своего агента. Включите, чтобы независимо расставить все выбранные цели.', selectedTargetCount: 'Выбрано целей для расчёта: {used} из {limit}', wEngineSuffix: 'амплификатор',
@@ -1478,6 +1488,55 @@ html>body{padding:1rem}</style>
   const t = key => translations[language][key];
   const maxAgentsReachedText = () => t('maxAgentsReached').replace('{limit}', PLANNER_CONFIG.maxAgents);
   const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+  const tooltip = document.createElement('div');
+  tooltip.id = 't-planner-tooltip';
+  tooltip.className = 'tooltip';
+  tooltip.setAttribute('role', 'tooltip');
+  tooltip.hidden = true;
+  document.body.appendChild(tooltip);
+  let tooltipTarget = null;
+  const hideTooltip = () => {
+    tooltip.hidden = true;
+    tooltipTarget = null;
+  };
+  const showTooltip = target => {
+    const message = target.dataset.tooltip;
+    if (!message) return;
+    tooltipTarget = target;
+    tooltip.textContent = message;
+    tooltip.style.setProperty('--tooltip-available-width', `${Math.max(0, window.innerWidth - 10)}px`);
+    tooltip.style.setProperty('--tooltip-available-height', `${Math.max(0, window.innerHeight - 10)}px`);
+    tooltip.style.left = '0px';
+    tooltip.style.top = '0px';
+    tooltip.hidden = false;
+    const margin = 5;
+    const gap = 6;
+    const targetRect = target.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const left = Math.min(Math.max(margin, targetRect.left + (targetRect.width - tooltipRect.width) / 2), Math.max(margin, window.innerWidth - tooltipRect.width - margin));
+    const above = targetRect.top - tooltipRect.height - gap;
+    const below = targetRect.bottom + gap;
+    const top = above >= margin ? above : Math.min(below, Math.max(margin, window.innerHeight - tooltipRect.height - margin));
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  };
+  root.addEventListener('pointerover', event => {
+    const target = event.target.closest?.('[data-tooltip]');
+    if (target && !target.contains(event.relatedTarget)) showTooltip(target);
+  });
+  root.addEventListener('pointerout', event => {
+    const target = event.target.closest?.('[data-tooltip]');
+    if (target === tooltipTarget && !target.contains(event.relatedTarget)) hideTooltip();
+  });
+  root.addEventListener('focusin', event => {
+    const target = event.target.closest?.('[data-tooltip]');
+    if (target) showTooltip(target);
+  });
+  root.addEventListener('focusout', event => {
+    if (event.target === tooltipTarget) hideTooltip();
+  });
+  window.addEventListener('resize', hideTooltip);
+  window.addEventListener('scroll', hideTooltip, true);
   const preferredLanguage = () => navigator.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
   const themeStorageKey = 'zzz-universal-pull-planner-theme';
   const languageStorageKey = 'zzz-universal-pull-planner-language';
@@ -2145,14 +2204,19 @@ html>body{padding:1rem}</style>
     });
     return { ...summarize(arrivals, plan.selected, plan.bits), phaseBalances };
   }
-  function simulateNow(cfg, plan) {
+  function simulateWithCurrentBalance(cfg, plan) {
     let arrivals = [];
     addBucket(arrivals, 0, packCore(cfg.groups, 0), 1);
-    arrivals = runPhase(arrivals, plan.current, cfg.now, plan.bits);
-    return summarize(arrivals, new Set(plan.current), plan.bits);
+    plan.phases.forEach((phase, phaseIndex) => {
+      if (!phase.expired) arrivals = runPhase(arrivals, phase.targets, cfg.now, plan.bits);
+      const retainedGroupIds = new Set(plan.phases.slice(phaseIndex + 1).flatMap(futurePhase => futurePhase.targets.map(id => targetById.get(id).pityGroupId)));
+      arrivals = compactArrivals(arrivals, retainedGroupIds);
+    });
+    return summarize(arrivals, plan.selected, plan.bits);
   }
 
   function render() {
+    hideTooltip();
     if (!validAppConfig || !runtimeCharactersValid()) { els.error.textContent = t('invalidAppConfig'); return; }
     const cfg = getConfig();
     const plan = getPlan();
@@ -2163,7 +2227,9 @@ html>body{padding:1rem}</style>
       els.error.textContent = t('selectTarget'); els.order.textContent = ''; els.summary.innerHTML = ''; els.targetChances.innerHTML = ''; els.outcomes.innerHTML = ''; return;
     }
     els.error.textContent = '';
-    const nowResult = simulateNow(cfg, plan);
+    const currentBalanceResult = simulateWithCurrentBalance(cfg, plan);
+    const currentTargetMask = plan.current.reduce((mask, id) => mask | plan.bits[id], 0);
+    const anyCurrentNow = [...currentBalanceResult.outcomes].reduce((sum, [mask, probability]) => sum + ((mask & currentTargetMask) ? probability : 0), 0);
     const orderedSelected = plan.ordered;
     const phaseLabels = plan.phases.filter(phase => phase.targets.length).map(phase => phase.targets.map(id => targetLabel(targetById.get(id))).join(' → '));
     els.order.textContent = `${t('targetPriority')}: ${phaseLabels.join(`  ${t('phaseSeparator')}  `)}`;
@@ -2171,11 +2237,17 @@ html>body{padding:1rem}</style>
       <div class="card viz-stat"><div class="text-muted">${t('allTargets')}</div><div class="viz-stat-value">${pct(result.complete)}</div></div>
       <div class="card viz-stat"><div class="text-muted">${t('anyTarget')}</div><div class="viz-stat-value">${pct(result.any)}</div></div>
       <div class="card viz-stat"><div class="text-muted">${t('expectedTargets')}</div><div class="viz-stat-value">${decimal(result.expected)}</div></div>
-      <div class="card viz-stat"><div class="text-muted">${t('anyCurrentNow')}</div><div class="viz-stat-value">${plan.current.length ? pct(nowResult.any) : '—'}</div></div>`;
+      <div class="card viz-stat"><div class="text-muted">${t('anyCurrentNow')}</div><div class="viz-stat-value">${plan.current.length ? pct(anyCurrentNow) : '—'}</div></div>`;
     els.targetChances.innerHTML = orderedSelected.map(id => {
       const obtained = result.marginal(id);
       const target = targetById.get(id);
-      return `<tr><td>${escapeHtml(targetLabel(target))}</td><td class="text-end">${plan.current.includes(id) ? pct(nowResult.marginal(id)) : '—'}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(probabilityComplement(obtained))}</td></tr>`;
+      const futureNote = localDeadline(target.startDate) > Date.now()
+        ? `<span class="unconfirmed-badge current-balance-availability" tabindex="0" aria-describedby="t-planner-tooltip" data-tooltip="${escapeHtml(t('futureBalanceTooltip'))}">${escapeHtml(t('notAvailableNowShort'))}</span>`
+        : '';
+      const currentBalanceChance = localDeadline(target.endDate) <= Date.now()
+        ? '—'
+        : `${futureNote}${pct(currentBalanceResult.marginal(id))}`;
+      return `<tr><td>${escapeHtml(targetLabel(target))}</td><td class="text-end">${currentBalanceChance}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(probabilityComplement(obtained))}</td></tr>`;
     }).join('');
     const roster = mask => orderedSelected.filter(id => mask & plan.bits[id]).map(id => targetLabel(targetById.get(id))).join(' + ') || t('noTarget');
     const missed = mask => orderedSelected.filter(id => !(mask & plan.bits[id])).map(id => targetLabel(targetById.get(id))).join(' + ') || '—';
