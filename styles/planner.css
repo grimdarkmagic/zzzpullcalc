@@ -1,0 +1,439 @@
+#zzz-universal-planner {
+    --planner-green: light-dark(#14804a, #57d68d);
+    --planner-surface: color-mix(in srgb, var(--card) 82%, transparent);
+    --planner-surface-strong: color-mix(in srgb, var(--foreground) 3%, var(--background));
+    --planner-row-alt: color-mix(in srgb, var(--foreground) 3.5%, transparent);
+    --planner-row-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding: clamp(1rem, 2.2vw, 2rem);
+    overflow: hidden;
+    border: 0;
+    color: var(--foreground);
+    background: var(--background);
+  }
+  #zzz-universal-planner,
+  #zzz-universal-planner *,
+  #zzz-universal-planner *::before,
+  #zzz-universal-planner *::after {
+    border-radius: 0 !important;
+    corner-shape: round !important;
+  }
+  #zzz-universal-planner .planner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 20%, var(--border));
+  }
+  #zzz-universal-planner .planner-actions { display: flex; align-items: center; gap: 0.5rem; }
+  #zzz-universal-planner :is(.language-control, .theme-control) { display: flex; align-items: center; gap: 0.45rem; }
+  #zzz-universal-planner :is(.language-icon, .theme-icon) { color: var(--muted-foreground); font-size: 1.15rem; line-height: 1; white-space: nowrap; }
+  #zzz-universal-planner :is(.language-control, .theme-control) .form-control { width: auto; min-width: 110px; min-height: 34px; }
+  #zzz-universal-planner h2 {
+    margin: 0;
+    color: var(--foreground);
+    letter-spacing: -0.035em;
+  }
+  #zzz-universal-planner h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 0.55rem;
+    font-size: 1rem;
+  }
+  #zzz-universal-planner h3::before {
+    width: 0.32rem;
+    height: 1.05rem;
+    background: color-mix(in srgb, var(--foreground) 68%, transparent);
+    content: "";
+  }
+  #zzz-universal-planner .channel-group-heading {
+    margin: 0.75rem 0 0.35rem;
+    color: var(--muted-foreground);
+    font-size: var(--font-size-small);
+    font-weight: 720;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+  }
+  #zzz-universal-planner .channel-group-heading-secondary {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px dashed color-mix(in srgb, var(--foreground) 18%, var(--border));
+  }
+  #zzz-universal-planner section {
+    margin-top: 1rem;
+    padding: clamp(0.75rem, 1.4vw, 1rem);
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, var(--border));
+    background: var(--planner-surface);
+  }
+  #zzz-universal-planner .planner-actions .btn {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding-inline: 0.75rem;
+    border-color: color-mix(in srgb, var(--foreground) 18%, var(--input));
+    background: var(--secondary);
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, background-color 150ms ease;
+  }
+  #zzz-universal-planner .planner-actions .btn:hover {
+    border-color: color-mix(in srgb, var(--foreground) 48%, var(--input));
+    background: color-mix(in srgb, var(--foreground) 8%, var(--secondary));
+    transform: translateY(-1px);
+  }
+  #zzz-universal-planner .btn:focus-visible {
+    outline-color: var(--foreground);
+  }
+  #zzz-universal-planner :is(#t-language-select, #t-theme-select) {
+    border-color: color-mix(in srgb, var(--foreground) 18%, var(--input));
+    background: var(--secondary);
+  }
+  #zzz-universal-planner .resource-wallet {
+    position: relative;
+    margin-bottom: 0.5rem;
+    padding: clamp(0.8rem, 1.5vw, 1.1rem);
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--foreground) 20%, var(--border));
+    border-left: 4px solid var(--foreground);
+    background:
+      linear-gradient(115deg, color-mix(in srgb, var(--foreground) 4%, transparent), transparent 44%),
+      var(--planner-surface);
+  }
+  #zzz-universal-planner .resource-wallet-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 0.8rem;
+  }
+  #zzz-universal-planner .resource-wallet-title { margin-bottom: 0.2rem; }
+  #zzz-universal-planner .resource-wallet-help { max-width: 760px; }
+  #zzz-universal-planner .resource-total {
+    display: grid;
+    min-width: 185px;
+    padding-left: 1rem;
+    border-left: 1px solid color-mix(in srgb, var(--foreground) 18%, var(--border));
+    text-align: end;
+  }
+  #zzz-universal-planner #t-current-searches {
+    color: var(--foreground);
+    font-size: clamp(1.75rem, 3vw, 2.4rem);
+    font-weight: 760;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+  #zzz-universal-planner .resource-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  #zzz-universal-planner .resource-field {
+    position: relative;
+    min-width: 0;
+    padding: 0.7rem;
+    border: 1px solid color-mix(in srgb, var(--foreground) 17%, var(--border));
+    background: var(--planner-surface-strong);
+    transition: border-color 150ms ease, opacity 150ms ease, transform 150ms ease;
+  }
+  #zzz-universal-planner .resource-field:focus-within {
+    border-color: color-mix(in srgb, var(--foreground) 52%, var(--border));
+    transform: translateY(-1px);
+  }
+  #zzz-universal-planner .resource-field:has(.t-resource-enabled:not(:checked)) {
+    opacity: 0.5;
+  }
+  #zzz-universal-planner .resource-toggle {
+    display: flex;
+    min-height: 26px;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+    color: var(--foreground);
+    font-size: var(--font-size-small);
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #zzz-universal-planner .resource-toggle .form-check-input { flex: 0 0 auto; }
+  #zzz-universal-planner .resource-icon {
+    position: relative;
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 18%));
+  }
+  #zzz-universal-planner .resource-icon-monochromes {
+    border: 1px solid color-mix(in srgb, var(--foreground) 52%, transparent);
+    background: linear-gradient(135deg, #f4f4f6 0 34%, #777b83 35% 66%, #24262b 67%);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  }
+  #zzz-universal-planner .resource-icon-polychromes {
+    border: 2px solid color-mix(in srgb, white 72%, transparent);
+    background: conic-gradient(from 35deg, #6fe7ff, #8e7dff, #f48bd5, #ffd56b, #74ebaa, #6fe7ff);
+    clip-path: polygon(50% 0, 95% 24%, 86% 76%, 50% 100%, 14% 76%, 5% 24%);
+  }
+  #zzz-universal-planner .resource-icon-tapes {
+    border: 1px solid color-mix(in srgb, var(--foreground) 45%, transparent);
+    background: linear-gradient(135deg, #f7de77 0 17%, #40cbd4 18% 49%, #6155a7 50% 78%, #242838 79%);
+    clip-path: polygon(8% 0, 92% 0, 100% 25%, 100% 75%, 92% 100%, 8% 100%, 0 75%, 0 25%);
+  }
+  #zzz-universal-planner .resource-field .form-control {
+    min-height: 42px;
+    border-color: color-mix(in srgb, var(--foreground) 27%, var(--input));
+    background: color-mix(in srgb, var(--background) 88%, transparent);
+    font-size: 1.15rem;
+    font-weight: 720;
+    font-variant-numeric: tabular-nums;
+  }
+  #zzz-universal-planner .resource-field .form-control:disabled {
+    color: var(--muted-foreground);
+    background: color-mix(in srgb, var(--foreground) 4%, var(--background));
+    cursor: not-allowed;
+  }
+  #zzz-universal-planner .resource-breakdown { min-height: 1.3em; margin-top: 0.55rem; }
+  #zzz-universal-planner .form-control {
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+  #zzz-universal-planner .form-control:hover { border-color: color-mix(in srgb, var(--foreground) 42%, var(--input)); }
+  #zzz-universal-planner .form-control:focus-visible {
+    border-color: var(--foreground);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 16%, transparent);
+  }
+  #zzz-universal-planner #t-income-note { margin: 0.35rem 0 0; color: var(--muted-foreground); }
+  #zzz-universal-planner .configuration-table { margin-top: 0; }
+  #zzz-universal-planner .configuration-table table { min-width: 760px; }
+  #zzz-universal-planner .configuration-table th { white-space: nowrap; }
+  #zzz-universal-planner .configuration-table td { vertical-align: middle; }
+  #zzz-universal-planner .table-responsive {
+    margin-top: 0.75rem;
+    overflow-x: auto;
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, var(--border));
+    background: var(--planner-surface-strong);
+  }
+  #zzz-universal-planner .table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  #zzz-universal-planner .table :is(th, td) { padding: 0.68rem 0.75rem; }
+  #zzz-universal-planner .table :is(th, td):last-child { padding-inline-end: 0.75rem; }
+  #zzz-universal-planner .table thead th {
+    border-bottom-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--foreground) 5%, var(--planner-surface-strong));
+    font-size: var(--font-size-small);
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+  }
+  #zzz-universal-planner .table tbody tr:nth-child(even) td { background: var(--planner-row-alt); }
+  #zzz-universal-planner .table tbody tr td {
+    transition: background-color 140ms ease, box-shadow 140ms ease;
+  }
+  #zzz-universal-planner .table tbody tr:is(:hover, :focus-within) td {
+    background: var(--planner-row-hover);
+    box-shadow: inset 0 1px color-mix(in srgb, var(--foreground) 12%, transparent), inset 0 -1px color-mix(in srgb, var(--foreground) 12%, transparent);
+  }
+  #zzz-universal-planner .table tbody tr:is(:hover, :focus-within) td:first-child {
+    box-shadow: inset 3px 0 color-mix(in srgb, var(--foreground) 65%, transparent), inset 0 1px color-mix(in srgb, var(--foreground) 12%, transparent), inset 0 -1px color-mix(in srgb, var(--foreground) 12%, transparent);
+  }
+  #zzz-universal-planner .config-number { width: 92px; min-width: 92px; }
+  #zzz-universal-planner .config-checks { display: grid; gap: 0.25rem; min-width: 185px; }
+  #zzz-universal-planner .config-checks .form-check { margin: 0; }
+  #zzz-universal-planner .form-check-input[type="checkbox"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    margin: 0;
+    border: 1px solid color-mix(in srgb, var(--foreground) 42%, transparent);
+    background-color: var(--secondary);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+  }
+  #zzz-universal-planner .form-check-input[type="checkbox"]:checked {
+    border-color: var(--foreground);
+    background: var(--foreground);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+  #zzz-universal-planner .form-check-input[type="checkbox"]:checked::before {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--background);
+    content: "";
+    -webkit-mask: var(--checkmark-image) center / 13px 13px no-repeat;
+    mask: var(--checkmark-image) center / 13px 13px no-repeat;
+  }
+  #zzz-universal-planner .form-check-input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+  #zzz-universal-planner .config-subtext { display: block; margin-top: 0.2rem; white-space: nowrap; }
+  #zzz-universal-planner .t-agent-estimate { min-width: 190px; }
+  #zzz-universal-planner .t-agent-estimate strong { white-space: nowrap; }
+  #zzz-universal-planner .t-agent-estimate .config-subtext { line-height: 1.35; white-space: normal; }
+  #zzz-universal-planner .unconfirmed-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--orange) 70%, transparent);
+    color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 10%, transparent);
+    font-size: var(--font-size-small);
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+  #zzz-universal-planner .current-balance-availability {
+    margin-left: 0;
+    margin-right: 0.4rem;
+    cursor: help;
+    vertical-align: 0.05em;
+  }
+  #zzz-universal-planner .current-balance-availability:focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+  #zzz-universal-planner .provisional-badge {
+    border-color: color-mix(in srgb, var(--muted-foreground) 52%, transparent);
+    color: var(--muted-foreground);
+    background: color-mix(in srgb, var(--muted-foreground) 8%, transparent);
+  }
+  #zzz-universal-planner .config-rules { white-space: nowrap; }
+  #zzz-universal-planner .target-order-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px dashed color-mix(in srgb, var(--foreground) 18%, var(--border));
+  }
+  #zzz-universal-planner .target-order-toggle { margin: 0; font-weight: 650; }
+  #zzz-universal-planner .target-order-help { margin: 0.35rem 0 0; }
+  #zzz-universal-planner .target-order-table { margin-top: 0.65rem; }
+  #zzz-universal-planner .target-kind-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+    color: var(--muted-foreground);
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+    font-size: var(--font-size-small);
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+  #zzz-universal-planner .compact-order-actions[hidden] { display: none; }
+  #zzz-universal-planner .move-buttons { display: flex; gap: 0.3rem; }
+  #zzz-universal-planner .move-buttons .btn {
+    min-width: 2rem;
+    padding: 0.2rem 0.45rem;
+    border-color: color-mix(in srgb, var(--foreground) 18%, var(--input));
+    background: var(--secondary);
+    transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  }
+  #zzz-universal-planner .move-buttons .btn:not(:disabled):hover {
+    border-color: var(--foreground);
+    background: color-mix(in srgb, var(--foreground) 10%, var(--secondary));
+    transform: translateY(-1px);
+  }
+  #zzz-universal-planner .move-buttons .provisional-row-action {
+    min-width: 1.75rem;
+    color: var(--muted-foreground);
+    background: transparent;
+  }
+  #zzz-universal-planner .provisional-controls { margin-top: 0.65rem; }
+  #zzz-universal-planner .provisional-trigger {
+    padding: 0.25rem 0;
+    border: 0;
+    color: var(--muted-foreground);
+    background: transparent;
+    font-size: var(--font-size-small);
+  }
+  #zzz-universal-planner .provisional-trigger:hover { color: var(--foreground); text-decoration: underline; }
+  #zzz-universal-planner .provisional-form {
+    margin-top: 0.65rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed color-mix(in srgb, var(--foreground) 18%, var(--border));
+  }
+  #zzz-universal-planner .provisional-form-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.65rem;
+  }
+  #zzz-universal-planner :is(.provisional-form-grid, .provisional-date-grid) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+  #zzz-universal-planner .provisional-date-grid {
+    grid-template-columns: repeat(2, minmax(0, 220px));
+    margin-top: 0.65rem;
+  }
+  #zzz-universal-planner :is(.provisional-form-grid, .provisional-date-grid) label { font-size: var(--font-size-small); }
+  #zzz-universal-planner :is(.provisional-form-grid, .provisional-date-grid) .form-control { margin-top: 0.25rem; }
+  #zzz-universal-planner .provisional-note { min-height: 1.35em; margin: 0.55rem 0 0; }
+  #zzz-universal-planner .provisional-form-actions { display: flex; gap: 0.45rem; margin-top: 0.65rem; }
+  #zzz-universal-planner #t-order {
+    width: fit-content;
+    margin: 0.5rem 0 0.85rem;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--foreground) 16%, var(--border));
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  }
+  #zzz-universal-planner .viz-grid { gap: 0.75rem; }
+  #zzz-universal-planner .viz-stat {
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, var(--border));
+    background: var(--planner-surface);
+  }
+  #zzz-universal-planner .viz-stat::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: color-mix(in srgb, var(--foreground) 60%, transparent);
+    content: "";
+  }
+  #zzz-universal-planner .viz-stat-value { color: var(--foreground); }
+  #zzz-universal-planner .viz-stat:nth-child(1) .viz-stat-value,
+  #zzz-universal-planner .viz-stat:nth-child(2) .viz-stat-value,
+  #zzz-universal-planner .viz-stat:nth-child(4) .viz-stat-value,
+  #zzz-universal-planner #t-target-chances td:nth-child(2),
+  #zzz-universal-planner #t-target-chances td:nth-child(3),
+  #zzz-universal-planner #t-outcomes td:last-child { color: var(--planner-green); font-weight: 650; }
+  #zzz-universal-planner #t-target-chances td:nth-child(4) { color: var(--destructive); font-weight: 650; }
+  #zzz-universal-planner .outcome-help { margin: 0.75rem 0 -0.15rem; }
+  @media (prefers-reduced-motion: reduce) {
+    #zzz-universal-planner *, #zzz-universal-planner *::before { scroll-behavior: auto !important; transition: none !important; }
+  }
+  @media (max-width: 760px) {
+    #zzz-universal-planner .resource-wallet-header { display: block; }
+    #zzz-universal-planner .resource-total {
+      display: flex;
+      min-width: 0;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 0.75rem;
+      padding: 0.65rem 0 0;
+      border-top: 1px solid color-mix(in srgb, var(--foreground) 18%, var(--border));
+      border-left: 0;
+      text-align: start;
+    }
+  }
+  @media (max-width: 520px) {
+    html > body { padding: 0.5rem; }
+    #zzz-universal-planner { padding: 0.85rem; }
+    #zzz-universal-planner .planner-header { align-items: flex-start; }
+    #zzz-universal-planner .planner-actions { flex-direction: column; align-items: stretch; }
+    #zzz-universal-planner .resource-fields { grid-template-columns: 1fr; }
+    #zzz-universal-planner .resource-total { align-items: center; }
+    #zzz-universal-planner :is(.provisional-form-grid, .provisional-date-grid) { grid-template-columns: 1fr; }
+  }
+
+#zzz-universal-planner[data-localizing] {
+  visibility: hidden;
+}
