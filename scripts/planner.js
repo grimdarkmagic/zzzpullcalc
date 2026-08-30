@@ -30,7 +30,7 @@
   const t = key => translations[language][key];
   const maxAgentsReachedText = () => t('maxAgentsReached').replace('{limit}', PLANNER_CONFIG.maxAgents);
   const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
-  const futureAvailabilityBadge = tooltipKey => `<span class="unconfirmed-badge current-balance-availability" tabindex="0" aria-describedby="t-planner-tooltip" data-tooltip="${escapeHtml(t(tooltipKey))}">${escapeHtml(t('notAvailableNowShort'))}</span>`;
+  const availabilityBadge = (labelKey, tooltipKey) => `<span class="unconfirmed-badge current-balance-availability" tabindex="0" aria-describedby="t-planner-tooltip" data-tooltip="${escapeHtml(t(tooltipKey))}">${escapeHtml(t(labelKey))}</span>`;
   const renderLanguageOptions = () => {
     els.languageSelect.innerHTML = localeLoader.available().map(locale => `<option value="${escapeHtml(locale.code)}">${escapeHtml(locale.label)}</option>`).join('');
   };
@@ -72,7 +72,7 @@
   });
   root.addEventListener('pointerout', event => {
     const target = event.target.closest?.('[data-tooltip]');
-    if (target === tooltipTarget && !target.contains(event.relatedTarget)) hideTooltip();
+    if (target && target === tooltipTarget && !target.contains(event.relatedTarget)) hideTooltip();
   });
   root.addEventListener('focusin', event => {
     const target = event.target.closest?.('[data-tooltip]');
@@ -830,21 +830,28 @@
     els.error.textContent = '';
     const currentBalanceResult = simulateWithCurrentBalance(cfg, plan);
     const orderedSelected = plan.ordered;
-    const summaryFutureNote = orderedSelected.some(id => localDeadline(targetById.get(id).startDate) > Date.now())
-      ? futureAvailabilityBadge('futureSummaryBalanceTooltip')
-      : '';
+    const renderedAt = Date.now();
+    const availableTargetCount = orderedSelected.reduce((count, id) => {
+      const target = targetById.get(id);
+      return count + (localDeadline(target.startDate) <= renderedAt && localDeadline(target.endDate) > renderedAt ? 1 : 0);
+    }, 0);
+    const summaryAvailabilityNote = availableTargetCount === orderedSelected.length
+      ? ''
+      : availableTargetCount > 0
+        ? availabilityBadge('mixedAvailabilityShort', 'mixedSummaryBalanceTooltip')
+        : availabilityBadge('notAvailableNowShort', 'unavailableSummaryBalanceTooltip');
     const phaseLabels = plan.phases.filter(phase => phase.targets.length).map(phase => phase.targets.map(id => targetLabel(targetById.get(id))).join(' → '));
     els.order.textContent = `${t('targetPriority')}: ${phaseLabels.join(`  ${t('phaseSeparator')}  `)}`;
     els.summary.innerHTML = `
       <div class="card viz-stat"><div class="text-muted">${t('allTargets')}</div><div class="viz-stat-value">${pct(result.complete)}</div></div>
       <div class="card viz-stat"><div class="text-muted">${t('anyTarget')}</div><div class="viz-stat-value">${pct(result.any)}</div></div>
       <div class="card viz-stat"><div class="text-muted">${t('expectedTargets')}</div><div class="viz-stat-value">${decimal(result.expected)}</div></div>
-      <div class="card viz-stat"><div class="text-muted">${t('anyCurrentNow')}</div><div class="viz-stat-value">${summaryFutureNote}${pct(currentBalanceResult.any)}</div></div>`;
+      <div class="card viz-stat"><div class="text-muted">${t('anyCurrentNow')}</div><div class="viz-stat-value">${summaryAvailabilityNote}${pct(currentBalanceResult.any)}</div></div>`;
     els.targetChances.innerHTML = orderedSelected.map(id => {
       const obtained = result.marginal(id);
       const target = targetById.get(id);
       const futureNote = localDeadline(target.startDate) > Date.now()
-        ? futureAvailabilityBadge('futureBalanceTooltip')
+        ? availabilityBadge('notAvailableNowShort', 'futureBalanceTooltip')
         : '';
       const currentBalanceChance = localDeadline(target.endDate) <= Date.now()
         ? '—'

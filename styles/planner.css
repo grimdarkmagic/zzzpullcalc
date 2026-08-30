@@ -171,14 +171,16 @@
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   }
   #zzz-universal-planner .resource-icon-polychromes {
-    border: 2px solid color-mix(in srgb, white 72%, transparent);
-    background: conic-gradient(from 35deg, #6fe7ff, #8e7dff, #f48bd5, #ffd56b, #74ebaa, #6fe7ff);
-    clip-path: polygon(50% 0, 95% 24%, 86% 76%, 50% 100%, 14% 76%, 5% 24%);
-  }
-  #zzz-universal-planner .resource-icon-tapes {
     border: 1px solid color-mix(in srgb, var(--foreground) 45%, transparent);
     background: linear-gradient(135deg, #f7de77 0 17%, #40cbd4 18% 49%, #6155a7 50% 78%, #242838 79%);
     clip-path: polygon(8% 0, 92% 0, 100% 25%, 100% 75%, 92% 100%, 8% 100%, 0 75%, 0 25%);
+  }
+  #zzz-universal-planner .resource-icon-tapes {
+    border: 2px solid color-mix(in srgb, white 70%, transparent);
+    background:
+      radial-gradient(circle at 50% 50%, #1f2432 0 19%, transparent 20%),
+      conic-gradient(from 20deg, #f7dd72, #42ccd5, #6658ad, #ef83bd, #f7dd72);
+    clip-path: circle(48% at 50% 50%);
   }
   #zzz-universal-planner .resource-field .form-control {
     min-height: 42px;
