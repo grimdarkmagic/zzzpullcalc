@@ -392,7 +392,7 @@
           <label class="form-check"><input class="form-check-input t-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.guaranteed ? ' checked' : ''}><span class="form-check-label">${t(targetType === 'w-engine' ? 'normalWEngineGuarantee' : 'normalAgentGuarantee')}</span></label>
           ${specialChannel ? `<label class="form-check"><input class="form-check-input t-special-guaranteed" data-pity-group="${escapeHtml(pity.groupId)}" type="checkbox"${group.specialGuaranteed ? ' checked' : ''}><span class="form-check-label">${t('specialGuarantee')}</span></label>` : ''}
         </div></td>
-        <td class="config-rules">${t('baseRate')} ${percentLabel(pity.baseRate)} · ${t('softPity')} ${pity.softPityStartsAt} · ${t('guaranteedBy')} ${pity.hardPity}<span class="text-small text-muted config-subtext">${t(targetType === 'w-engine' ? 'featuredWEngineRate' : 'featuredAgentRate')} ${percentLabel(pity.featuredRate)}</span></td>
+        <td class="config-rules">${t('ruleSummary').replace('{baseRate}', percentLabel(pity.baseRate)).replace('{softPityStart}', pity.softPityStartsAt).replace('{hardPity}', pity.hardPity)}<span class="text-small text-muted config-subtext">${t(targetType === 'w-engine' ? 'featuredWEngineRate' : 'featuredAgentRate')} ${percentLabel(pity.featuredRate)}</span></td>
       </tr>`;
     }).join('');
     els.agentChannelRows.innerHTML = renderRows(agentChannels);

@@ -5,7 +5,8 @@
     defaultLanguage: 'en',
     entries: Object.freeze({
       en: Object.freeze({ label: 'English', intlLocale: 'en-US' }),
-      ru: Object.freeze({ label: 'Русский', intlLocale: 'ru-RU' })
+      ru: Object.freeze({ label: 'Русский', intlLocale: 'ru-RU' }),
+      ja: Object.freeze({ label: '日本語', intlLocale: 'ja-JP' })
     })
   });
 })();
