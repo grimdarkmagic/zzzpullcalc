@@ -410,17 +410,20 @@
       const estimate = estimatedSearches(character.endDate);
       const canMoveUp = index > 0 && runsOverlap(character, characterById.get(runtime.characterOrder[index - 1]));
       const canMoveDown = index < runtime.characterOrder.length - 1 && runsOverlap(character, characterById.get(runtime.characterOrder[index + 1]));
-      const badge = character.provisional
+      const provisionalBadge = character.provisional
         ? `<span class="unconfirmed-badge provisional-badge">${t('provisional')}</span>`
-        : character.confirmed ? '' : `<span class="unconfirmed-badge">${t('unconfirmed')}</span>`;
+        : '';
+      const unconfirmedBadge = !character.provisional && !character.confirmed
+        ? `<br><span class="unconfirmed-badge availability-unconfirmed-badge">${t('unconfirmed')}</span>`
+        : '';
       const provisionalActions = character.provisional ? `
           <button class="btn provisional-row-action t-edit-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('editTarget')}: ${character.name}`)}" title="${escapeHtml(t('editTarget'))}">✎</button>
           <button class="btn provisional-row-action t-delete-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('removeTarget')}: ${character.name}`)}" title="${escapeHtml(t('removeTarget'))}">×</button>` : '';
       return `<tr>
         <td><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('agentTarget')}`)}"></td>
         <td><input class="form-check-input t-w-engine-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.wEngineEnabled[character.id] ? ' checked' : ''}${limitReached && !runtime.wEngineEnabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('wEngineTarget')}`)}"></td>
-        <td class="text-end">${runtime.separateWEnginePriorities ? '—' : index + 1}</td><td>${escapeHtml(character.name)}${badge}</td>
-        <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(character))}</td>
+        <td class="text-end">${runtime.separateWEnginePriorities ? '—' : index + 1}</td><td>${escapeHtml(character.name)}${provisionalBadge}</td>
+        <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(character))}${unconfirmedBadge}</td>
         <td class="t-agent-estimate t-deadline-estimate" data-end-date="${escapeHtml(character.endDate)}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${numberLabel(PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay)} ${t('searchesPerDay')}</span></td>
         <td><div class="move-buttons">
           <span class="compact-order-actions"${runtime.separateWEnginePriorities ? ' hidden' : ''}><button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${character.name}`)}">↑</button>

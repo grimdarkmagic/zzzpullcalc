@@ -287,6 +287,7 @@
     line-height: 1.35;
     white-space: nowrap;
   }
+  #zzz-universal-planner .availability-unconfirmed-badge { margin-left: 0; }
   #zzz-universal-planner .current-balance-availability {
     margin-left: 0;
     margin-right: 0.4rem;
