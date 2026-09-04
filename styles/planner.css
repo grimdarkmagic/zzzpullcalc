@@ -379,7 +379,7 @@
   #zzz-universal-planner .agent-target-control { display: inline-flex; align-items: center; gap: 0.4rem; }
   #zzz-universal-planner .agent-target-control .form-check-input { flex: 0 0 auto; }
   #zzz-universal-planner .mindscape-range-button {
-    min-width: 5rem;
+    min-width: 3rem;
     padding: 0.22rem 0.4rem;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;

@@ -218,7 +218,9 @@
       const agentsValid = (channel.agents || []).every(character => {
         const period = periodDefaults.get(character.budget.periodId);
         const characterDatesValid = /^\d{4}-\d{2}-\d{2}$/.test(character.startDate) && /^\d{4}-\d{2}-\d{2}$/.test(character.endDate);
-        return characterDatesValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
+        const defaultName = translations[localeLoader.normalize()]?.[character.nameKey];
+        return typeof character.name === 'string' && character.name.length > 0 && typeof defaultName === 'string' && defaultName.length > 0 &&
+          characterDatesValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
           period.endDate === character.endDate && Number.isInteger(character.budget.phase) && character.budget.phase >= 0;
       });
       return agentsValid && group && group.mode === pity.mode && validModes.has(pity.mode) && typeof pity.targetType === 'string' &&
@@ -256,10 +258,18 @@
     : channel.id === 'exclusive-rescreening' ? t('exclusiveRescreening')
       : channel.id === 'w-engine' ? t('wEngineChannel')
         : channel.id === 'w-engine-reverberation' ? t('wEngineReverberation') : channel.name;
-  const compactMindscapeRange = characterId => `${runtime.agentCurrentMindscapes[characterId] < 0 ? '—' : `M${runtime.agentCurrentMindscapes[characterId]}`} → M${runtime.agentMindscapes[characterId]}`;
-  const targetLabel = target => target.kind === 'w-engine'
-    ? `${target.characterName} — ${t('wEngineSuffix')}`
-    : runtime.agentMindscapes[target.characterId] > 0 ? `${target.characterName} (M${runtime.agentMindscapes[target.characterId]})` : target.characterName;
+  const localizedCharacterName = character => {
+    if (!character || character.provisional || !character.nameKey) return character?.name || '';
+    const localizedName = translations[language]?.[character.nameKey];
+    return typeof localizedName === 'string' && localizedName ? localizedName : character.name;
+  };
+  const compactMindscapeGoal = characterId => `M${runtime.agentMindscapes[characterId]}`;
+  const targetLabel = target => {
+    const name = localizedCharacterName(characterById.get(target.characterId)) || target.characterName;
+    return target.kind === 'w-engine'
+      ? `${name} — ${t('wEngineSuffix')}`
+      : runtime.agentMindscapes[target.characterId] > 0 ? `${name} (M${runtime.agentMindscapes[target.characterId]})` : name;
+  };
   const percentLabel = value => `${new Intl.NumberFormat(localeLoader.intlLocale(language), { maximumFractionDigits: 1 }).format(value * 100)}%`;
   const numberLabel = (value, maximumFractionDigits = 1) => new Intl.NumberFormat(localeLoader.intlLocale(language), { maximumFractionDigits }).format(value);
   const resourceBalancesValid = () => resourceKeys.every(key => !runtime.resourceEnabled[key] ||
@@ -454,7 +464,7 @@
     characters.forEach(character => {
       const key = windowValue(character.startDate, character.endDate);
       if (!windows.has(key)) windows.set(key, { startDate: character.startDate, endDate: character.endDate, names: [] });
-      windows.get(key).names.push(character.name);
+      windows.get(key).names.push(localizedCharacterName(character));
     });
     return [...windows].sort(([, first], [, second]) => first.startDate.localeCompare(second.startDate) || first.endDate.localeCompare(second.endDate));
   };
@@ -552,7 +562,7 @@
   const renderMindscapeDialog = () => {
     const character = characterById.get(mindscapeDialogCharacterId);
     if (!character) return;
-    els.mindscapeAgentName.textContent = character.name;
+    els.mindscapeAgentName.textContent = localizedCharacterName(character);
     els.currentMindscape.innerHTML = [
       `<option value="-1">${escapeHtml(t('notOwned'))}</option>`,
       ...Array.from({ length: maximumMindscape }, (_, level) => `<option value="${level}">M${level}</option>`)
@@ -596,6 +606,7 @@
     const limitReached = selectedCount >= PLANNER_CONFIG.maxSelectedTargets;
     els.agentRows.innerHTML = runtime.characterOrder.map((characterId, index) => {
       const character = characterById.get(characterId);
+      const name = localizedCharacterName(character);
       const channel = channelById.get(character.channelId);
       const remaining = daysRemaining(character.endDate);
       const estimate = estimatedSearches(character.endDate, income.rate);
@@ -608,18 +619,18 @@
         ? `<br><span class="unconfirmed-badge availability-unconfirmed-badge">${t('unconfirmed')}</span>`
         : '';
       const provisionalActions = character.provisional ? `
-          <button class="btn provisional-row-action t-edit-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('editTarget')}: ${character.name}`)}" title="${escapeHtml(t('editTarget'))}">✎</button>
-          <button class="btn provisional-row-action t-delete-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('removeTarget')}: ${character.name}`)}" title="${escapeHtml(t('removeTarget'))}">×</button>` : '';
+          <button class="btn provisional-row-action t-edit-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('editTarget')}: ${name}`)}" title="${escapeHtml(t('editTarget'))}">✎</button>
+          <button class="btn provisional-row-action t-delete-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('removeTarget')}: ${name}`)}" title="${escapeHtml(t('removeTarget'))}">×</button>` : '';
       return `<tr>
         <td class="priority-column">${runtime.separateWEnginePriorities ? '—' : index + 1}</td>
-        <td><div class="agent-target-control"><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('agentTarget')}`)}"><button class="btn btn-secondary mindscape-range-button t-edit-mindscape" data-character-id="${escapeHtml(character.id)}" type="button" title="${escapeHtml(t('editMindscapeRange'))}" aria-label="${escapeHtml(`${t('editMindscapeRange')}: ${character.name}`)}">${escapeHtml(compactMindscapeRange(character.id))}</button></div></td>
-        <td><input class="form-check-input t-w-engine-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.wEngineEnabled[character.id] ? ' checked' : ''}${limitReached && !runtime.wEngineEnabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('wEngineTarget')}`)}"></td>
-        <td>${escapeHtml(character.name)}${provisionalBadge}</td>
+        <td><div class="agent-target-control"><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${name} — ${t('agentTarget')}`)}"><button class="btn btn-secondary mindscape-range-button t-edit-mindscape" data-character-id="${escapeHtml(character.id)}" type="button" title="${escapeHtml(t('editMindscapeRange'))}" aria-label="${escapeHtml(`${t('editMindscapeRange')}: ${name}`)}">${escapeHtml(compactMindscapeGoal(character.id))}</button></div></td>
+        <td><input class="form-check-input t-w-engine-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.wEngineEnabled[character.id] ? ' checked' : ''}${limitReached && !runtime.wEngineEnabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${name} — ${t('wEngineTarget')}`)}"></td>
+        <td>${escapeHtml(name)}${provisionalBadge}</td>
         <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(character))}${unconfirmedBadge}</td>
         <td class="t-agent-estimate t-deadline-estimate" data-end-date="${escapeHtml(character.endDate)}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${escapeHtml(incomeRateLabel(income.rate))} ${t('searchesPerDay')}</span></td>
         <td><div class="move-buttons">
-          <span class="compact-order-actions"${runtime.separateWEnginePriorities ? ' hidden' : ''}><button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${character.name}`)}">↑</button>
-          <button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${character.name}`)}">↓</button></span>
+          <span class="compact-order-actions"${runtime.separateWEnginePriorities ? ' hidden' : ''}><button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${name}`)}">↑</button>
+          <button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${name}`)}">↓</button></span>
           ${provisionalActions}
         </div></td>
       </tr>`;
