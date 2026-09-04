@@ -87,10 +87,13 @@
       <div>
         <p class="text-small text-muted pull-tracker-help" data-i18n="pullTrackerHelp">Save occasional snapshots of the wallet above. Spending and excluded balance changes apply to the time since the preceding snapshot.</p>
       </div>
-      <div class="pull-tracker-backup-actions">
-        <button id="t-export-pull-history" class="btn btn-sm" type="button" data-i18n="exportHistory">Export history</button>
-        <button id="t-import-pull-history" class="btn btn-sm" type="button" data-i18n="importHistory">Import history</button>
-        <input id="t-import-pull-history-file" type="file" accept="application/json,.json" hidden>
+      <div class="pull-tracker-backup">
+        <div class="pull-tracker-backup-actions">
+          <button id="t-export-pull-history" class="btn btn-sm" type="button" data-i18n="exportHistory">Export history</button>
+          <button id="t-import-pull-history" class="btn btn-sm" type="button" data-i18n="importHistory">Import history</button>
+          <input id="t-import-pull-history-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <p class="text-small pull-tracker-backup-note" role="note"><span class="backup-info-icon" aria-hidden="true">i</span><span><strong data-i18n="backupReminderTitle">Keep a backup</strong><span data-i18n="historyBackupReminder">This history is stored only in this browser. Export it occasionally so you can restore it after clearing browser data or moving to another device.</span></span></p>
       </div>
     </div>
 
@@ -167,7 +170,7 @@
         <tbody id="t-agent-rows"></tbody>
       </table>
     </div>
-    <p class="text-small text-muted mindscape-help" data-i18n="mindscapeHelp">Choose M0 for the Agent's first copy or M1–M6 for additional copies. All copies are searched consecutively and the whole Agent goal counts as one of the 15 calculation targets.</p>
+    <p class="text-small text-muted mindscape-help" data-i18n="mindscapeHelp">Set each Agent's current → target Mindscape. Required copies are searched consecutively, and the whole range counts as one of the 15 calculation targets.</p>
     <div class="provisional-controls">
       <button id="t-add-provisional" class="btn provisional-trigger" type="button" data-i18n="addProvisional">+ Add custom target</button>
       <form id="t-provisional-form" class="provisional-form" hidden>
@@ -210,6 +213,23 @@
       </div>
     </div>
   </section>
+
+  <dialog id="t-mindscape-dialog" class="mindscape-dialog" aria-labelledby="t-mindscape-dialog-title">
+    <form id="t-mindscape-form" class="mindscape-dialog-form">
+      <h3 id="t-mindscape-dialog-title" data-i18n="mindscapeRange">Mindscape range</h3>
+      <p id="t-mindscape-agent-name" class="mindscape-dialog-agent"></p>
+      <div class="mindscape-range-fields">
+        <label><span data-i18n="currentMindscape">Current</span><select id="t-current-mindscape" class="form-control"></select></label>
+        <span class="mindscape-range-arrow" aria-hidden="true">→</span>
+        <label><span data-i18n="targetMindscape">Target</span><select id="t-target-mindscape" class="form-control"></select></label>
+      </div>
+      <p class="text-small text-muted mindscape-dialog-help" data-i18n="mindscapeRangeHelp">Set where you are starting and the Mindscape you want to reach. The required copies are searched consecutively.</p>
+      <div class="mindscape-dialog-actions">
+        <button class="btn btn-primary" type="submit" data-i18n="saveMindscapeRange">Save range</button>
+        <button id="t-cancel-mindscape" class="btn btn-secondary" type="button" data-i18n="cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
 
   <div id="t-error" class="text-destructive" role="alert"></div>
   <p class="text-small text-muted" data-i18n="budgetHelp">Each Agent row shows the expected Signal Search balance after earlier targets. Future income accumulates to that Agent's deadline, while availability dates determine which targets can be prioritized against each other.</p>

@@ -30,7 +30,9 @@
     provisionalCount: root.querySelector('#t-provisional-count'), provisionalId: root.querySelector('#t-provisional-id'), provisionalName: root.querySelector('#t-provisional-name'),
     provisionalChannel: root.querySelector('#t-provisional-channel'), provisionalSchedule: root.querySelector('#t-provisional-schedule'), provisionalCustomDates: root.querySelector('#t-provisional-custom-dates'),
     provisionalStart: root.querySelector('#t-provisional-start'), provisionalEnd: root.querySelector('#t-provisional-end'), provisionalNote: root.querySelector('#t-provisional-note'),
-    provisionalError: root.querySelector('#t-provisional-error'), cancelProvisional: root.querySelector('#t-cancel-provisional')
+    provisionalError: root.querySelector('#t-provisional-error'), cancelProvisional: root.querySelector('#t-cancel-provisional'),
+    mindscapeDialog: root.querySelector('#t-mindscape-dialog'), mindscapeForm: root.querySelector('#t-mindscape-form'), mindscapeAgentName: root.querySelector('#t-mindscape-agent-name'),
+    currentMindscape: root.querySelector('#t-current-mindscape'), targetMindscape: root.querySelector('#t-target-mindscape'), cancelMindscape: root.querySelector('#t-cancel-mindscape')
   };
   let language = 'en';
   const t = key => translations[language][key];
@@ -92,14 +94,15 @@
   const preferredLanguage = () => localeLoader.preferred();
   const themeStorageKey = 'zzz-universal-pull-planner-theme';
   const languageStorageKey = 'zzz-universal-pull-planner-language';
-  const plannerStateStorageKey = 'zzz-universal-pull-planner-state-v9';
-  const previousPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v8';
-  const olderPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v7';
-  const earlierPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v6';
-  const oldestPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v5';
-  const ancientPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v4';
-  const prehistoricPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v3';
-  const primitivePlannerStateStorageKey = 'zzz-universal-pull-planner-state-v2';
+  const plannerStateStorageKey = 'zzz-universal-pull-planner-state-v10';
+  const previousPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v9';
+  const olderPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v8';
+  const earlierPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v7';
+  const oldestPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v6';
+  const ancientPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v5';
+  const prehistoricPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v4';
+  const primitivePlannerStateStorageKey = 'zzz-universal-pull-planner-state-v3';
+  const primordialPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v2';
   const legacyPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v1';
   const currencyPerSearch = 160;
   const maximumAvailableSearches = 600;
@@ -166,6 +169,7 @@
     pityGroups: Object.fromEntries([...pityDefaults].map(([id, value]) => [id, { count: value.count, guaranteed: value.guaranteed, specialGuaranteed: value.specialGuaranteed }])),
     customPeriods: [], customCharacters: [],
     enabled: Object.fromEntries(builtInCharacters.map(character => [character.id, character.enabled])),
+    agentCurrentMindscapes: Object.fromEntries(builtInCharacters.map(character => [character.id, -1])),
     agentMindscapes: Object.fromEntries(builtInCharacters.map(character => [character.id, 0])),
     wEngineEnabled: Object.fromEntries(builtInCharacters.map(character => [character.id, false])),
     characterOrder: defaultCharacterOrder.slice(), targetOrder: defaultTargetOrder.slice(),
@@ -185,8 +189,12 @@
     runtime.characterOrder = constrainOrder(completeOrder, characterById);
     runtime.enabled = Object.fromEntries(characters.map(character => [character.id,
       typeof runtime.enabled[character.id] === 'boolean' ? runtime.enabled[character.id] : Boolean(character.enabled)]));
+    runtime.agentCurrentMindscapes = Object.fromEntries(characters.map(character => [character.id,
+      Number.isInteger(runtime.agentCurrentMindscapes[character.id]) && runtime.agentCurrentMindscapes[character.id] >= -1 && runtime.agentCurrentMindscapes[character.id] < maximumMindscape ? runtime.agentCurrentMindscapes[character.id] : -1]));
     runtime.agentMindscapes = Object.fromEntries(characters.map(character => [character.id,
-      Number.isInteger(runtime.agentMindscapes[character.id]) && runtime.agentMindscapes[character.id] >= 0 && runtime.agentMindscapes[character.id] <= maximumMindscape ? runtime.agentMindscapes[character.id] : 0]));
+      Number.isInteger(runtime.agentMindscapes[character.id]) && runtime.agentMindscapes[character.id] > runtime.agentCurrentMindscapes[character.id] && runtime.agentMindscapes[character.id] <= maximumMindscape
+        ? runtime.agentMindscapes[character.id]
+        : runtime.agentCurrentMindscapes[character.id] + 1]));
     runtime.wEngineEnabled = Object.fromEntries(characters.map(character => [character.id,
       typeof runtime.wEngineEnabled[character.id] === 'boolean' ? runtime.wEngineEnabled[character.id] : false]));
     targets = makeTargets(characters);
@@ -222,7 +230,11 @@
     return periods.every((period, index) => index === 0 || period.endDate > periods[index - 1].endDate);
   };
   const validAppConfig = configIsValid();
-  const runtimeCharactersValid = () => characters.length > 0 && characters.length <= PLANNER_CONFIG.maxAgents && characterById.size === characters.length && targetById.size === characters.length * 2;
+  const runtimeCharactersValid = () => characters.length > 0 && characters.length <= PLANNER_CONFIG.maxAgents && characterById.size === characters.length && targetById.size === characters.length * 2 && characters.every(character => {
+    const current = runtime.agentCurrentMindscapes[character.id];
+    const target = runtime.agentMindscapes[character.id];
+    return Number.isInteger(current) && current >= -1 && current < maximumMindscape && Number.isInteger(target) && target > current && target <= maximumMindscape;
+  });
 
   const storedLanguage = () => { try { const stored = localStorage.getItem(languageStorageKey); return localeLoader.isSupported(stored) ? localeLoader.normalize(stored) : null; } catch { return null; } };
   const storedTheme = () => { try { const stored = localStorage.getItem(themeStorageKey); return stored === 'dark' || stored === 'light' ? stored : null; } catch { return null; } };
@@ -244,9 +256,10 @@
     : channel.id === 'exclusive-rescreening' ? t('exclusiveRescreening')
       : channel.id === 'w-engine' ? t('wEngineChannel')
         : channel.id === 'w-engine-reverberation' ? t('wEngineReverberation') : channel.name;
+  const compactMindscapeRange = characterId => `${runtime.agentCurrentMindscapes[characterId] < 0 ? '—' : `M${runtime.agentCurrentMindscapes[characterId]}`} → M${runtime.agentMindscapes[characterId]}`;
   const targetLabel = target => target.kind === 'w-engine'
     ? `${target.characterName} — ${t('wEngineSuffix')}`
-    : `${target.characterName} — M${runtime.agentMindscapes[target.characterId] || 0}`;
+    : runtime.agentMindscapes[target.characterId] > 0 ? `${target.characterName} (M${runtime.agentMindscapes[target.characterId]})` : target.characterName;
   const percentLabel = value => `${new Intl.NumberFormat(localeLoader.intlLocale(language), { maximumFractionDigits: 1 }).format(value * 100)}%`;
   const numberLabel = (value, maximumFractionDigits = 1) => new Intl.NumberFormat(localeLoader.intlLocale(language), { maximumFractionDigits }).format(value);
   const resourceBalancesValid = () => resourceKeys.every(key => !runtime.resourceEnabled[key] ||
@@ -524,6 +537,38 @@
     els.provisionalName.focus();
   }
 
+  let mindscapeDialogCharacterId = '';
+  const closeMindscapeDialog = () => {
+    if (typeof els.mindscapeDialog.close === 'function') els.mindscapeDialog.close();
+    else els.mindscapeDialog.removeAttribute('open');
+    mindscapeDialogCharacterId = '';
+  };
+  const renderMindscapeTargetOptions = preferredTarget => {
+    const current = +els.currentMindscape.value;
+    const targets = Array.from({ length: maximumMindscape - current }, (_, index) => current + index + 1);
+    els.targetMindscape.innerHTML = targets.map(level => `<option value="${level}">M${level}</option>`).join('');
+    els.targetMindscape.value = targets.includes(+preferredTarget) ? String(preferredTarget) : String(targets[0]);
+  };
+  const renderMindscapeDialog = () => {
+    const character = characterById.get(mindscapeDialogCharacterId);
+    if (!character) return;
+    els.mindscapeAgentName.textContent = character.name;
+    els.currentMindscape.innerHTML = [
+      `<option value="-1">${escapeHtml(t('notOwned'))}</option>`,
+      ...Array.from({ length: maximumMindscape }, (_, level) => `<option value="${level}">M${level}</option>`)
+    ].join('');
+    els.currentMindscape.value = String(runtime.agentCurrentMindscapes[character.id]);
+    renderMindscapeTargetOptions(runtime.agentMindscapes[character.id]);
+  };
+  const openMindscapeDialog = characterId => {
+    if (!characterById.has(characterId)) return;
+    mindscapeDialogCharacterId = characterId;
+    renderMindscapeDialog();
+    if (typeof els.mindscapeDialog.showModal === 'function') els.mindscapeDialog.showModal();
+    else els.mindscapeDialog.setAttribute('open', '');
+    els.currentMindscape.focus();
+  };
+
   function renderChannelTable() {
     const renderRows = sourceChannels => sourceChannels.map(channel => {
       const pity = channel.pity;
@@ -565,10 +610,9 @@
       const provisionalActions = character.provisional ? `
           <button class="btn provisional-row-action t-edit-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('editTarget')}: ${character.name}`)}" title="${escapeHtml(t('editTarget'))}">✎</button>
           <button class="btn provisional-row-action t-delete-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('removeTarget')}: ${character.name}`)}" title="${escapeHtml(t('removeTarget'))}">×</button>` : '';
-      const mindscapeOptions = Array.from({ length: maximumMindscape + 1 }, (_, level) => `<option value="${level}"${runtime.agentMindscapes[character.id] === level ? ' selected' : ''}>M${level}</option>`).join('');
       return `<tr>
         <td class="priority-column">${runtime.separateWEnginePriorities ? '—' : index + 1}</td>
-        <td><div class="agent-target-control"><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('agentTarget')}`)}"><select class="form-control mindscape-select t-agent-mindscape" data-character-id="${escapeHtml(character.id)}" aria-label="${escapeHtml(`${character.name} — ${t('mindscape')}`)}">${mindscapeOptions}</select></div></td>
+        <td><div class="agent-target-control"><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('agentTarget')}`)}"><button class="btn btn-secondary mindscape-range-button t-edit-mindscape" data-character-id="${escapeHtml(character.id)}" type="button" title="${escapeHtml(t('editMindscapeRange'))}" aria-label="${escapeHtml(`${t('editMindscapeRange')}: ${character.name}`)}">${escapeHtml(compactMindscapeRange(character.id))}</button></div></td>
         <td><input class="form-check-input t-w-engine-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.wEngineEnabled[character.id] ? ' checked' : ''}${limitReached && !runtime.wEngineEnabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('wEngineTarget')}`)}"></td>
         <td>${escapeHtml(character.name)}${provisionalBadge}</td>
         <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(character))}${unconfirmedBadge}</td>
@@ -637,6 +681,7 @@
       renderProvisionalFormOptions(openSchedule);
       if ([...els.provisionalChannel.options].some(option => option.value === openChannel)) els.provisionalChannel.value = openChannel;
     }
+    if (mindscapeDialogCharacterId && els.mindscapeDialog.open) renderMindscapeDialog();
     if (persist) { try { localStorage.setItem(languageStorageKey, language); } catch {} }
     if (rerender) render();
   };
@@ -650,7 +695,7 @@
     pityGroups: Object.fromEntries(Object.entries(runtime.pityGroups).map(([id, value]) => [id, { ...value }])),
     customPeriods: runtime.customPeriods.map(period => ({ ...period })),
     customCharacters: runtime.customCharacters.map(character => ({ ...character })),
-    enabled: { ...runtime.enabled }, agentMindscapes: { ...runtime.agentMindscapes }, wEngineEnabled: { ...runtime.wEngineEnabled },
+    enabled: { ...runtime.enabled }, agentCurrentMindscapes: { ...runtime.agentCurrentMindscapes }, agentMindscapes: { ...runtime.agentMindscapes }, wEngineEnabled: { ...runtime.wEngineEnabled },
     order: runtime.characterOrder.slice(), characterOrder: runtime.characterOrder.slice(), targetOrder: runtime.targetOrder.slice(),
     separateWEnginePriorities: runtime.separateWEnginePriorities, separateOrderInitialized: runtime.separateOrderInitialized
   });
@@ -710,8 +755,13 @@
     rebuildCharacterRegistry(storedCharacterOrder, Array.isArray(state.targetOrder) ? state.targetOrder : runtime.targetOrder);
     characters.forEach(character => { if (typeof state.enabled?.[character.id] === 'boolean') runtime.enabled[character.id] = state.enabled[character.id]; });
     characters.forEach(character => {
+      const currentMindscape = +state.agentCurrentMindscapes?.[character.id];
+      if (Number.isInteger(currentMindscape) && currentMindscape >= -1 && currentMindscape < maximumMindscape) runtime.agentCurrentMindscapes[character.id] = currentMindscape;
+    });
+    characters.forEach(character => {
       const mindscape = +state.agentMindscapes?.[character.id];
-      if (Number.isInteger(mindscape) && mindscape >= 0 && mindscape <= maximumMindscape) runtime.agentMindscapes[character.id] = mindscape;
+      if (Number.isInteger(mindscape) && mindscape > runtime.agentCurrentMindscapes[character.id] && mindscape <= maximumMindscape) runtime.agentMindscapes[character.id] = mindscape;
+      else runtime.agentMindscapes[character.id] = runtime.agentCurrentMindscapes[character.id] + 1;
     });
     characters.forEach(character => { if (typeof state.wEngineEnabled?.[character.id] === 'boolean') runtime.wEngineEnabled[character.id] = state.wEngineEnabled[character.id]; });
     if (storedCharacterOrder.length === characters.length && new Set(storedCharacterOrder).size === characters.length && storedCharacterOrder.every(id => characterById.has(id))) runtime.characterOrder = constrainOrder(storedCharacterOrder, characterById);
@@ -754,6 +804,7 @@
     try { const state = JSON.parse(localStorage.getItem(ancientPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
     try { const state = JSON.parse(localStorage.getItem(prehistoricPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
     try { const state = JSON.parse(localStorage.getItem(primitivePlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
+    try { const state = JSON.parse(localStorage.getItem(primordialPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
     return legacyState();
   };
 
@@ -890,7 +941,7 @@
     const simulationTargets = targetIds.flatMap(id => {
       const target = targetById.get(id);
       const rules = channelById.get(target.channelId).pity;
-      const copies = target.kind === 'agent' ? runtime.agentMindscapes[target.characterId] + 1 : 1;
+      const copies = target.kind === 'agent' ? runtime.agentMindscapes[target.characterId] - runtime.agentCurrentMindscapes[target.characterId] : 1;
       return Array.from({ length: copies }, (_, copyIndex) => ({
         bit: copyIndex === copies - 1 ? bits[target.id] : 0,
         layout: groupPacking[rules.groupId],
@@ -1159,6 +1210,21 @@
   });
   els.addProvisional.addEventListener('click', () => openProvisionalForm());
   els.cancelProvisional.addEventListener('click', closeProvisionalForm);
+  els.currentMindscape.addEventListener('change', () => renderMindscapeTargetOptions(els.targetMindscape.value));
+  els.cancelMindscape.addEventListener('click', closeMindscapeDialog);
+  els.mindscapeDialog.addEventListener('close', () => { mindscapeDialogCharacterId = ''; });
+  els.mindscapeForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const character = characterById.get(mindscapeDialogCharacterId);
+    const currentMindscape = +els.currentMindscape.value;
+    const targetMindscape = +els.targetMindscape.value;
+    if (!character || !Number.isInteger(currentMindscape) || currentMindscape < -1 || currentMindscape >= maximumMindscape || !Number.isInteger(targetMindscape) || targetMindscape <= currentMindscape || targetMindscape > maximumMindscape) return;
+    runtime.agentCurrentMindscapes[character.id] = currentMindscape;
+    runtime.agentMindscapes[character.id] = targetMindscape;
+    closeMindscapeDialog();
+    renderCharacterTable();
+    updateAndPersist();
+  });
   els.provisionalSchedule.addEventListener('change', () => {
     if (els.provisionalSchedule.value === '__custom__' && (!els.provisionalStart.value || !els.provisionalEnd.value)) {
       const suggested = nextScheduleDates();
@@ -1249,14 +1315,6 @@
       updateAndPersist();
       return;
     }
-    if (target.matches('.t-agent-mindscape')) {
-      const mindscape = +target.value;
-      if (!Number.isInteger(mindscape) || mindscape < 0 || mindscape > maximumMindscape) return;
-      runtime.agentMindscapes[target.dataset.characterId] = mindscape;
-      renderCharacterTable();
-      updateAndPersist();
-      return;
-    }
     if (target === els.separateWEnginePriorities) {
       if (target.checked && !runtime.separateOrderInitialized) {
         runtime.targetOrder = constrainOrder(compactTargetOrder(), targetById);
@@ -1278,6 +1336,11 @@
     if (target.matches('.t-guaranteed, .t-special-guaranteed')) updateAndPersist();
   });
   root.addEventListener('click', event => {
+    const mindscapeButton = event.target.closest('.t-edit-mindscape');
+    if (mindscapeButton) {
+      openMindscapeDialog(mindscapeButton.dataset.characterId);
+      return;
+    }
     const editButton = event.target.closest('.t-edit-provisional');
     if (editButton) {
       openProvisionalForm(editButton.dataset.characterId);
