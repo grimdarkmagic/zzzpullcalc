@@ -196,6 +196,77 @@
     cursor: not-allowed;
   }
   #zzz-universal-planner .resource-breakdown { min-height: 1.3em; margin-top: 0.55rem; }
+  #zzz-universal-planner .pull-tracker {
+    margin: 0.85rem 0 0.5rem;
+    padding: clamp(0.8rem, 1.5vw, 1.1rem);
+    border: 1px solid color-mix(in srgb, var(--foreground) 15%, var(--border));
+    background: var(--planner-surface);
+  }
+  #zzz-universal-planner .pull-tracker-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.8rem;
+  }
+  #zzz-universal-planner .pull-tracker-toggle { cursor: pointer; }
+  #zzz-universal-planner .pull-tracker-toggle::marker { color: var(--muted-foreground); }
+  #zzz-universal-planner .pull-tracker-toggle:focus-visible { outline: 2px solid var(--foreground); outline-offset: 4px; }
+  #zzz-universal-planner .pull-tracker-title { display: inline; margin: 0; }
+  #zzz-universal-planner .pull-tracker-title::before { content: none; }
+  #zzz-universal-planner .pull-tracker-help { max-width: 760px; }
+  #zzz-universal-planner .pull-tracker-projection { margin-top: 0.75rem; }
+  #zzz-universal-planner .pull-tracker-projection-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+  #zzz-universal-planner .pull-tracker-projection-toggle .form-check-input { flex: 0 0 auto; }
+  #zzz-universal-planner #t-tracked-income-basis { margin-top: 0.35rem; }
+  #zzz-universal-planner .pull-tracker-backup-actions,
+  #zzz-universal-planner .pull-snapshot-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+  #zzz-universal-planner .pull-tracker-backup-actions { flex: 0 0 auto; }
+  #zzz-universal-planner .pull-tracker-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-top: 0.8rem;
+  }
+  #zzz-universal-planner .pull-tracker-stat {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--foreground) 14%, var(--border));
+    background: var(--planner-surface-strong);
+  }
+  #zzz-universal-planner .pull-tracker-stat strong {
+    color: var(--planner-green);
+    font-size: 1.3rem;
+    font-variant-numeric: tabular-nums;
+  }
+  #zzz-universal-planner .pull-snapshot-form {
+    display: grid;
+    grid-template-columns: minmax(190px, 1.25fr) repeat(3, minmax(135px, 1fr)) auto;
+    margin-top: 0.75rem;
+  }
+  #zzz-universal-planner .pull-snapshot-form label {
+    min-width: 0;
+    font-size: var(--font-size-small);
+  }
+  #zzz-universal-planner .pull-snapshot-form .form-control { margin-top: 0.25rem; }
+  #zzz-universal-planner .pull-snapshot-note { margin-top: 0.5rem; }
+  #zzz-universal-planner .pull-tracker-message { min-height: 1.3em; margin-top: 0.35rem; }
+  #zzz-universal-planner .pull-history-wrap { margin-top: 0.45rem; }
+  #zzz-universal-planner .pull-history-table { min-width: 1160px; }
+  #zzz-universal-planner .pull-history-table .form-control {
+    min-width: 88px;
+    padding: 0.35rem 0.45rem;
+    font-variant-numeric: tabular-nums;
+  }
+  #zzz-universal-planner .pull-history-table .t-history-date { min-width: 185px; }
+  #zzz-universal-planner .pull-history-table td { vertical-align: middle; }
+  #zzz-universal-planner .pull-history-earned { white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #zzz-universal-planner .pull-history-baseline { color: var(--muted-foreground); }
   #zzz-universal-planner .form-control {
     transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   }
@@ -221,6 +292,14 @@
   }
   #zzz-universal-planner .table :is(th, td) { padding: 0.68rem 0.75rem; }
   #zzz-universal-planner .table :is(th, td):last-child { padding-inline-end: 0.75rem; }
+  #zzz-universal-planner .table .priority-column {
+    width: 1%;
+    min-width: 0;
+    padding-inline: 0.4rem;
+    text-align: center;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
   #zzz-universal-planner .table thead th {
     border-bottom-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
     color: var(--foreground);
@@ -273,6 +352,10 @@
     outline-offset: 2px;
   }
   #zzz-universal-planner .config-subtext { display: block; margin-top: 0.2rem; white-space: nowrap; }
+  #zzz-universal-planner .agent-target-control { display: inline-flex; align-items: center; gap: 0.4rem; }
+  #zzz-universal-planner .agent-target-control .form-check-input { flex: 0 0 auto; }
+  #zzz-universal-planner .mindscape-select { width: 3.8rem; min-width: 3.8rem; padding: 0.25rem 0.35rem; }
+  #zzz-universal-planner .mindscape-help { margin: 0.45rem 0 0; }
   #zzz-universal-planner .t-agent-estimate { min-width: 190px; }
   #zzz-universal-planner .t-agent-estimate strong { white-space: nowrap; }
   #zzz-universal-planner .t-agent-estimate .config-subtext { line-height: 1.35; white-space: normal; }
@@ -426,9 +509,15 @@
       border-left: 0;
       text-align: start;
     }
+    #zzz-universal-planner .pull-tracker-header { display: block; }
+    #zzz-universal-planner .pull-tracker-backup-actions { margin-top: 0.65rem; }
+    #zzz-universal-planner .pull-tracker-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #zzz-universal-planner .pull-snapshot-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 520px) {
     html > body { padding: 0.5rem; }
+    #zzz-universal-planner .pull-tracker-summary,
+    #zzz-universal-planner .pull-snapshot-form { grid-template-columns: 1fr; }
     #zzz-universal-planner { padding: 0.85rem; }
     #zzz-universal-planner .planner-header { align-items: flex-start; }
     #zzz-universal-planner .planner-actions { flex-direction: column; align-items: stretch; }

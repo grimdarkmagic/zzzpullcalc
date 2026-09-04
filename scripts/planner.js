@@ -17,6 +17,12 @@
     currentSearches: root.querySelector('#t-current-searches'), resourceBreakdown: root.querySelector('#t-resource-breakdown'),
     resourceAmounts: Object.fromEntries([...root.querySelectorAll('.t-resource-amount')].map(input => [input.dataset.resource, input])),
     resourceEnabled: Object.fromEntries([...root.querySelectorAll('.t-resource-enabled')].map(input => [input.dataset.resource, input])),
+    pullTracker: root.querySelector('#t-pull-tracker'), useTrackedIncome: root.querySelector('#t-use-tracked-income'), trackedIncomeBasis: root.querySelector('#t-tracked-income-basis'),
+    pullSnapshotForm: root.querySelector('#t-pull-snapshot-form'), pullSnapshotDate: root.querySelector('#t-pull-snapshot-date'),
+    pullSnapshotSpent: root.querySelector('#t-pull-snapshot-spent'), pullSnapshotPurchased: root.querySelector('#t-pull-snapshot-purchased'), pullSnapshotAdjustment: root.querySelector('#t-pull-snapshot-adjustment'),
+    recordPullSnapshot: root.querySelector('#t-record-pull-snapshot'), pullGainTotal: root.querySelector('#t-pull-gain-total'), pullGainSeven: root.querySelector('#t-pull-gain-seven'), pullGainThirty: root.querySelector('#t-pull-gain-thirty'), pullGainAverage: root.querySelector('#t-pull-gain-average'),
+    pullHistoryWrap: root.querySelector('#t-pull-history-wrap'), pullHistoryRows: root.querySelector('#t-pull-history-rows'), pullHistoryEmpty: root.querySelector('#t-pull-history-empty'), pullTrackerMessage: root.querySelector('#t-pull-tracker-message'),
+    exportPullHistory: root.querySelector('#t-export-pull-history'), importPullHistory: root.querySelector('#t-import-pull-history'), importPullHistoryFile: root.querySelector('#t-import-pull-history-file'),
     incomeNote: root.querySelector('#t-income-note'), agentChannelRows: root.querySelector('#t-agent-channel-rows'), wEngineChannelRows: root.querySelector('#t-w-engine-channel-rows'), agentRows: root.querySelector('#t-agent-rows'), error: root.querySelector('#t-error'),
     order: root.querySelector('#t-order'), summary: root.querySelector('#t-summary'), targetChances: root.querySelector('#t-target-chances'), outcomes: root.querySelector('#t-outcomes'),
     separateWEnginePriorities: root.querySelector('#t-separate-w-engine-priorities'), selectedTargetCount: root.querySelector('#t-selected-target-count'), targetOrderPanel: root.querySelector('#t-target-order-panel'), targetOrderRows: root.querySelector('#t-target-order-rows'),
@@ -86,16 +92,20 @@
   const preferredLanguage = () => localeLoader.preferred();
   const themeStorageKey = 'zzz-universal-pull-planner-theme';
   const languageStorageKey = 'zzz-universal-pull-planner-language';
-  const plannerStateStorageKey = 'zzz-universal-pull-planner-state-v7';
-  const previousPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v6';
-  const olderPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v5';
-  const earlierPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v4';
-  const oldestPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v3';
-  const ancientPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v2';
+  const plannerStateStorageKey = 'zzz-universal-pull-planner-state-v9';
+  const previousPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v8';
+  const olderPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v7';
+  const earlierPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v6';
+  const oldestPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v5';
+  const ancientPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v4';
+  const prehistoricPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v3';
+  const primitivePlannerStateStorageKey = 'zzz-universal-pull-planner-state-v2';
   const legacyPlannerStateStorageKey = 'zzz-universal-pull-planner-state-v1';
   const currencyPerSearch = 160;
   const maximumAvailableSearches = 600;
+  const maximumMindscape = 6;
   const resourceKeys = ['monochromes', 'polychromes', 'encryptedMasterTapes'];
+  const maximumPullHistoryEntries = 500;
 
   const agentChannels = PLANNER_CONFIG.channels;
   const wEngineChannels = PLANNER_CONFIG.wEngineChannels;
@@ -152,9 +162,11 @@
     availableNow: PLANNER_CONFIG.availableNow,
     resourceBalances: { monochromes: 0, polychromes: 0, encryptedMasterTapes: PLANNER_CONFIG.availableNow },
     resourceEnabled: { monochromes: false, polychromes: true, encryptedMasterTapes: true },
+    pullHistory: [], pullTrackerOpen: false, useTrackedIncome: false,
     pityGroups: Object.fromEntries([...pityDefaults].map(([id, value]) => [id, { count: value.count, guaranteed: value.guaranteed, specialGuaranteed: value.specialGuaranteed }])),
     customPeriods: [], customCharacters: [],
     enabled: Object.fromEntries(builtInCharacters.map(character => [character.id, character.enabled])),
+    agentMindscapes: Object.fromEntries(builtInCharacters.map(character => [character.id, 0])),
     wEngineEnabled: Object.fromEntries(builtInCharacters.map(character => [character.id, false])),
     characterOrder: defaultCharacterOrder.slice(), targetOrder: defaultTargetOrder.slice(),
     separateWEnginePriorities: false, separateOrderInitialized: false
@@ -173,6 +185,8 @@
     runtime.characterOrder = constrainOrder(completeOrder, characterById);
     runtime.enabled = Object.fromEntries(characters.map(character => [character.id,
       typeof runtime.enabled[character.id] === 'boolean' ? runtime.enabled[character.id] : Boolean(character.enabled)]));
+    runtime.agentMindscapes = Object.fromEntries(characters.map(character => [character.id,
+      Number.isInteger(runtime.agentMindscapes[character.id]) && runtime.agentMindscapes[character.id] >= 0 && runtime.agentMindscapes[character.id] <= maximumMindscape ? runtime.agentMindscapes[character.id] : 0]));
     runtime.wEngineEnabled = Object.fromEntries(characters.map(character => [character.id,
       typeof runtime.wEngineEnabled[character.id] === 'boolean' ? runtime.wEngineEnabled[character.id] : false]));
     targets = makeTargets(characters);
@@ -230,7 +244,9 @@
     : channel.id === 'exclusive-rescreening' ? t('exclusiveRescreening')
       : channel.id === 'w-engine' ? t('wEngineChannel')
         : channel.id === 'w-engine-reverberation' ? t('wEngineReverberation') : channel.name;
-  const targetLabel = target => target.kind === 'w-engine' ? `${target.characterName} — ${t('wEngineSuffix')}` : target.characterName;
+  const targetLabel = target => target.kind === 'w-engine'
+    ? `${target.characterName} — ${t('wEngineSuffix')}`
+    : `${target.characterName} — M${runtime.agentMindscapes[target.characterId] || 0}`;
   const percentLabel = value => `${new Intl.NumberFormat(localeLoader.intlLocale(language), { maximumFractionDigits: 1 }).format(value * 100)}%`;
   const numberLabel = (value, maximumFractionDigits = 1) => new Intl.NumberFormat(localeLoader.intlLocale(language), { maximumFractionDigits }).format(value);
   const resourceBalancesValid = () => resourceKeys.every(key => !runtime.resourceEnabled[key] ||
@@ -262,13 +278,142 @@
     });
     renderResourceBalance();
   };
+  const localDateTimeInputValue = value => {
+    const date = new Date(value);
+    const offset = date.getTimezoneOffset() * 60 * 1000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  };
+  const pullUnitsFromInput = (value, allowNegative = false) => {
+    const numeric = Number(value);
+    const units = Math.round(numeric * currencyPerSearch);
+    if (!Number.isFinite(numeric) || (!allowNegative && numeric < 0) || Math.abs(numeric * currencyPerSearch - units) > 1e-7 || Math.abs(units) > 10000 * currencyPerSearch) return null;
+    return units;
+  };
+  const pullHistoryEntryIsValid = entry => Number.isInteger(entry.recordedAt) && entry.recordedAt >= 1577836800000 && entry.recordedAt < 4102444800000 &&
+    resourceKeys.every(key => Number.isInteger(entry.balances?.[key]) && entry.balances[key] >= 0 && entry.balances[key] <= (key === 'encryptedMasterTapes' ? 600 : 96000)) &&
+    Number.isInteger(entry.spent) && entry.spent >= 0 && entry.spent <= 10000 &&
+    Number.isInteger(entry.purchasedUnits) && entry.purchasedUnits >= 0 && entry.purchasedUnits <= 10000 * currencyPerSearch &&
+    Number.isInteger(entry.adjustmentUnits) && Math.abs(entry.adjustmentUnits) <= 10000 * currencyPerSearch;
+  const normalizedPullHistory = (entries, strict = false) => {
+    if (!Array.isArray(entries)) return strict ? null : [];
+    if (entries.length > maximumPullHistoryEntries && strict) return null;
+    const sourceEntries = entries.slice(0, maximumPullHistoryEntries);
+    const normalized = [];
+    const ids = new Set();
+    for (let index = 0; index < sourceEntries.length; index += 1) {
+      const source = sourceEntries[index];
+      if (!source || typeof source !== 'object' || Array.isArray(source)) {
+        if (strict) return null;
+        continue;
+      }
+      let id = typeof source.id === 'string' && source.id.length > 0 && source.id.length <= 100 && !ids.has(source.id) ? source.id : `history-${source.recordedAt}-${index}`;
+      while (ids.has(id)) id = `${id}-${index}`;
+      const numeric = value => typeof value === 'number' ? value : NaN;
+      const candidate = {
+        id,
+        recordedAt: numeric(source.recordedAt),
+        balances: Object.fromEntries(resourceKeys.map(key => [key, numeric(source.balances?.[key])])),
+        spent: numeric(source.spent), purchasedUnits: numeric(source.purchasedUnits), adjustmentUnits: numeric(source.adjustmentUnits)
+      };
+      if (!pullHistoryEntryIsValid(candidate)) {
+        if (strict) return null;
+        continue;
+      }
+      ids.add(candidate.id);
+      normalized.push(candidate);
+    }
+    normalized.sort((a, b) => a.recordedAt - b.recordedAt || a.id.localeCompare(b.id));
+    if (normalized[0]) {
+      normalized[0].spent = 0;
+      normalized[0].purchasedUnits = 0;
+      normalized[0].adjustmentUnits = 0;
+    }
+    return normalized;
+  };
+  const snapshotBalanceUnits = entry => entry.balances.monochromes + entry.balances.polychromes + entry.balances.encryptedMasterTapes * currencyPerSearch;
+  const pullGainUnits = (entry, previous) => previous
+    ? snapshotBalanceUnits(entry) - snapshotBalanceUnits(previous) + entry.spent * currencyPerSearch - entry.purchasedUnits - entry.adjustmentUnits
+    : null;
+  const trackedIncomeStats = (now = Date.now()) => {
+    const history = runtime.pullHistory.filter(entry => entry.recordedAt <= now);
+    const first = history[0];
+    const latest = history[history.length - 1];
+    const totalUnits = history.reduce((sum, entry, index) => sum + (pullGainUnits(entry, history[index - 1]) ?? 0), 0);
+    const elapsedDays = history.length > 1 ? (latest.recordedAt - first.recordedAt) / millisecondsPerDay : 0;
+    const rate = elapsedDays > 0 ? totalUnits / currencyPerSearch / elapsedDays : null;
+    return { count: history.length, first, latest, totalUnits, rate };
+  };
+  const projectionIncome = () => {
+    const tracked = trackedIncomeStats();
+    const usable = tracked.rate !== null && Number.isFinite(tracked.rate) && tracked.rate >= 0;
+    const usingTracked = runtime.useTrackedIncome && usable;
+    return { tracked, usable, usingTracked, rate: usingTracked ? tracked.rate : PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay };
+  };
+  const incomeRateLabel = rate => rate > 0 && rate < 0.00001 ? `<${numberLabel(0.00001, 5)}` : numberLabel(rate, 5);
+  const trackedIncomeText = (key, tracked) => {
+    const formatter = new Intl.DateTimeFormat(localeLoader.intlLocale(language), { dateStyle: 'short', timeStyle: 'short' });
+    return t(key).replace('{rate}', incomeRateLabel(tracked.rate))
+      .replace('{start}', formatter.format(tracked.first.recordedAt))
+      .replace('{end}', formatter.format(tracked.latest.recordedAt));
+  };
+  const renderProjectionIncome = (income = projectionIncome()) => {
+    els.useTrackedIncome.checked = runtime.useTrackedIncome;
+    els.trackedIncomeBasis.textContent = income.usable
+      ? trackedIncomeText('trackedIncomeBasis', income.tracked)
+      : t(income.tracked.rate !== null && income.tracked.rate < 0 ? 'trackedIncomeNegative' : 'trackedIncomeNeedsHistory');
+    els.incomeNote.textContent = income.usingTracked
+      ? trackedIncomeText('trackedIncomeNote', income.tracked)
+      : `${runtime.useTrackedIncome ? `${t('trackedIncomeFallback')} ` : ''}${t('incomeNote').replace('{rate}', incomeRateLabel(income.rate))}`;
+  };
+  const pullUnitsLabel = units => numberLabel(units / currencyPerSearch, 5);
+  const pullUnitsInputValue = units => String(units / currencyPerSearch);
+  const signedPullUnitsLabel = units => `${units > 0 ? '+' : ''}${pullUnitsLabel(units)}`;
+  const setPullTrackerMessage = (key = '', isError = false) => {
+    els.pullTrackerMessage.textContent = key ? t(key) : '';
+    els.pullTrackerMessage.classList.toggle('text-destructive', isError);
+  };
+  const renderPullTracker = () => {
+    const history = runtime.pullHistory;
+    const gains = history.map((entry, index) => pullGainUnits(entry, history[index - 1]));
+    const now = Date.now();
+    const tracked = trackedIncomeStats(now);
+    const recentTotal = days => {
+      const cutoff = now - days * millisecondsPerDay;
+      const relevant = gains.filter((value, index) => index > 0 && history[index].recordedAt >= cutoff && history[index].recordedAt <= now);
+      return relevant.length ? relevant.reduce((sum, value) => sum + value, 0) : null;
+    };
+    els.pullGainTotal.textContent = tracked.count > 1 ? signedPullUnitsLabel(tracked.totalUnits) : '—';
+    const sevenDayTotal = recentTotal(7);
+    const thirtyDayTotal = recentTotal(30);
+    els.pullGainSeven.textContent = sevenDayTotal === null ? '—' : signedPullUnitsLabel(sevenDayTotal);
+    els.pullGainThirty.textContent = thirtyDayTotal === null ? '—' : signedPullUnitsLabel(thirtyDayTotal);
+    els.pullGainAverage.textContent = tracked.rate !== null ? `${tracked.rate > 0 ? '+' : ''}${incomeRateLabel(tracked.rate)}` : '—';
+    renderProjectionIncome();
+    els.pullHistoryWrap.hidden = !history.length;
+    els.pullHistoryEmpty.hidden = Boolean(history.length);
+    els.recordPullSnapshot.textContent = t(history.length ? 'recordSnapshot' : 'startTracking');
+    [els.pullSnapshotSpent, els.pullSnapshotPurchased, els.pullSnapshotAdjustment].forEach(input => { input.disabled = !history.length; });
+    els.pullHistoryRows.innerHTML = history.map((entry, index) => {
+      const gain = gains[index];
+      return `<tr data-history-id="${escapeHtml(entry.id)}">
+        <td><input class="form-control t-pull-history-input t-history-date" data-field="recordedAt" type="datetime-local" value="${localDateTimeInputValue(entry.recordedAt)}"></td>
+        ${resourceKeys.map(key => `<td><input class="form-control t-pull-history-input" data-field="${key}" type="number" min="0" max="${key === 'encryptedMasterTapes' ? 600 : 96000}" step="1" value="${entry.balances[key]}"></td>`).join('')}
+        <td><input class="form-control t-pull-history-input" data-field="spent" type="number" min="0" max="10000" step="1" value="${entry.spent}" ${index ? '' : 'disabled'}></td>
+        <td><input class="form-control t-pull-history-input" data-field="purchasedUnits" type="number" min="0" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.purchasedUnits)}" ${index ? '' : 'disabled'}></td>
+        <td><input class="form-control t-pull-history-input" data-field="adjustmentUnits" type="number" min="-10000" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.adjustmentUnits)}" ${index ? '' : 'disabled'}></td>
+        <td class="text-end pull-history-earned ${gain === null ? 'pull-history-baseline' : ''}">${gain === null ? escapeHtml(t('pullHistoryBaseline')) : signedPullUnitsLabel(gain)}</td>
+        <td><button class="btn btn-sm t-remove-pull-history" type="button" title="${escapeHtml(t('removeSnapshot'))}" aria-label="${escapeHtml(t('removeSnapshot'))}">×</button></td>
+      </tr>`;
+    }).join('');
+    if (!els.pullSnapshotDate.value) els.pullSnapshotDate.value = localDateTimeInputValue(Date.now());
+  };
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
   const localDeadline = value => {
     const [year, month, day] = value.split('-').map(Number);
     return new Date(year, month - 1, day).getTime();
   };
   const daysRemaining = endDate => Math.max(0, (localDeadline(endDate) - Date.now()) / millisecondsPerDay);
-  const estimatedSearches = endDate => Math.floor(daysRemaining(endDate) * PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay);
+  const estimatedSearches = (endDate, rate = projectionIncome().rate) => Math.floor(daysRemaining(endDate) * rate);
   const datePattern = /^\d{4}-\d{2}-\d{2}$/;
   const validIsoDate = value => {
     if (!datePattern.test(value)) return false;
@@ -400,14 +545,15 @@
   }
 
   function renderCharacterTable() {
-    els.incomeNote.textContent = t('incomeNote').replace('{rate}', numberLabel(PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay));
+    const income = projectionIncome();
+    renderProjectionIncome(income);
     const selectedCount = selectedTargetIds().length;
     const limitReached = selectedCount >= PLANNER_CONFIG.maxSelectedTargets;
     els.agentRows.innerHTML = runtime.characterOrder.map((characterId, index) => {
       const character = characterById.get(characterId);
       const channel = channelById.get(character.channelId);
       const remaining = daysRemaining(character.endDate);
-      const estimate = estimatedSearches(character.endDate);
+      const estimate = estimatedSearches(character.endDate, income.rate);
       const canMoveUp = index > 0 && runsOverlap(character, characterById.get(runtime.characterOrder[index - 1]));
       const canMoveDown = index < runtime.characterOrder.length - 1 && runsOverlap(character, characterById.get(runtime.characterOrder[index + 1]));
       const provisionalBadge = character.provisional
@@ -419,12 +565,14 @@
       const provisionalActions = character.provisional ? `
           <button class="btn provisional-row-action t-edit-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('editTarget')}: ${character.name}`)}" title="${escapeHtml(t('editTarget'))}">✎</button>
           <button class="btn provisional-row-action t-delete-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('removeTarget')}: ${character.name}`)}" title="${escapeHtml(t('removeTarget'))}">×</button>` : '';
+      const mindscapeOptions = Array.from({ length: maximumMindscape + 1 }, (_, level) => `<option value="${level}"${runtime.agentMindscapes[character.id] === level ? ' selected' : ''}>M${level}</option>`).join('');
       return `<tr>
-        <td><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('agentTarget')}`)}"></td>
+        <td class="priority-column">${runtime.separateWEnginePriorities ? '—' : index + 1}</td>
+        <td><div class="agent-target-control"><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('agentTarget')}`)}"><select class="form-control mindscape-select t-agent-mindscape" data-character-id="${escapeHtml(character.id)}" aria-label="${escapeHtml(`${character.name} — ${t('mindscape')}`)}">${mindscapeOptions}</select></div></td>
         <td><input class="form-check-input t-w-engine-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.wEngineEnabled[character.id] ? ' checked' : ''}${limitReached && !runtime.wEngineEnabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${character.name} — ${t('wEngineTarget')}`)}"></td>
-        <td class="text-end">${runtime.separateWEnginePriorities ? '—' : index + 1}</td><td>${escapeHtml(character.name)}${provisionalBadge}</td>
+        <td>${escapeHtml(character.name)}${provisionalBadge}</td>
         <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(character))}${unconfirmedBadge}</td>
-        <td class="t-agent-estimate t-deadline-estimate" data-end-date="${escapeHtml(character.endDate)}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${numberLabel(PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay)} ${t('searchesPerDay')}</span></td>
+        <td class="t-agent-estimate t-deadline-estimate" data-end-date="${escapeHtml(character.endDate)}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${escapeHtml(incomeRateLabel(income.rate))} ${t('searchesPerDay')}</span></td>
         <td><div class="move-buttons">
           <span class="compact-order-actions"${runtime.separateWEnginePriorities ? ' hidden' : ''}><button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${character.name}`)}">↑</button>
           <button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${character.name}`)}">↓</button></span>
@@ -451,7 +599,7 @@
       const canMoveUp = previous && runsOverlap(target, previous);
       const canMoveDown = next && runsOverlap(target, next);
       return `<tr>
-        <td class="text-end">${index + 1}</td><td>${escapeHtml(targetLabel(target))}<span class="target-kind-badge">${t(target.kind === 'w-engine' ? 'wEngineTarget' : 'agentTarget')}</span></td>
+        <td class="priority-column">${index + 1}</td><td>${escapeHtml(targetLabel(target))}<span class="target-kind-badge">${t(target.kind === 'w-engine' ? 'wEngineTarget' : 'agentTarget')}</span></td>
         <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(target))}</td>
         <td class="t-deadline-estimate" data-end-date="${escapeHtml(target.endDate)}">—</td>
         <td><div class="move-buttons"><button class="btn btn-secondary t-move-target" data-target-id="${escapeHtml(id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${targetLabel(target)}`)}">↑</button><button class="btn btn-secondary t-move-target" data-target-id="${escapeHtml(id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${targetLabel(target)}`)}">↓</button></div></td>
@@ -482,6 +630,7 @@
     els.languageSelect.value = language;
     applyTheme(document.documentElement.dataset.theme);
     renderResourceBalance();
+    renderPullTracker();
     renderChannelTable(); renderCharacterTable();
     if (!els.provisionalForm.hidden) {
       els.provisionalFormTitle.textContent = t(els.provisionalId.value ? 'editProvisional' : 'addProvisional').replace(/^\+\s*/, '');
@@ -496,10 +645,12 @@
     availableNow: runtime.availableNow,
     resourceBalances: { ...runtime.resourceBalances },
     resourceEnabled: { ...runtime.resourceEnabled },
+    pullHistory: runtime.pullHistory.map(entry => ({ ...entry, balances: { ...entry.balances } })),
+    pullTrackerOpen: runtime.pullTrackerOpen, useTrackedIncome: runtime.useTrackedIncome,
     pityGroups: Object.fromEntries(Object.entries(runtime.pityGroups).map(([id, value]) => [id, { ...value }])),
     customPeriods: runtime.customPeriods.map(period => ({ ...period })),
     customCharacters: runtime.customCharacters.map(character => ({ ...character })),
-    enabled: { ...runtime.enabled }, wEngineEnabled: { ...runtime.wEngineEnabled },
+    enabled: { ...runtime.enabled }, agentMindscapes: { ...runtime.agentMindscapes }, wEngineEnabled: { ...runtime.wEngineEnabled },
     order: runtime.characterOrder.slice(), characterOrder: runtime.characterOrder.slice(), targetOrder: runtime.targetOrder.slice(),
     separateWEnginePriorities: runtime.separateWEnginePriorities, separateOrderInitialized: runtime.separateOrderInitialized
   });
@@ -541,6 +692,9 @@
       runtime.resourceEnabled.polychromes = true;
       runtime.resourceEnabled.encryptedMasterTapes = true;
     }
+    runtime.pullHistory = normalizedPullHistory(state.pullHistory);
+    runtime.pullTrackerOpen = state.pullTrackerOpen === true;
+    runtime.useTrackedIncome = state.useTrackedIncome === true;
     runtime.availableNow = resourceBudget().searches;
     Object.keys(runtime.pityGroups).forEach(id => {
       const stored = state.pityGroups?.[id] || (id === 'exclusive' ? state.pityGroups?.['normal-exclusive'] : null);
@@ -555,6 +709,10 @@
     const storedCharacterOrder = Array.isArray(state.characterOrder) ? state.characterOrder : Array.isArray(state.order) ? state.order : runtime.characterOrder;
     rebuildCharacterRegistry(storedCharacterOrder, Array.isArray(state.targetOrder) ? state.targetOrder : runtime.targetOrder);
     characters.forEach(character => { if (typeof state.enabled?.[character.id] === 'boolean') runtime.enabled[character.id] = state.enabled[character.id]; });
+    characters.forEach(character => {
+      const mindscape = +state.agentMindscapes?.[character.id];
+      if (Number.isInteger(mindscape) && mindscape >= 0 && mindscape <= maximumMindscape) runtime.agentMindscapes[character.id] = mindscape;
+    });
     characters.forEach(character => { if (typeof state.wEngineEnabled?.[character.id] === 'boolean') runtime.wEngineEnabled[character.id] = state.wEngineEnabled[character.id]; });
     if (storedCharacterOrder.length === characters.length && new Set(storedCharacterOrder).size === characters.length && storedCharacterOrder.every(id => characterById.has(id))) runtime.characterOrder = constrainOrder(storedCharacterOrder, characterById);
     if (Array.isArray(state.targetOrder) && state.targetOrder.length === targets.length && new Set(state.targetOrder).size === targets.length && state.targetOrder.every(id => targetById.has(id))) runtime.targetOrder = constrainOrder(state.targetOrder, targetById);
@@ -594,6 +752,8 @@
     try { const state = JSON.parse(localStorage.getItem(earlierPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
     try { const state = JSON.parse(localStorage.getItem(oldestPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
     try { const state = JSON.parse(localStorage.getItem(ancientPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
+    try { const state = JSON.parse(localStorage.getItem(prehistoricPlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
+    try { const state = JSON.parse(localStorage.getItem(primitivePlannerStateStorageKey) || 'null'); if (state && typeof state === 'object' && !Array.isArray(state)) return state; } catch {}
     return legacyState();
   };
 
@@ -673,40 +833,43 @@
     const outcomes = [];
     const maskDelta = (maskFromCore(core) & bit) ? 0 : bit * maskUnit;
     const resetPityCore = core - count * layout.countUnit;
-    if (hitRate < 1) outcomes.push(core + layout.countUnit, 1 - hitRate);
+    if (hitRate < 1) outcomes.push(core + layout.countUnit, 1 - hitRate, false);
     if (specialGuaranteed) {
-      outcomes.push(resetPityCore - layout.specialGuaranteedUnit + maskDelta, hitRate);
+      outcomes.push(resetPityCore - layout.specialGuaranteedUnit + maskDelta, hitRate, true);
     } else if (guaranteed) {
-      outcomes.push(resetPityCore - layout.guaranteedUnit + maskDelta, hitRate);
+      outcomes.push(resetPityCore - layout.guaranteedUnit + maskDelta, hitRate, true);
     } else {
       const featuredProbability = hitRate * rules.featuredRate;
       const missedProbability = hitRate * (1 - rules.featuredRate);
-      if (featuredProbability > 0) outcomes.push(resetPityCore + maskDelta, featuredProbability);
-      if (missedProbability > 0) outcomes.push(resetPityCore + layout.guaranteedUnit, missedProbability);
+      if (featuredProbability > 0) outcomes.push(resetPityCore + maskDelta, featuredProbability, true);
+      if (missedProbability > 0) outcomes.push(resetPityCore + layout.guaranteedUnit, missedProbability, false);
     }
     return outcomes;
   };
 
   const runUnitCostPhase = (arrivals, simulationTargets, cap) => {
-    const done = Array(cap + 1);
+    const latestArrival = arrivals.reduce((latest, bucket, index) => bucket?.size ? index : latest, 0);
+    const maximumTargetSpend = simulationTargets.reduce((sum, target) => sum + target.rules.hardPity * 2, 0);
+    const effectiveCap = Math.min(cap, latestArrival + maximumTargetSpend);
+    const done = Array(effectiveCap + 1);
     let activeTargets = [];
-    for (let spent = 0; spent <= cap; spent += 1) {
+    for (let spent = 0; spent <= effectiveCap; spent += 1) {
       const arriving = arrivals[spent];
       if (arriving) {
         if (!activeTargets[0]) activeTargets[0] = new Map();
         arriving.forEach((probability, core) => add(activeTargets[0], core, probability));
       }
-      if (spent === cap) {
-        activeTargets.forEach(active => active?.forEach((probability, core) => addBucket(done, cap, core, probability)));
+      if (spent === effectiveCap) {
+        activeTargets.forEach(active => active?.forEach((probability, core) => addBucket(done, effectiveCap, core, probability)));
         break;
       }
       const nextTargets = [];
       activeTargets.forEach((active, targetIndex) => active?.forEach((probability, core) => {
         const simulationTarget = simulationTargets[targetIndex];
         const branches = pullTarget(core, simulationTarget);
-        for (let index = 0; index < branches.length; index += 2) {
+        for (let index = 0; index < branches.length; index += 3) {
           const nextCore = branches[index];
-          const nextIndex = (maskFromCore(nextCore) & simulationTarget.bit) ? targetIndex + 1 : targetIndex;
+          const nextIndex = branches[index + 2] ? targetIndex + 1 : targetIndex;
           if (nextIndex >= simulationTargets.length) {
             addBucket(done, spent + 1, nextCore, probability * branches[index + 1]);
           } else {
@@ -722,10 +885,17 @@
 
   function runPhase(arrivals, targetIds, cap, bits) {
     if (!targetIds.length) return arrivals;
-    const simulationTargets = targetIds.map(id => {
+    // Extra Agent copies are internal consecutive steps. Only the final copy
+    // carries the Agent's outcome bit, so every Agent still uses one target bit.
+    const simulationTargets = targetIds.flatMap(id => {
       const target = targetById.get(id);
       const rules = channelById.get(target.channelId).pity;
-      return { bit: bits[target.id], layout: groupPacking[rules.groupId], rules };
+      const copies = target.kind === 'agent' ? runtime.agentMindscapes[target.characterId] + 1 : 1;
+      return Array.from({ length: copies }, (_, copyIndex) => ({
+        bit: copyIndex === copies - 1 ? bits[target.id] : 0,
+        layout: groupPacking[rules.groupId],
+        rules
+      }));
     });
     return runUnitCostPhase(arrivals, simulationTargets, cap);
   }
@@ -747,10 +917,11 @@
     const selected = new Set(ordered);
     const bits = Object.fromEntries(ordered.map((id, index) => [id, 1 << index]));
     const deadlines = [...new Set(characters.map(character => character.endDate))].sort();
+    const incomeRate = projectionIncome().rate;
     const phases = deadlines.map((endDate, phase) => ({
       phase,
       endDate,
-      estimatedGain: estimatedSearches(endDate),
+      estimatedGain: estimatedSearches(endDate, incomeRate),
       expired: localDeadline(endDate) <= Date.now(),
       targets: ordered.filter(id => targetById.get(id).endDate === endDate)
     }));
@@ -868,6 +1039,124 @@
   }
 
   const updateAndPersist = () => { persistPlannerState(); render(); };
+  const refreshPullHistory = () => {
+    persistPlannerState();
+    renderPullTracker();
+    if (runtime.useTrackedIncome) {
+      renderCharacterTable();
+      render();
+    }
+  };
+  els.pullTracker.addEventListener('toggle', () => {
+    if (runtime.pullTrackerOpen !== els.pullTracker.open) {
+      runtime.pullTrackerOpen = els.pullTracker.open;
+      persistPlannerState();
+    }
+    if (els.pullTracker.open) renderPullTracker();
+  });
+  els.useTrackedIncome.addEventListener('change', () => {
+    runtime.useTrackedIncome = els.useTrackedIncome.checked;
+    renderCharacterTable();
+    updateAndPersist();
+  });
+  const newPullHistoryId = () => globalThis.crypto?.randomUUID?.() || `history-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  els.pullSnapshotForm.addEventListener('submit', event => {
+    event.preventDefault();
+    if (runtime.pullHistory.length >= maximumPullHistoryEntries) {
+      setPullTrackerMessage('historyLimitReached', true);
+      return;
+    }
+    const recordedAt = new Date(els.pullSnapshotDate.value).getTime();
+    const spent = Number(els.pullSnapshotSpent.value);
+    const purchasedUnits = pullUnitsFromInput(els.pullSnapshotPurchased.value);
+    const adjustmentUnits = pullUnitsFromInput(els.pullSnapshotAdjustment.value, true);
+    const entry = {
+      id: newPullHistoryId(), recordedAt,
+      balances: Object.fromEntries(resourceKeys.map(key => [key, runtime.resourceBalances[key]])),
+      spent: runtime.pullHistory.length ? spent : 0,
+      purchasedUnits: runtime.pullHistory.length ? purchasedUnits : 0,
+      adjustmentUnits: runtime.pullHistory.length ? adjustmentUnits : 0
+    };
+    if (!Number.isInteger(spent) || purchasedUnits === null || adjustmentUnits === null || !pullHistoryEntryIsValid(entry)) {
+      setPullTrackerMessage('invalidSnapshot', true);
+      return;
+    }
+    runtime.pullHistory = normalizedPullHistory([...runtime.pullHistory, entry]);
+    els.pullSnapshotDate.value = localDateTimeInputValue(Date.now());
+    els.pullSnapshotSpent.value = '0';
+    els.pullSnapshotPurchased.value = '0';
+    els.pullSnapshotAdjustment.value = '0';
+    refreshPullHistory();
+    setPullTrackerMessage('snapshotSaved');
+  });
+  els.pullHistoryRows.addEventListener('change', event => {
+    const input = event.target.closest('.t-pull-history-input');
+    if (!input) return;
+    const row = input.closest('[data-history-id]');
+    const index = runtime.pullHistory.findIndex(entry => entry.id === row.dataset.historyId);
+    if (index < 0) return;
+    const entry = { ...runtime.pullHistory[index], balances: { ...runtime.pullHistory[index].balances } };
+    if (input.dataset.field === 'recordedAt') entry.recordedAt = new Date(input.value).getTime();
+    else if (resourceKeys.includes(input.dataset.field)) entry.balances[input.dataset.field] = Number(input.value);
+    else if (input.dataset.field === 'spent') entry.spent = Number(input.value);
+    else {
+      const units = pullUnitsFromInput(input.value, input.dataset.field === 'adjustmentUnits');
+      if (units === null) {
+        renderPullTracker();
+        setPullTrackerMessage('invalidSnapshot', true);
+        return;
+      }
+      entry[input.dataset.field] = units;
+    }
+    if (!pullHistoryEntryIsValid(entry)) {
+      renderPullTracker();
+      setPullTrackerMessage('invalidSnapshot', true);
+      return;
+    }
+    runtime.pullHistory[index] = entry;
+    runtime.pullHistory = normalizedPullHistory(runtime.pullHistory);
+    refreshPullHistory();
+    setPullTrackerMessage('snapshotUpdated');
+  });
+  els.pullHistoryRows.addEventListener('click', event => {
+    const button = event.target.closest('.t-remove-pull-history');
+    if (!button || !window.confirm(t('removeSnapshotConfirm'))) return;
+    const id = button.closest('[data-history-id]').dataset.historyId;
+    runtime.pullHistory = normalizedPullHistory(runtime.pullHistory.filter(entry => entry.id !== id));
+    refreshPullHistory();
+    setPullTrackerMessage('snapshotRemoved');
+  });
+  els.exportPullHistory.addEventListener('click', () => {
+    const payload = JSON.stringify({ format: 'zzz-pull-history', version: 1, exportedAt: new Date().toISOString(), entries: runtime.pullHistory }, null, 2);
+    const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `zzz-pull-history-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  });
+  els.importPullHistory.addEventListener('click', () => {
+    els.importPullHistoryFile.value = '';
+    els.importPullHistoryFile.click();
+  });
+  els.importPullHistoryFile.addEventListener('change', async () => {
+    const file = els.importPullHistoryFile.files?.[0];
+    if (!file || file.size > 1024 * 1024) {
+      if (file) setPullTrackerMessage('invalidHistoryFile', true);
+      return;
+    }
+    try {
+      const payload = JSON.parse(await file.text());
+      const imported = payload?.format === 'zzz-pull-history' && payload.version === 1 ? normalizedPullHistory(payload.entries, true) : null;
+      if (!imported) throw new Error('Invalid pull history');
+      if (runtime.pullHistory.length && !window.confirm(t('replaceHistoryConfirm'))) return;
+      runtime.pullHistory = imported;
+      refreshPullHistory();
+      setPullTrackerMessage('historyImported');
+    } catch {
+      setPullTrackerMessage('invalidHistoryFile', true);
+    }
+  });
   els.addProvisional.addEventListener('click', () => openProvisionalForm());
   els.cancelProvisional.addEventListener('click', closeProvisionalForm);
   els.provisionalSchedule.addEventListener('change', () => {
@@ -960,6 +1249,14 @@
       updateAndPersist();
       return;
     }
+    if (target.matches('.t-agent-mindscape')) {
+      const mindscape = +target.value;
+      if (!Number.isInteger(mindscape) || mindscape < 0 || mindscape > maximumMindscape) return;
+      runtime.agentMindscapes[target.dataset.characterId] = mindscape;
+      renderCharacterTable();
+      updateAndPersist();
+      return;
+    }
     if (target === els.separateWEnginePriorities) {
       if (target.checked && !runtime.separateOrderInitialized) {
         runtime.targetOrder = constrainOrder(compactTargetOrder(), targetById);
@@ -1047,6 +1344,7 @@
   });
   els.themeSelect.addEventListener('change', event => applyTheme(event.currentTarget.value, true));
   applyPlannerState(storedPlannerState());
+  els.pullTracker.open = runtime.pullTrackerOpen;
   syncResourceControls();
   applyLanguage(initialLanguage, false, false);
   persistPlannerState();

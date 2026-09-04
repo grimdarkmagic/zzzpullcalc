@@ -81,6 +81,56 @@
   </div>
   <p id="t-income-note" class="text-small text-muted"></p>
 
+  <details id="t-pull-tracker" class="pull-tracker" aria-labelledby="t-pull-tracker-heading">
+    <summary class="pull-tracker-toggle"><h3 id="t-pull-tracker-heading" class="pull-tracker-title" data-i18n="pullTracker">Pull income tracker</h3></summary>
+    <div class="pull-tracker-header">
+      <div>
+        <p class="text-small text-muted pull-tracker-help" data-i18n="pullTrackerHelp">Save occasional snapshots of the wallet above. Spending and excluded balance changes apply to the time since the preceding snapshot.</p>
+      </div>
+      <div class="pull-tracker-backup-actions">
+        <button id="t-export-pull-history" class="btn btn-sm" type="button" data-i18n="exportHistory">Export history</button>
+        <button id="t-import-pull-history" class="btn btn-sm" type="button" data-i18n="importHistory">Import history</button>
+        <input id="t-import-pull-history-file" type="file" accept="application/json,.json" hidden>
+      </div>
+    </div>
+
+    <div class="pull-tracker-summary" aria-live="polite">
+      <div class="pull-tracker-stat"><span class="text-small text-muted" data-i18n="trackedTotal">Tracked total</span><strong id="t-pull-gain-total">—</strong></div>
+      <div class="pull-tracker-stat"><span class="text-small text-muted" data-i18n="trackedSevenDays">Recorded in 7 days</span><strong id="t-pull-gain-seven">—</strong></div>
+      <div class="pull-tracker-stat"><span class="text-small text-muted" data-i18n="trackedThirtyDays">Recorded in 30 days</span><strong id="t-pull-gain-thirty">—</strong></div>
+      <div class="pull-tracker-stat"><span class="text-small text-muted" data-i18n="trackedDailyAverage">Average per day</span><strong id="t-pull-gain-average">—</strong></div>
+    </div>
+
+    <div class="pull-tracker-projection">
+      <label class="pull-tracker-projection-toggle" for="t-use-tracked-income">
+        <input id="t-use-tracked-income" class="form-check-input" type="checkbox" aria-describedby="t-tracked-income-basis">
+        <span data-i18n="useTrackedIncome">Use tracked income for projections</span>
+      </label>
+      <p id="t-tracked-income-basis" class="text-small text-muted" aria-live="polite"></p>
+    </div>
+
+    <form id="t-pull-snapshot-form" class="pull-snapshot-form">
+      <label><span data-i18n="snapshotDate">Snapshot date and time</span><input id="t-pull-snapshot-date" class="form-control" type="datetime-local" required></label>
+      <label><span data-i18n="pullsSpent">Pulls spent</span><input id="t-pull-snapshot-spent" class="form-control" type="number" min="0" max="10000" step="1" value="0" required></label>
+      <label><span data-i18n="purchasedPulls">Purchased pull equivalents</span><input id="t-pull-snapshot-purchased" class="form-control" type="number" min="0" max="10000" step="0.00625" value="0" required></label>
+      <label><span data-i18n="otherBalanceChange">Other balance change</span><input id="t-pull-snapshot-adjustment" class="form-control" type="number" min="-10000" max="10000" step="0.00625" value="0" required></label>
+      <button id="t-record-pull-snapshot" class="btn btn-primary" type="submit" data-i18n="startTracking">Start tracking</button>
+    </form>
+    <p class="text-small text-muted pull-snapshot-note" data-i18n="snapshotAdjustmentHelp">Use a positive number for resources added outside ordinary income and a negative number for resources removed outside Signal Searches. Purchased and other balance changes are excluded from earned income.</p>
+    <p id="t-pull-tracker-message" class="text-small pull-tracker-message" role="status" aria-live="polite"></p>
+
+    <div id="t-pull-history-wrap" class="table-responsive pull-history-wrap" hidden>
+      <table class="table table-sm pull-history-table">
+        <thead><tr>
+          <th data-i18n="snapshotDate">Snapshot date and time</th><th data-i18n="monochromes">Monochromes</th><th data-i18n="polychromes">Polychromes</th><th data-i18n="encryptedMasterTapes">Encrypted Master Tapes</th>
+          <th data-i18n="pullsSpent">Pulls spent</th><th data-i18n="purchasedPulls">Purchased pull equivalents</th><th data-i18n="otherBalanceChange">Other balance change</th><th class="text-end" data-i18n="earnedPulls">Earned pulls</th><th data-i18n="actions">Actions</th>
+        </tr></thead>
+        <tbody id="t-pull-history-rows"></tbody>
+      </table>
+    </div>
+    <p id="t-pull-history-empty" class="text-small text-muted" data-i18n="noPullHistory">No snapshots yet. Save the current wallet as your baseline to begin tracking.</p>
+  </details>
+
   <section aria-labelledby="t-channels-heading">
     <h3 id="t-channels-heading" data-i18n="channels">Channels</h3>
     <h4 class="channel-group-heading" data-i18n="agentChannels">Agent channels</h4>
@@ -110,13 +160,14 @@
     <div class="table-responsive configuration-table">
       <table class="table table-sm">
         <thead><tr>
-          <th data-i18n="agentTargetShort">Agent</th><th data-i18n="wEngineTargetShort">W-Engine</th><th class="text-end" data-i18n="priority">Priority</th>
+          <th class="priority-column"><span aria-hidden="true">#</span><span class="sr-only" data-i18n="priority">Priority</span></th><th data-i18n="agentMindscapeTargetShort">Agent / M</th><th data-i18n="wEngineTargetShort">W-Engine</th>
           <th data-i18n="agent">Agent</th><th data-i18n="channel">Channel</th><th data-i18n="availability">Availability</th>
           <th data-i18n="estimatedSearches">Projected searches by deadline</th><th data-i18n="actions">Actions</th>
         </tr></thead>
         <tbody id="t-agent-rows"></tbody>
       </table>
     </div>
+    <p class="text-small text-muted mindscape-help" data-i18n="mindscapeHelp">Choose M0 for the Agent's first copy or M1–M6 for additional copies. All copies are searched consecutively and the whole Agent goal counts as one of the 15 calculation targets.</p>
     <div class="provisional-controls">
       <button id="t-add-provisional" class="btn provisional-trigger" type="button" data-i18n="addProvisional">+ Add custom target</button>
       <form id="t-provisional-form" class="provisional-form" hidden>
@@ -151,7 +202,7 @@
       <div class="table-responsive configuration-table target-order-table">
         <table class="table table-sm">
           <thead><tr>
-            <th class="text-end" data-i18n="priority">Priority</th><th data-i18n="target">Target</th><th data-i18n="channel">Channel</th>
+            <th class="priority-column"><span aria-hidden="true">#</span><span class="sr-only" data-i18n="priority">Priority</span></th><th data-i18n="target">Target</th><th data-i18n="channel">Channel</th>
             <th data-i18n="availability">Availability</th><th data-i18n="estimatedSearches">Projected searches by deadline</th><th data-i18n="actions">Actions</th>
           </tr></thead>
           <tbody id="t-target-order-rows"></tbody>
