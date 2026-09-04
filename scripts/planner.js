@@ -218,8 +218,7 @@
       const agentsValid = (channel.agents || []).every(character => {
         const period = periodDefaults.get(character.budget.periodId);
         const characterDatesValid = /^\d{4}-\d{2}-\d{2}$/.test(character.startDate) && /^\d{4}-\d{2}-\d{2}$/.test(character.endDate);
-        const defaultName = translations[localeLoader.normalize()]?.[character.nameKey];
-        return typeof character.name === 'string' && character.name.length > 0 && typeof defaultName === 'string' && defaultName.length > 0 &&
+        return typeof character.name === 'string' && character.name.length > 0 && typeof character.nameKey === 'string' && character.nameKey.length > 0 &&
           characterDatesValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
           period.endDate === character.endDate && Number.isInteger(character.budget.phase) && character.budget.phase >= 0;
       });
