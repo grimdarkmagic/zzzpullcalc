@@ -111,6 +111,8 @@
   const maximumPullHistoryEntries = 500;
 
   const agentChannels = PLANNER_CONFIG.channels;
+  const visibleAgentChannels = agentChannels.filter(channel => channel.visible !== false);
+  const visibleAgentChannelIds = new Set(visibleAgentChannels.map(channel => channel.id));
   const wEngineChannels = PLANNER_CONFIG.wEngineChannels;
   const allChannels = [...agentChannels, ...wEngineChannels];
   const channelById = new Map(allChannels.map(channel => [channel.id, channel]));
@@ -122,7 +124,7 @@
   const makeTargets = sourceCharacters => sourceCharacters.flatMap(character => {
     const agentChannel = channelById.get(character.channelId);
     const wEngineChannel = channelById.get(agentChannel.wEngineChannelId);
-    const shared = { characterId: character.id, characterName: character.name, startDate: character.startDate, endDate: character.endDate };
+    const shared = { characterId: character.id, characterName: character.name, startDate: character.startDate, endDate: character.endDate, endAt: character.endAt };
     return [
       { ...shared, id: targetId('agent', character.id), kind: 'agent', channelId: agentChannel.id, pityGroupId: agentChannel.pity.groupId },
       { ...shared, id: targetId('w-engine', character.id), kind: 'w-engine', channelId: wEngineChannel.id, pityGroupId: wEngineChannel.pity.groupId }
@@ -158,7 +160,7 @@
   });
   agentChannels.forEach(channel => {
     channel.agents.forEach(character => {
-      if (!periodDefaults.has(character.budget.periodId)) periodDefaults.set(character.budget.periodId, { phase: character.budget.phase, endDate: character.endDate });
+      if (!periodDefaults.has(character.budget.periodId)) periodDefaults.set(character.budget.periodId, { phase: character.budget.phase, endDate: character.endDate, endAt: character.endAt });
     });
   });
   const runtime = {
@@ -178,7 +180,7 @@
 
   const rebuildCharacterRegistry = (preferredCharacterOrder = runtime.characterOrder, preferredTargetOrder = runtime.targetOrder) => {
     const customPeriodById = new Map(runtime.customPeriods.map(period => [period.id, period]));
-    const resolvedCustomCharacters = runtime.customCharacters.map(character => {
+    const resolvedCustomCharacters = runtime.customCharacters.filter(character => visibleAgentChannelIds.has(character.channelId)).map(character => {
       const period = customPeriodById.get(character.scheduleId);
       return { ...character, confirmed: false, provisional: true, enabled: false, startDate: period.startDate, endDate: period.endDate };
     });
@@ -218,9 +220,10 @@
       const agentsValid = (channel.agents || []).every(character => {
         const period = periodDefaults.get(character.budget.periodId);
         const characterDatesValid = /^\d{4}-\d{2}-\d{2}$/.test(character.startDate) && /^\d{4}-\d{2}-\d{2}$/.test(character.endDate);
+        const characterEndAtValid = character.endAt === undefined || (typeof character.endAt === 'string' && Number.isFinite(Date.parse(character.endAt)));
         return typeof character.name === 'string' && character.name.length > 0 && typeof character.nameKey === 'string' && character.nameKey.length > 0 &&
-          characterDatesValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
-          period.endDate === character.endDate && Number.isInteger(character.budget.phase) && character.budget.phase >= 0;
+          characterDatesValid && characterEndAtValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
+          period.endDate === character.endDate && period.endAt === character.endAt && Number.isInteger(character.budget.phase) && character.budget.phase >= 0;
       });
       return agentsValid && group && group.mode === pity.mode && validModes.has(pity.mode) && typeof pity.targetType === 'string' &&
         Number.isFinite(pity.hardPity) && pity.hardPity > 1 && pity.hardPity <= 127 && Number.isFinite(pity.baseRate) && Number.isFinite(pity.softPityStartsAt) && Number.isFinite(pity.softPityStep) && Number.isFinite(pity.featuredRate);
@@ -251,7 +254,20 @@
     const [year, month, day] = value.split('-').map(Number);
     return new Intl.DateTimeFormat(localeLoader.intlLocale(language), { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(Date.UTC(year, month - 1, day)));
   };
-  const characterDates = character => `${formatDate(character.startDate)} – ${formatDate(character.endDate)}`;
+  const deadlineValue = character => character.endAt || character.endDate;
+  const deadlineTime = character => localDeadline(deadlineValue(character));
+  const formatEndDate = character => {
+    const endTime = deadlineTime(character);
+    const endDate = character.endAt
+      ? new Intl.DateTimeFormat(localeLoader.intlLocale(language), { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(endTime))
+      : formatDate(character.endDate);
+    const millisecondsLeft = endTime - Date.now();
+    if (millisecondsLeft <= 0 || millisecondsLeft >= millisecondsPerDay) return endDate;
+    const hoursLeft = Math.ceil(millisecondsLeft / (60 * 60 * 1000));
+    const hoursLeftText = t(hoursLeft === 1 ? 'hourLeft' : 'hoursLeft').replace('{hours}', numberLabel(hoursLeft, 0));
+    return `${endDate} (${hoursLeftText})`;
+  };
+  const characterDates = character => `${formatDate(character.startDate)} – ${formatEndDate(character)}`;
   const channelLabel = channel => channel.id === 'exclusive'
     ? t('exclusiveChannel')
     : channel.id === 'exclusive-rescreening' ? t('exclusiveRescreening')
@@ -430,12 +446,13 @@
     if (!els.pullSnapshotDate.value) els.pullSnapshotDate.value = localDateTimeInputValue(Date.now());
   };
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
-  const localDeadline = value => {
+  function localDeadline(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return Date.parse(value);
     const [year, month, day] = value.split('-').map(Number);
     return new Date(year, month - 1, day).getTime();
-  };
-  const daysRemaining = endDate => Math.max(0, (localDeadline(endDate) - Date.now()) / millisecondsPerDay);
-  const estimatedSearches = (endDate, rate = projectionIncome().rate) => Math.floor(daysRemaining(endDate) * rate);
+  }
+  const daysRemaining = character => Math.max(0, (deadlineTime(character) - Date.now()) / millisecondsPerDay);
+  const estimatedSearches = (character, rate = projectionIncome().rate) => Math.floor(daysRemaining(character) * rate);
   const datePattern = /^\d{4}-\d{2}-\d{2}$/;
   const validIsoDate = value => {
     if (!datePattern.test(value)) return false;
@@ -489,7 +506,7 @@
   const effectiveSelectedTargetOrder = () => (runtime.separateWEnginePriorities ? runtime.targetOrder : compactTargetOrder()).filter(id => targetIsSelected(targetById.get(id)));
 
   function renderProvisionalFormOptions(selectedSchedule = els.provisionalSchedule.value) {
-    els.provisionalChannel.innerHTML = agentChannels.map(channel => `<option value="${escapeHtml(channel.id)}">${escapeHtml(channelLabel(channel))}</option>`).join('');
+    els.provisionalChannel.innerHTML = visibleAgentChannels.map(channel => `<option value="${escapeHtml(channel.id)}">${escapeHtml(channelLabel(channel))}</option>`).join('');
     const next = nextScheduleDates();
     const options = [
       `<option value="__next__">${escapeHtml(`${t('nextThreeWeeks')} · ${characterDates(next)}`)}</option>`,
@@ -536,7 +553,7 @@
     const period = editing ? runtime.customPeriods.find(item => item.id === editing.scheduleId) : null;
     const selectedSchedule = period ? windowValue(period.startDate, period.endDate) : '__next__';
     renderProvisionalFormOptions(selectedSchedule);
-    els.provisionalChannel.value = editing?.channelId || agentChannels[0].id;
+    els.provisionalChannel.value = editing?.channelId || visibleAgentChannels[0].id;
     const suggested = period || nextScheduleDates();
     els.provisionalStart.value = suggested.startDate;
     els.provisionalEnd.value = suggested.endDate;
@@ -594,7 +611,7 @@
         <td class="config-rules">${t('ruleSummary').replace('{baseRate}', percentLabel(pity.baseRate)).replace('{softPityStart}', pity.softPityStartsAt).replace('{hardPity}', pity.hardPity)}<span class="text-small text-muted config-subtext">${t(targetType === 'w-engine' ? 'featuredWEngineRate' : 'featuredAgentRate')} ${percentLabel(pity.featuredRate)}</span></td>
       </tr>`;
     }).join('');
-    els.agentChannelRows.innerHTML = renderRows(agentChannels);
+    els.agentChannelRows.innerHTML = renderRows(visibleAgentChannels);
     els.wEngineChannelRows.innerHTML = renderRows(wEngineChannels);
   }
 
@@ -607,8 +624,8 @@
       const character = characterById.get(characterId);
       const name = localizedCharacterName(character);
       const channel = channelById.get(character.channelId);
-      const remaining = daysRemaining(character.endDate);
-      const estimate = estimatedSearches(character.endDate, income.rate);
+      const remaining = daysRemaining(character);
+      const estimate = estimatedSearches(character, income.rate);
       const canMoveUp = index > 0 && runsOverlap(character, characterById.get(runtime.characterOrder[index - 1]));
       const canMoveDown = index < runtime.characterOrder.length - 1 && runsOverlap(character, characterById.get(runtime.characterOrder[index + 1]));
       const provisionalBadge = character.provisional
@@ -626,7 +643,7 @@
         <td><input class="form-check-input t-w-engine-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.wEngineEnabled[character.id] ? ' checked' : ''}${limitReached && !runtime.wEngineEnabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${name} — ${t('wEngineTarget')}`)}"></td>
         <td>${escapeHtml(name)}${provisionalBadge}</td>
         <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(character))}${unconfirmedBadge}</td>
-        <td class="t-agent-estimate t-deadline-estimate" data-end-date="${escapeHtml(character.endDate)}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${escapeHtml(incomeRateLabel(income.rate))} ${t('searchesPerDay')}</span></td>
+        <td class="t-agent-estimate t-deadline-estimate" data-deadline="${escapeHtml(deadlineValue(character))}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${escapeHtml(incomeRateLabel(income.rate))} ${t('searchesPerDay')}</span></td>
         <td><div class="move-buttons">
           <span class="compact-order-actions"${runtime.separateWEnginePriorities ? ' hidden' : ''}><button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${name}`)}">↑</button>
           <button class="btn btn-secondary t-move-character" data-character-id="${escapeHtml(character.id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${name}`)}">↓</button></span>
@@ -655,16 +672,16 @@
       return `<tr>
         <td class="priority-column">${index + 1}</td><td>${escapeHtml(targetLabel(target))}<span class="target-kind-badge">${t(target.kind === 'w-engine' ? 'wEngineTarget' : 'agentTarget')}</span></td>
         <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(target))}</td>
-        <td class="t-deadline-estimate" data-end-date="${escapeHtml(target.endDate)}">—</td>
+        <td class="t-deadline-estimate" data-deadline="${escapeHtml(deadlineValue(target))}">—</td>
         <td><div class="move-buttons"><button class="btn btn-secondary t-move-target" data-target-id="${escapeHtml(id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${targetLabel(target)}`)}">↑</button><button class="btn btn-secondary t-move-target" data-target-id="${escapeHtml(id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${targetLabel(target)}`)}">↓</button></div></td>
       </tr>`;
     }).join('');
   }
 
   function renderCharacterProjections(phaseBalances) {
-    const balancesByDeadline = new Map(phaseBalances.map(phase => [phase.endDate, phase]));
+    const balancesByDeadline = new Map(phaseBalances.map(phase => [phase.deadline, phase]));
     root.querySelectorAll('.t-deadline-estimate').forEach(cell => {
-      const phase = balancesByDeadline.get(cell.dataset.endDate);
+      const phase = balancesByDeadline.get(cell.dataset.deadline);
       if (!phase?.stats) {
         cell.innerHTML = `<strong>${t('expired')}</strong>`;
         return;
@@ -977,17 +994,17 @@
     const ordered = effectiveSelectedTargetOrder();
     const selected = new Set(ordered);
     const bits = Object.fromEntries(ordered.map((id, index) => [id, 1 << index]));
-    const deadlines = [...new Set(characters.map(character => character.endDate))].sort();
+    const deadlines = [...new Set(characters.map(deadlineValue))].sort((first, second) => localDeadline(first) - localDeadline(second));
     const incomeRate = projectionIncome().rate;
-    const phases = deadlines.map((endDate, phase) => ({
+    const phases = deadlines.map((deadline, phase) => ({
       phase,
-      endDate,
-      estimatedGain: estimatedSearches(endDate, incomeRate),
-      expired: localDeadline(endDate) <= Date.now(),
-      targets: ordered.filter(id => targetById.get(id).endDate === endDate)
+      deadline,
+      estimatedGain: estimatedSearches({ endDate: deadline }, incomeRate),
+      expired: localDeadline(deadline) <= Date.now(),
+      targets: ordered.filter(id => deadlineValue(targetById.get(id)) === deadline)
     }));
-    const currentEndDate = [...periodDefaults.values()].find(period => period.phase === PLANNER_CONFIG.currentPhase)?.endDate;
-    const currentPhase = phases.find(item => item.endDate === currentEndDate);
+    const currentDeadline = deadlineValue([...periodDefaults.values()].find(period => period.phase === PLANNER_CONFIG.currentPhase));
+    const currentPhase = phases.find(item => item.deadline === currentDeadline);
     return { selected, ordered, bits, phases, current: currentPhase && !currentPhase.expired ? currentPhase.targets : [] };
   };
 
@@ -1068,7 +1085,7 @@
     const renderedAt = Date.now();
     const availableTargetCount = orderedSelected.reduce((count, id) => {
       const target = targetById.get(id);
-      return count + (localDeadline(target.startDate) <= renderedAt && localDeadline(target.endDate) > renderedAt ? 1 : 0);
+      return count + (localDeadline(target.startDate) <= renderedAt && deadlineTime(target) > renderedAt ? 1 : 0);
     }, 0);
     const summaryAvailabilityNote = availableTargetCount === orderedSelected.length
       ? ''
@@ -1088,7 +1105,7 @@
       const futureNote = localDeadline(target.startDate) > Date.now()
         ? availabilityBadge('notAvailableNowShort', 'futureBalanceTooltip')
         : '';
-      const currentBalanceChance = localDeadline(target.endDate) <= Date.now()
+      const currentBalanceChance = deadlineTime(target) <= Date.now()
         ? '—'
         : `${futureNote}${pct(currentBalanceResult.marginal(id))}`;
       return `<tr><td>${escapeHtml(targetLabel(target))}</td><td class="text-end">${currentBalanceChance}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(probabilityComplement(obtained))}</td></tr>`;
