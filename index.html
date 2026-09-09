@@ -113,7 +113,7 @@
     </div>
 
     <form id="t-pull-snapshot-form" class="pull-snapshot-form">
-      <label><span data-i18n="snapshotDate">Snapshot date and time</span><input id="t-pull-snapshot-date" class="form-control" type="datetime-local" required></label>
+      <label><span data-i18n="snapshotDate">Snapshot date and time</span><input id="t-pull-snapshot-date" class="form-control" type="datetime-local" step="1" required><span class="pull-snapshot-time-help text-muted" data-i18n="snapshotTimeHelp">Uses the current time automatically unless you edit it.</span></label>
       <label><span data-i18n="pullsSpent">Pulls spent</span><input id="t-pull-snapshot-spent" class="form-control" type="number" min="0" max="10000" step="1" value="0" required></label>
       <label><span data-i18n="purchasedPulls">Purchased pull equivalents</span><input id="t-pull-snapshot-purchased" class="form-control" type="number" min="0" max="10000" step="0.00625" value="0" required></label>
       <label><span data-i18n="otherBalanceChange">Other balance change</span><input id="t-pull-snapshot-adjustment" class="form-control" type="number" min="-10000" max="10000" step="0.00625" value="0" required></label>

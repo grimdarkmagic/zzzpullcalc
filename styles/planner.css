@@ -278,6 +278,7 @@
     font-size: var(--font-size-small);
   }
   #zzz-universal-planner .pull-snapshot-form .form-control { margin-top: 0.25rem; }
+  #zzz-universal-planner .pull-snapshot-time-help { display: block; margin-top: 0.25rem; font-size: 0.85em; }
   #zzz-universal-planner .pull-snapshot-note { margin-top: 0.5rem; }
   #zzz-universal-planner .pull-tracker-message { min-height: 1.3em; margin-top: 0.35rem; }
   #zzz-universal-planner .pull-history-wrap { margin-top: 0.45rem; }

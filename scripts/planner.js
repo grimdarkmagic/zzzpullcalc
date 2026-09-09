@@ -114,6 +114,7 @@
   const visibleAgentChannels = agentChannels.filter(channel => channel.visible !== false);
   const visibleAgentChannelIds = new Set(visibleAgentChannels.map(channel => channel.id));
   const wEngineChannels = PLANNER_CONFIG.wEngineChannels;
+  const visibleWEngineChannels = wEngineChannels.filter(channel => channel.visible !== false);
   const allChannels = [...agentChannels, ...wEngineChannels];
   const channelById = new Map(allChannels.map(channel => [channel.id, channel]));
   const agentChannelById = new Map(agentChannels.map(channel => [channel.id, channel]));
@@ -319,8 +320,10 @@
   const localDateTimeInputValue = value => {
     const date = new Date(value);
     const offset = date.getTimezoneOffset() * 60 * 1000;
-    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    return new Date(date.getTime() - offset).toISOString().slice(0, 19);
   };
+  let pullSnapshotDateManuallyEdited = false;
+  const syncPullSnapshotDate = () => { els.pullSnapshotDate.value = localDateTimeInputValue(Date.now()); };
   const pullUnitsFromInput = (value, allowNegative = false) => {
     const numeric = Number(value);
     const units = Math.round(numeric * currencyPerSearch);
@@ -434,7 +437,7 @@
     els.pullHistoryRows.innerHTML = history.map((entry, index) => {
       const gain = gains[index];
       return `<tr data-history-id="${escapeHtml(entry.id)}">
-        <td><input class="form-control t-pull-history-input t-history-date" data-field="recordedAt" type="datetime-local" value="${localDateTimeInputValue(entry.recordedAt)}"></td>
+        <td><input class="form-control t-pull-history-input t-history-date" data-field="recordedAt" type="datetime-local" step="1" value="${localDateTimeInputValue(entry.recordedAt)}"></td>
         ${resourceKeys.map(key => `<td><input class="form-control t-pull-history-input" data-field="${key}" type="number" min="0" max="${key === 'encryptedMasterTapes' ? 600 : 96000}" step="1" value="${entry.balances[key]}"></td>`).join('')}
         <td><input class="form-control t-pull-history-input" data-field="spent" type="number" min="0" max="10000" step="1" value="${entry.spent}" ${index ? '' : 'disabled'}></td>
         <td><input class="form-control t-pull-history-input" data-field="purchasedUnits" type="number" min="0" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.purchasedUnits)}" ${index ? '' : 'disabled'}></td>
@@ -443,7 +446,7 @@
         <td><button class="btn btn-sm t-remove-pull-history" type="button" title="${escapeHtml(t('removeSnapshot'))}" aria-label="${escapeHtml(t('removeSnapshot'))}">×</button></td>
       </tr>`;
     }).join('');
-    if (!els.pullSnapshotDate.value) els.pullSnapshotDate.value = localDateTimeInputValue(Date.now());
+    if (!pullSnapshotDateManuallyEdited) syncPullSnapshotDate();
   };
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
   function localDeadline(value) {
@@ -612,7 +615,7 @@
       </tr>`;
     }).join('');
     els.agentChannelRows.innerHTML = renderRows(visibleAgentChannels);
-    els.wEngineChannelRows.innerHTML = renderRows(wEngineChannels);
+    els.wEngineChannelRows.innerHTML = renderRows(visibleWEngineChannels);
   }
 
   function renderCharacterTable() {
@@ -1138,13 +1141,14 @@
     updateAndPersist();
   });
   const newPullHistoryId = () => globalThis.crypto?.randomUUID?.() || `history-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  els.pullSnapshotDate.addEventListener('input', () => { pullSnapshotDateManuallyEdited = true; });
   els.pullSnapshotForm.addEventListener('submit', event => {
     event.preventDefault();
     if (runtime.pullHistory.length >= maximumPullHistoryEntries) {
       setPullTrackerMessage('historyLimitReached', true);
       return;
     }
-    const recordedAt = new Date(els.pullSnapshotDate.value).getTime();
+    const recordedAt = pullSnapshotDateManuallyEdited ? new Date(els.pullSnapshotDate.value).getTime() : Date.now();
     const spent = Number(els.pullSnapshotSpent.value);
     const purchasedUnits = pullUnitsFromInput(els.pullSnapshotPurchased.value);
     const adjustmentUnits = pullUnitsFromInput(els.pullSnapshotAdjustment.value, true);
@@ -1160,7 +1164,8 @@
       return;
     }
     runtime.pullHistory = normalizedPullHistory([...runtime.pullHistory, entry]);
-    els.pullSnapshotDate.value = localDateTimeInputValue(Date.now());
+    pullSnapshotDateManuallyEdited = false;
+    syncPullSnapshotDate();
     els.pullSnapshotSpent.value = '0';
     els.pullSnapshotPurchased.value = '0';
     els.pullSnapshotAdjustment.value = '0';
@@ -1444,6 +1449,9 @@
     renderCharacterTable();
     render();
   }, PLANNER_CONFIG.incomeEstimate.refreshMinutes * 60 * 1000);
+  window.setInterval(() => {
+    if (els.pullTracker.open && !pullSnapshotDateManuallyEdited) syncPullSnapshotDate();
+  }, 30 * 1000);
 })().catch(error => {
   console.error('Unable to initialize the planner.', error);
   const planner = document.getElementById('zzz-universal-planner');

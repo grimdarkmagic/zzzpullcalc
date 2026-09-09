@@ -39,7 +39,7 @@
         pity: { groupId: 'w-engine', mode: 'w-engine', targetType: 'w-engine', count: 0, guaranteed: false, specialGuaranteed: false, hardPity: 80, baseRate: 0.01, softPityStartsAt: 65, softPityStep: 0.07, featuredRate: 0.75 }
       },
       {
-        id: 'w-engine-reverberation', name: 'W-Engine Reverberation',
+        id: 'w-engine-reverberation', name: 'W-Engine Reverberation', visible: false,
         pity: { groupId: 'w-engine-reverberation', mode: 'w-engine-reverberation', targetType: 'w-engine', count: 0, guaranteed: false, specialGuaranteed: true, hardPity: 80, baseRate: 0.01, softPityStartsAt: 65, softPityStep: 0.07, featuredRate: 0.75 }
       }
     ]

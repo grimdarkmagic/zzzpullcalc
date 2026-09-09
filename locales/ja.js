@@ -9,7 +9,7 @@
       resourceBreakdown: 'テープ分 {tapes}回 + 交換可能通貨分 {converted}回 · 次の1回まで {remainder}/160', invalidResourceBalance: 'リソース数は0以上の整数で入力してください。',
       pullTracker: '変調用リソースの獲得記録', pullTrackerHelp: '上の所持数を定期的に記録します。使用回数と集計から除外する残高変動は、前回の記録以降の分を入力してください。',
       exportHistory: '履歴を書き出す', importHistory: '履歴を読み込む', backupReminderTitle: 'バックアップを保存', historyBackupReminder: 'この履歴は現在のブラウザにのみ保存されます。ブラウザデータを消去したときや別の端末へ移るときに復元できるよう、定期的に書き出してください。', trackedTotal: '記録期間の合計', trackedSevenDays: '直近7日間の記録分', trackedThirtyDays: '直近30日間の記録分', trackedDailyAverage: '1日あたりの平均',
-      snapshotDate: '記録日時', pullsSpent: '使用した変調回数', purchasedPulls: '購入分（変調回数換算）', otherBalanceChange: 'その他の残高変動', earnedPulls: '獲得した変調回数分',
+      snapshotDate: '記録日時', snapshotTimeHelp: '日時を変更しない限り、保存時の現在時刻が自動で使われます。', pullsSpent: '使用した変調回数', purchasedPulls: '購入分（変調回数換算）', otherBalanceChange: 'その他の残高変動', earnedPulls: '獲得した変調回数分',
       startTracking: '記録を始める', recordSnapshot: '現在の所持数を記録', snapshotAdjustmentHelp: '通常の獲得以外で増えた分は正の値、変調以外で減った分は負の値で入力します。購入分とその他の残高変動は獲得量の集計から除外されます。',
       noPullHistory: '記録はまだありません。現在の所持数を基準として保存すると集計が始まります。', pullHistoryBaseline: '基準', removeSnapshot: '記録を削除', invalidSnapshot: '有効な日時、0以上の整数の所持数と使用回数、および有効な除外対象の残高変動を入力してください。',
       snapshotSaved: '現在の所持数を記録しました。', snapshotUpdated: '記録を更新しました。', snapshotRemoved: '記録を削除しました。', historyImported: '変調履歴を読み込みました。', invalidHistoryFile: '有効な変調履歴が含まれていません。', historyLimitReached: '記録できる所持数は500件までです。', replaceHistoryConfirm: '現在の変調履歴を読み込んだ履歴に置き換えますか？', removeSnapshotConfirm: 'この記録を削除しますか？',
