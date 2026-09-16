@@ -89,6 +89,7 @@
       </div>
       <div class="pull-tracker-backup">
         <div class="pull-tracker-backup-actions">
+          <button id="t-open-pull-charts" class="btn btn-sm" type="button" data-i18n="viewCharts">View charts</button>
           <button id="t-export-pull-history" class="btn btn-sm" type="button" data-i18n="exportHistory">Export history</button>
           <button id="t-import-pull-history" class="btn btn-sm" type="button" data-i18n="importHistory">Import history</button>
           <input id="t-import-pull-history-file" type="file" accept="application/json,.json" hidden>
@@ -133,6 +134,91 @@
     </div>
     <p id="t-pull-history-empty" class="text-small text-muted" data-i18n="noPullHistory">No snapshots yet. Save the current wallet as your baseline to begin tracking.</p>
   </details>
+
+  <dialog id="t-pull-charts-dialog" class="pull-charts-dialog" aria-labelledby="t-pull-charts-title">
+    <div class="pull-charts-shell">
+      <div class="pull-charts-header">
+        <div>
+          <h3 id="t-pull-charts-title" data-i18n="pullChartsTitle">Pull history charts</h3>
+          <p id="t-pull-charts-coverage" class="text-small text-muted"></p>
+        </div>
+        <button id="t-close-pull-charts" class="btn btn-sm pull-charts-close" type="button" data-i18n-aria-label="close" aria-label="Close">×</button>
+      </div>
+      <p class="text-small text-muted pull-charts-help" data-i18n="pullChartsHelp">Gained pulls are reconstructed from wallet changes plus spent pulls, excluding purchases and other recorded adjustments.</p>
+      <form id="t-pull-chart-period-form" class="pull-chart-period-form">
+        <label><span data-i18n="chartPeriod">Chart period</span><select id="t-pull-chart-period" class="form-control">
+          <option value="all" data-i18n="chartPeriodAll">All history</option>
+          <option value="7" data-i18n="chartPeriodSeven">Last 7 days</option>
+          <option value="30" data-i18n="chartPeriodThirty">Last 30 days</option>
+          <option value="90" data-i18n="chartPeriodNinety">Last 90 days</option>
+          <option value="custom" data-i18n="chartPeriodCustom">Custom range…</option>
+        </select></label>
+        <div id="t-pull-chart-custom-period" class="pull-chart-custom-period" hidden>
+          <label><span data-i18n="chartPeriodStart">From</span><input id="t-pull-chart-period-start" class="form-control" type="date" required></label>
+          <label><span data-i18n="chartPeriodEnd">Through</span><input id="t-pull-chart-period-end" class="form-control" type="date" required></label>
+          <button class="btn btn-primary" type="submit" data-i18n="applyPeriod">Apply</button>
+        </div>
+        <p id="t-pull-chart-period-error" class="text-small text-destructive pull-chart-period-error" role="alert"></p>
+      </form>
+      <p class="text-small text-muted pull-chart-period-note" data-i18n="chartPeriodHelp">If a filtered range starts after tracking began, its first visible snapshot becomes the opening balance; changes are measured between snapshots inside the range.</p>
+      <p id="t-pull-charts-empty" class="pull-charts-empty text-muted" data-i18n="chartsNeedSnapshots" hidden>At least two snapshots are needed to chart changes. One snapshot can only provide a baseline and wallet composition.</p>
+      <div id="t-pull-charts-content">
+        <div id="t-pull-charts-summary" class="pull-charts-summary" aria-live="polite"></div>
+        <p id="t-pull-charts-reconciliation" class="text-small text-muted pull-charts-reconciliation"></p>
+
+        <figure class="pull-chart-panel">
+          <figcaption>
+            <strong data-i18n="chartCumulativeTitle">Cumulative pull flow</strong>
+            <span class="text-small text-muted" data-i18n="chartCumulativeHelp">Running earned and spent totals compared with the recorded wallet balance.</span>
+          </figcaption>
+          <div class="pull-chart-legend" aria-hidden="true">
+            <span><i class="chart-swatch chart-swatch-earned"></i><span data-i18n="chartEarned">Earned</span></span>
+            <span><i class="chart-swatch chart-swatch-spent"></i><span data-i18n="chartSpent">Spent</span></span>
+            <span><i class="chart-swatch chart-swatch-wallet"></i><span data-i18n="chartWalletBalance">Wallet balance</span></span>
+          </div>
+          <svg id="t-pull-cumulative-chart" class="pull-chart" role="img"></svg>
+        </figure>
+
+        <figure class="pull-chart-panel">
+          <figcaption>
+            <strong data-i18n="chartIntervalsTitle">Earned and spent by interval</strong>
+            <span class="text-small text-muted" data-i18n="chartIntervalsHelp">Each pair of bars covers the period ending at that snapshot.</span>
+          </figcaption>
+          <div class="pull-chart-legend" aria-hidden="true">
+            <span><i class="chart-swatch chart-swatch-earned"></i><span data-i18n="chartEarned">Earned</span></span>
+            <span><i class="chart-swatch chart-swatch-spent"></i><span data-i18n="chartSpent">Spent</span></span>
+          </div>
+          <p id="t-pull-interval-chart-note" class="text-small text-muted pull-chart-note"></p>
+          <svg id="t-pull-interval-chart" class="pull-chart" role="img"></svg>
+        </figure>
+
+        <figure class="pull-chart-panel">
+          <figcaption>
+            <strong data-i18n="chartWalletTitle">Wallet composition</strong>
+            <span class="text-small text-muted" data-i18n="chartWalletHelp">Recorded Monochromes, Polychromes, and Encrypted Master Tapes, all converted to pull equivalents.</span>
+          </figcaption>
+          <div class="pull-chart-legend" aria-hidden="true">
+            <span><i class="chart-swatch chart-swatch-monochromes"></i><span data-i18n="monochromes">Monochromes</span></span>
+            <span><i class="chart-swatch chart-swatch-polychromes"></i><span data-i18n="polychromes">Polychromes</span></span>
+            <span><i class="chart-swatch chart-swatch-tapes"></i><span data-i18n="encryptedMasterTapes">Encrypted Master Tapes</span></span>
+          </div>
+          <svg id="t-pull-wallet-chart" class="pull-chart" role="img"></svg>
+        </figure>
+
+        <section class="pull-chart-details" aria-labelledby="t-pull-chart-details-title">
+          <h4 id="t-pull-chart-details-title" data-i18n="chartIntervalDetails">Interval details</h4>
+          <div class="table-responsive">
+            <table class="table table-sm pull-chart-details-table">
+              <thead><tr>
+                <th data-i18n="chartDate">Date</th><th class="text-end" data-i18n="chartPeriodDays">Days</th><th class="text-end" data-i18n="earnedPulls">Earned pulls</th><th class="text-end" data-i18n="pullsSpent">Pulls spent</th><th class="text-end" data-i18n="purchasedPulls">Purchased pull equivalents</th><th class="text-end" data-i18n="otherBalanceChange">Other balance change</th><th class="text-end" data-i18n="chartClosingBalance">Closing wallet</th>
+              </tr></thead>
+              <tbody id="t-pull-chart-details-rows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </dialog>
 
   <section aria-labelledby="t-channels-heading">
     <h3 id="t-channels-heading" data-i18n="channels">Channels</h3>
@@ -239,10 +325,11 @@
 
   <div class="table-responsive">
     <table class="table table-sm">
-      <thead><tr><th data-i18n="selectedTarget">Selected target</th><th class="text-end" data-i18n="chanceNow">With current balance</th><th class="text-end" data-i18n="byDeadline">Obtain by deadline</th><th class="text-end" data-i18n="missByDeadline">Miss by deadline</th></tr></thead>
+      <thead><tr><th data-i18n="selectedTarget">Selected target</th><th class="text-end" data-i18n="searchesFromNow">Searches from now</th><th class="text-end" data-i18n="chanceNow">With current balance</th><th class="text-end" data-i18n="byDeadline">Obtain by deadline</th><th class="text-end" data-i18n="missByDeadline">Miss by deadline</th></tr></thead>
       <tbody id="t-target-chances"></tbody>
     </table>
   </div>
+  <p class="text-small text-muted outcome-help" data-i18n="pullRequirementHelp">Search counts are cumulative from now through each target, following the shown priority and current pity and guarantees. Future income affects whether that many searches are available by the deadline, not the requirement itself.</p>
   <p class="text-small text-muted outcome-help" data-i18n="outcomeHelp">“Miss by deadline” is the complement of that target’s acquisition chance. Each row below is one mutually exclusive complete result of the selected strategy.</p>
   <div class="table-responsive">
     <table class="table table-sm">
@@ -255,6 +342,7 @@
 <script src="scripts/config.js"></script>
 <script src="locales/manifest.js"></script>
 <script src="scripts/locale-loader.js"></script>
+<script src="scripts/pull-charts.js"></script>
 <script src="scripts/planner.js"></script>
 </body>
 </html>

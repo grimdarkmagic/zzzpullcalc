@@ -7,8 +7,9 @@
   const translations = window.ZZZ_PLANNER_LOCALES;
   const localeLoader = window.ZZZLocaleLoader;
   const loadLocale = localeLoader?.load;
+  const pullCharts = window.ZZZPullCharts;
 
-  if (!PLANNER_CONFIG || !translations || !loadLocale) {
+  if (!PLANNER_CONFIG || !translations || !loadLocale || !pullCharts) {
     throw new Error('Planner configuration or locale loader is unavailable.');
   }
 
@@ -23,6 +24,10 @@
     recordPullSnapshot: root.querySelector('#t-record-pull-snapshot'), pullGainTotal: root.querySelector('#t-pull-gain-total'), pullGainSeven: root.querySelector('#t-pull-gain-seven'), pullGainThirty: root.querySelector('#t-pull-gain-thirty'), pullGainAverage: root.querySelector('#t-pull-gain-average'),
     pullHistoryWrap: root.querySelector('#t-pull-history-wrap'), pullHistoryRows: root.querySelector('#t-pull-history-rows'), pullHistoryEmpty: root.querySelector('#t-pull-history-empty'), pullTrackerMessage: root.querySelector('#t-pull-tracker-message'),
     exportPullHistory: root.querySelector('#t-export-pull-history'), importPullHistory: root.querySelector('#t-import-pull-history'), importPullHistoryFile: root.querySelector('#t-import-pull-history-file'),
+    openPullCharts: root.querySelector('#t-open-pull-charts'), pullChartsDialog: root.querySelector('#t-pull-charts-dialog'), closePullCharts: root.querySelector('#t-close-pull-charts'), pullChartsCoverage: root.querySelector('#t-pull-charts-coverage'),
+    pullChartsEmpty: root.querySelector('#t-pull-charts-empty'), pullChartsContent: root.querySelector('#t-pull-charts-content'), pullChartsSummary: root.querySelector('#t-pull-charts-summary'), pullChartsReconciliation: root.querySelector('#t-pull-charts-reconciliation'), pullCumulativeChart: root.querySelector('#t-pull-cumulative-chart'),
+    pullIntervalChart: root.querySelector('#t-pull-interval-chart'), pullIntervalChartNote: root.querySelector('#t-pull-interval-chart-note'), pullWalletChart: root.querySelector('#t-pull-wallet-chart'), pullChartDetailsRows: root.querySelector('#t-pull-chart-details-rows'),
+    pullChartPeriodForm: root.querySelector('#t-pull-chart-period-form'), pullChartPeriod: root.querySelector('#t-pull-chart-period'), pullChartCustomPeriod: root.querySelector('#t-pull-chart-custom-period'), pullChartPeriodStart: root.querySelector('#t-pull-chart-period-start'), pullChartPeriodEnd: root.querySelector('#t-pull-chart-period-end'), pullChartPeriodError: root.querySelector('#t-pull-chart-period-error'),
     incomeNote: root.querySelector('#t-income-note'), agentChannelRows: root.querySelector('#t-agent-channel-rows'), wEngineChannelRows: root.querySelector('#t-w-engine-channel-rows'), agentRows: root.querySelector('#t-agent-rows'), error: root.querySelector('#t-error'),
     order: root.querySelector('#t-order'), summary: root.querySelector('#t-summary'), targetChances: root.querySelector('#t-target-chances'), outcomes: root.querySelector('#t-outcomes'),
     separateWEnginePriorities: root.querySelector('#t-separate-w-engine-priorities'), selectedTargetCount: root.querySelector('#t-selected-target-count'), targetOrderPanel: root.querySelector('#t-target-order-panel'), targetOrderRows: root.querySelector('#t-target-order-rows'),
@@ -366,22 +371,19 @@
     normalized.sort((a, b) => a.recordedAt - b.recordedAt || a.id.localeCompare(b.id));
     if (normalized[0]) {
       normalized[0].spent = 0;
-      normalized[0].purchasedUnits = 0;
-      normalized[0].adjustmentUnits = 0;
     }
     return normalized;
   };
   const snapshotBalanceUnits = entry => entry.balances.monochromes + entry.balances.polychromes + entry.balances.encryptedMasterTapes * currencyPerSearch;
-  const pullGainUnits = (entry, previous) => previous
-    ? snapshotBalanceUnits(entry) - snapshotBalanceUnits(previous) + entry.spent * currencyPerSearch - entry.purchasedUnits - entry.adjustmentUnits
-    : null;
+  const pullGainUnits = (entry, previous) => snapshotBalanceUnits(entry) - (previous ? snapshotBalanceUnits(previous) : 0) + entry.spent * currencyPerSearch - entry.purchasedUnits - entry.adjustmentUnits;
   const trackedIncomeStats = (now = Date.now()) => {
     const history = runtime.pullHistory.filter(entry => entry.recordedAt <= now);
     const first = history[0];
     const latest = history[history.length - 1];
-    const totalUnits = history.reduce((sum, entry, index) => sum + (pullGainUnits(entry, history[index - 1]) ?? 0), 0);
+    const totalUnits = history.reduce((sum, entry, index) => sum + pullGainUnits(entry, history[index - 1]), 0);
+    const rateUnits = history.slice(1).reduce((sum, entry, index) => sum + pullGainUnits(entry, history[index]), 0);
     const elapsedDays = history.length > 1 ? (latest.recordedAt - first.recordedAt) / millisecondsPerDay : 0;
-    const rate = elapsedDays > 0 ? totalUnits / currencyPerSearch / elapsedDays : null;
+    const rate = elapsedDays > 0 ? rateUnits / currencyPerSearch / elapsedDays : null;
     return { count: history.length, first, latest, totalUnits, rate };
   };
   const projectionIncome = () => {
@@ -423,7 +425,7 @@
       const relevant = gains.filter((value, index) => index > 0 && history[index].recordedAt >= cutoff && history[index].recordedAt <= now);
       return relevant.length ? relevant.reduce((sum, value) => sum + value, 0) : null;
     };
-    els.pullGainTotal.textContent = tracked.count > 1 ? signedPullUnitsLabel(tracked.totalUnits) : '—';
+    els.pullGainTotal.textContent = tracked.count ? signedPullUnitsLabel(tracked.totalUnits) : '—';
     const sevenDayTotal = recentTotal(7);
     const thirtyDayTotal = recentTotal(30);
     els.pullGainSeven.textContent = sevenDayTotal === null ? '—' : signedPullUnitsLabel(sevenDayTotal);
@@ -433,20 +435,73 @@
     els.pullHistoryWrap.hidden = !history.length;
     els.pullHistoryEmpty.hidden = Boolean(history.length);
     els.recordPullSnapshot.textContent = t(history.length ? 'recordSnapshot' : 'startTracking');
-    [els.pullSnapshotSpent, els.pullSnapshotPurchased, els.pullSnapshotAdjustment].forEach(input => { input.disabled = !history.length; });
+    els.pullSnapshotSpent.disabled = !history.length;
+    els.pullSnapshotPurchased.disabled = false;
+    els.pullSnapshotAdjustment.disabled = false;
     els.pullHistoryRows.innerHTML = history.map((entry, index) => {
       const gain = gains[index];
       return `<tr data-history-id="${escapeHtml(entry.id)}">
         <td><input class="form-control t-pull-history-input t-history-date" data-field="recordedAt" type="datetime-local" step="1" value="${localDateTimeInputValue(entry.recordedAt)}"></td>
         ${resourceKeys.map(key => `<td><input class="form-control t-pull-history-input" data-field="${key}" type="number" min="0" max="${key === 'encryptedMasterTapes' ? 600 : 96000}" step="1" value="${entry.balances[key]}"></td>`).join('')}
         <td><input class="form-control t-pull-history-input" data-field="spent" type="number" min="0" max="10000" step="1" value="${entry.spent}" ${index ? '' : 'disabled'}></td>
-        <td><input class="form-control t-pull-history-input" data-field="purchasedUnits" type="number" min="0" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.purchasedUnits)}" ${index ? '' : 'disabled'}></td>
-        <td><input class="form-control t-pull-history-input" data-field="adjustmentUnits" type="number" min="-10000" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.adjustmentUnits)}" ${index ? '' : 'disabled'}></td>
-        <td class="text-end pull-history-earned ${gain === null ? 'pull-history-baseline' : ''}">${gain === null ? escapeHtml(t('pullHistoryBaseline')) : signedPullUnitsLabel(gain)}</td>
+        <td><input class="form-control t-pull-history-input" data-field="purchasedUnits" type="number" min="0" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.purchasedUnits)}"></td>
+        <td><input class="form-control t-pull-history-input" data-field="adjustmentUnits" type="number" min="-10000" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.adjustmentUnits)}"></td>
+        <td class="text-end pull-history-earned">${signedPullUnitsLabel(gain)}</td>
         <td><button class="btn btn-sm t-remove-pull-history" type="button" title="${escapeHtml(t('removeSnapshot'))}" aria-label="${escapeHtml(t('removeSnapshot'))}">×</button></td>
       </tr>`;
     }).join('');
     if (!pullSnapshotDateManuallyEdited) syncPullSnapshotDate();
+  };
+  const pullChartPoints = () => runtime.pullHistory.map((entry, index, history) => ({
+    recordedAt: entry.recordedAt,
+    days: index ? (entry.recordedAt - history[index - 1].recordedAt) / millisecondsPerDay : 0,
+    earned: pullGainUnits(entry, history[index - 1]) / currencyPerSearch,
+    spent: entry.spent,
+    purchased: entry.purchasedUnits / currencyPerSearch,
+    adjustment: entry.adjustmentUnits / currencyPerSearch,
+    balance: snapshotBalanceUnits(entry) / currencyPerSearch,
+    monochromes: entry.balances.monochromes / currencyPerSearch,
+    polychromes: entry.balances.polychromes / currencyPerSearch,
+    tapes: entry.balances.encryptedMasterTapes
+  }));
+  let pullChartPeriod = 'all';
+  const localDateValue = value => localDateTimeInputValue(value).slice(0, 10);
+  const customPeriodBoundary = (value, end = false) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return NaN;
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return NaN;
+    return end ? new Date(year, month - 1, day + 1).getTime() - 1 : date.getTime();
+  };
+  const pullChartPeriodBounds = () => {
+    if (pullChartPeriod === 'all') return [-Infinity, Infinity];
+    if (pullChartPeriod === 'custom') return [customPeriodBoundary(els.pullChartPeriodStart.value), customPeriodBoundary(els.pullChartPeriodEnd.value, true)];
+    const days = Number(pullChartPeriod);
+    return [Date.now() - days * millisecondsPerDay, Date.now()];
+  };
+  const filteredPullChartPoints = () => {
+    const allPoints = pullChartPoints();
+    const [start, end] = pullChartPeriodBounds();
+    const filtered = allPoints.filter(point => point.recordedAt >= start && point.recordedAt <= end);
+    if (!filtered.length) return filtered;
+    if (filtered[0] === allPoints[0]) return filtered.map((point, index) => index ? point : { ...point, periodOpeningBalance: 0 });
+    return filtered.map((point, index) => index ? point : { ...point, days: 0, earned: 0, spent: 0, purchased: 0, adjustment: 0, periodOpeningBalance: point.balance });
+  };
+  const renderPullCharts = () => {
+    const allHistory = pullChartPeriod === 'all';
+    pullCharts.render({
+      points: filteredPullChartPoints(),
+      locale: localeLoader.intlLocale(language),
+      labels: {
+        coverage: t('chartCoverage'), noCoverage: t(allHistory ? 'chartNoCoverage' : 'chartPeriodNoSnapshots'), earnedTotal: t(allHistory ? 'chartEarnedTotal' : 'chartPeriodEarned'), spentTotal: t(allHistory ? 'chartSpentTotal' : 'chartPeriodSpent'), walletChange: t('chartWalletChange'), purchasedTotal: t(allHistory ? 'chartPurchasedTotal' : 'chartPeriodPurchased'), adjustmentTotal: t(allHistory ? 'chartAdjustmentTotal' : 'chartPeriodAdjustments'), dailyAverage: t('chartDailyAverage'), reconciliation: t('chartBalanceReconciliation'), reconciliationWithOpening: t('chartBalanceReconciliationWithOpening'),
+        cumulativeTitle: t('chartCumulativeTitle'), intervalsTitle: t('chartIntervalsTitle'), walletTitle: t('chartWalletTitle'), earned: t('chartEarned'), spent: t('chartSpent'), wallet: t('chartWalletBalance'), date: t('chartDate'), pulls: t('chartPulls'),
+        monochromes: t('monochromes'), polychromes: t('polychromes'), tapes: t('encryptedMasterTapes'), latestIntervals: t('chartLatestIntervals'), noIntervals: t('chartNoIntervals')
+      },
+      elements: {
+        coverage: els.pullChartsCoverage, empty: els.pullChartsEmpty, content: els.pullChartsContent, summary: els.pullChartsSummary, reconciliation: els.pullChartsReconciliation,
+        cumulative: els.pullCumulativeChart, intervals: els.pullIntervalChart, intervalNote: els.pullIntervalChartNote, wallet: els.pullWalletChart, details: els.pullChartDetailsRows
+      }
+    });
   };
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
   function localDeadline(value) {
@@ -701,6 +756,7 @@
     document.documentElement.lang = language;
     document.title = t('pageTitle');
     root.querySelectorAll('[data-i18n]').forEach(element => { element.textContent = t(element.dataset.i18n); });
+    root.querySelectorAll('[data-i18n-aria-label]').forEach(element => { element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel)); });
     els.languageSelect.value = language;
     applyTheme(document.documentElement.dataset.theme);
     renderResourceBalance();
@@ -712,6 +768,7 @@
       if ([...els.provisionalChannel.options].some(option => option.value === openChannel)) els.provisionalChannel.value = openChannel;
     }
     if (mindscapeDialogCharacterId && els.mindscapeDialog.open) renderMindscapeDialog();
+    if (els.pullChartsDialog.open) renderPullCharts();
     if (persist) { try { localStorage.setItem(languageStorageKey, language); } catch {} }
     if (rerender) render();
   };
@@ -1043,6 +1100,45 @@
     const expected = ordered.reduce((sum, [remaining, probability]) => sum + remaining * probability / totalProbability, 0);
     return { expected, low: quantile(0.1), high: quantile(0.9) };
   }
+  function pullRequirementStats(arrivals) {
+    const distribution = new Map();
+    let totalProbability = 0;
+    arrivals.forEach((bucket, spent) => bucket && bucket.forEach(probability => {
+      distribution.set(spent, (distribution.get(spent) || 0) + probability);
+      totalProbability += probability;
+    }));
+    if (!totalProbability) return null;
+    const ordered = [...distribution].sort((a, b) => a[0] - b[0]);
+    const quantile = threshold => {
+      let cumulative = 0;
+      for (const [spent, probability] of ordered) {
+        cumulative += probability / totalProbability;
+        if (cumulative + 1e-12 >= threshold) return spent;
+      }
+      return ordered[ordered.length - 1][0];
+    };
+    return {
+      expected: ordered.reduce((sum, [spent, probability]) => sum + spent * probability / totalProbability, 0),
+      median: quantile(0.5),
+      likely: quantile(0.8),
+      maximum: ordered[ordered.length - 1][0]
+    };
+  }
+  function cumulativePullRequirements(cfg, plan, renderedAt) {
+    let arrivals = [];
+    const requirements = new Map();
+    addBucket(arrivals, 0, packCore(cfg.groups, 0), 1);
+    plan.ordered.forEach(id => {
+      const target = targetById.get(id);
+      if (deadlineTime(target) <= renderedAt) {
+        requirements.set(id, null);
+        return;
+      }
+      arrivals = runPhase(arrivals, [id], Number.POSITIVE_INFINITY, plan.bits);
+      requirements.set(id, pullRequirementStats(arrivals));
+    });
+    return requirements;
+  }
   function simulate(cfg, plan) {
     let arrivals = [];
     const phaseBalances = [];
@@ -1086,6 +1182,7 @@
     const currentBalanceResult = simulateWithCurrentBalance(cfg, plan);
     const orderedSelected = plan.ordered;
     const renderedAt = Date.now();
+    const pullRequirements = cumulativePullRequirements(cfg, plan, renderedAt);
     const availableTargetCount = orderedSelected.reduce((count, id) => {
       const target = targetById.get(id);
       return count + (localDeadline(target.startDate) <= renderedAt && deadlineTime(target) > renderedAt ? 1 : 0);
@@ -1111,7 +1208,11 @@
       const currentBalanceChance = deadlineTime(target) <= Date.now()
         ? '—'
         : `${futureNote}${pct(currentBalanceResult.marginal(id))}`;
-      return `<tr><td>${escapeHtml(targetLabel(target))}</td><td class="text-end">${currentBalanceChance}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(probabilityComplement(obtained))}</td></tr>`;
+      const requirement = pullRequirements.get(id);
+      const requirementText = requirement
+        ? `<strong>${t('pullRequirementPrimary').replace('{median}', numberLabel(requirement.median, 0)).replace('{likely}', numberLabel(requirement.likely, 0))}</strong><span class="text-small text-muted config-subtext">${t('pullRequirementSecondary').replace('{average}', numberLabel(requirement.expected)).replace('{maximum}', numberLabel(requirement.maximum, 0))}</span>`
+        : '—';
+      return `<tr><td>${escapeHtml(targetLabel(target))}</td><td class="text-end pull-requirement-cell">${requirementText}</td><td class="text-end">${currentBalanceChance}</td><td class="text-end">${pct(obtained)}</td><td class="text-end">${pct(probabilityComplement(obtained))}</td></tr>`;
     }).join('');
     const roster = mask => orderedSelected.filter(id => mask & plan.bits[id]).map(id => targetLabel(targetById.get(id))).join(' + ') || t('noTarget');
     const missed = mask => orderedSelected.filter(id => !(mask & plan.bits[id])).map(id => targetLabel(targetById.get(id))).join(' + ') || '—';
@@ -1123,6 +1224,7 @@
   const refreshPullHistory = () => {
     persistPlannerState();
     renderPullTracker();
+    if (els.pullChartsDialog.open) renderPullCharts();
     if (runtime.useTrackedIncome) {
       renderCharacterTable();
       render();
@@ -1156,8 +1258,8 @@
       id: newPullHistoryId(), recordedAt,
       balances: Object.fromEntries(resourceKeys.map(key => [key, runtime.resourceBalances[key]])),
       spent: runtime.pullHistory.length ? spent : 0,
-      purchasedUnits: runtime.pullHistory.length ? purchasedUnits : 0,
-      adjustmentUnits: runtime.pullHistory.length ? adjustmentUnits : 0
+      purchasedUnits,
+      adjustmentUnits
     };
     if (!Number.isInteger(spent) || purchasedUnits === null || adjustmentUnits === null || !pullHistoryEntryIsValid(entry)) {
       setPullTrackerMessage('invalidSnapshot', true);
@@ -1208,6 +1310,62 @@
     runtime.pullHistory = normalizedPullHistory(runtime.pullHistory.filter(entry => entry.id !== id));
     refreshPullHistory();
     setPullTrackerMessage('snapshotRemoved');
+  });
+  const closePullCharts = () => {
+    if (typeof els.pullChartsDialog.close === 'function') els.pullChartsDialog.close();
+    else els.pullChartsDialog.removeAttribute('open');
+  };
+  const syncPullChartCustomPeriod = () => {
+    const history = runtime.pullHistory;
+    if (!els.pullChartPeriodStart.value) els.pullChartPeriodStart.value = localDateValue(history[0]?.recordedAt ?? Date.now() - 30 * millisecondsPerDay);
+    if (!els.pullChartPeriodEnd.value) els.pullChartPeriodEnd.value = localDateValue(Date.now());
+  };
+  const customPullChartPeriodIsValid = () => {
+    const start = customPeriodBoundary(els.pullChartPeriodStart.value);
+    const end = customPeriodBoundary(els.pullChartPeriodEnd.value, true);
+    return Number.isFinite(start) && Number.isFinite(end) && start <= end;
+  };
+  els.pullChartPeriod.addEventListener('change', () => {
+    pullChartPeriod = els.pullChartPeriod.value;
+    const custom = pullChartPeriod === 'custom';
+    els.pullChartCustomPeriod.hidden = !custom;
+    els.pullChartPeriodError.textContent = '';
+    if (custom) syncPullChartCustomPeriod();
+    if (els.pullChartsDialog.open) renderPullCharts();
+  });
+  els.pullChartPeriodForm.addEventListener('submit', event => {
+    event.preventDefault();
+    if (pullChartPeriod !== 'custom') return;
+    if (!customPullChartPeriodIsValid()) {
+      els.pullChartPeriodError.textContent = t('invalidChartPeriod');
+      return;
+    }
+    els.pullChartPeriodError.textContent = '';
+    renderPullCharts();
+  });
+  els.openPullCharts.addEventListener('click', () => {
+    els.pullChartPeriod.value = pullChartPeriod;
+    els.pullChartCustomPeriod.hidden = pullChartPeriod !== 'custom';
+    if (pullChartPeriod === 'custom') syncPullChartCustomPeriod();
+    els.pullChartPeriodError.textContent = '';
+    if (typeof els.pullChartsDialog.showModal === 'function') els.pullChartsDialog.showModal();
+    else els.pullChartsDialog.setAttribute('open', '');
+    window.requestAnimationFrame(() => {
+      renderPullCharts();
+      els.closePullCharts.focus();
+    });
+  });
+  els.closePullCharts.addEventListener('click', closePullCharts);
+  els.pullChartsDialog.addEventListener('click', event => {
+    if (event.target === els.pullChartsDialog) closePullCharts();
+  });
+  let pullChartResizeFrame = 0;
+  window.addEventListener('resize', () => {
+    if (!els.pullChartsDialog.open || pullChartResizeFrame) return;
+    pullChartResizeFrame = window.requestAnimationFrame(() => {
+      pullChartResizeFrame = 0;
+      renderPullCharts();
+    });
   });
   els.exportPullHistory.addEventListener('click', () => {
     const payload = JSON.stringify({ format: 'zzz-pull-history', version: 1, exportedAt: new Date().toISOString(), entries: runtime.pullHistory }, null, 2);
