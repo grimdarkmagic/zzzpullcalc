@@ -76,10 +76,47 @@
     svg.innerHTML = `<title>${svgEscape(labels.cumulativeTitle)}</title>${axes}${marks}`;
   };
 
-  const renderIntervalChart = (svg, allPoints, labels, locale, note) => {
-    const intervals = allPoints.slice(1);
-    const maximumIntervals = 120;
-    const points = intervals.slice(-maximumIntervals);
+  const localDayStart = timestamp => {
+    const date = new Date(timestamp);
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  };
+
+  const nextLocalDay = timestamp => {
+    const date = new Date(timestamp);
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime();
+  };
+
+  const dailyBuckets = allPoints => {
+    const buckets = new Map();
+    const bucketFor = timestamp => {
+      const start = localDayStart(timestamp);
+      if (!buckets.has(start)) buckets.set(start, { start, end: nextLocalDay(start), earned: 0, spent: 0 });
+      return buckets.get(start);
+    };
+    allPoints.slice(1).forEach((point, index) => {
+      const previous = allPoints[index];
+      const duration = point.recordedAt - previous.recordedAt;
+      if (duration <= 0) {
+        const bucket = bucketFor(point.recordedAt);
+        bucket.earned += finite(point.earned);
+        bucket.spent += finite(point.spent);
+        return;
+      }
+      let cursor = previous.recordedAt;
+      while (cursor < point.recordedAt) {
+        const bucket = bucketFor(cursor);
+        const sliceEnd = Math.min(point.recordedAt, bucket.end);
+        const fraction = (sliceEnd - cursor) / duration;
+        bucket.earned += finite(point.earned) * fraction;
+        bucket.spent += finite(point.spent) * fraction;
+        cursor = sliceEnd;
+      }
+    });
+    return [...buckets.values()].sort((first, second) => first.start - second.start);
+  };
+
+  const renderDailyChart = (svg, allPoints, labels, locale, note) => {
+    const points = dailyBuckets(allPoints);
     const width = chartWidth(svg);
     const height = 290;
     const margin = { top: 18, right: 18, bottom: 48, left: 64 };
@@ -87,35 +124,41 @@
     const innerHeight = height - margin.top - margin.bottom;
     const formatNumber = numberFormatter(locale).format;
     const formatDate = dateFormatter(locale).format;
-    note.textContent = intervals.length > maximumIntervals
-      ? labels.latestIntervals.replace('{count}', String(maximumIntervals)).replace('{total}', String(intervals.length))
-      : '';
+    note.textContent = '';
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
     svg.setAttribute('height', String(height));
     svg.setAttribute('aria-label', labels.intervalsTitle);
     if (!points.length) {
-      svg.innerHTML = `<title>${svgEscape(labels.intervalsTitle)}</title><text x="${width / 2}" y="${height / 2}" text-anchor="middle" class="pull-chart-empty-label">${svgEscape(labels.noIntervals)}</text>`;
+      svg.innerHTML = `<title>${svgEscape(labels.intervalsTitle)}</title><text x="${width / 2}" y="${height / 2}" text-anchor="middle" class="pull-chart-empty-label">${svgEscape(labels.noRateData)}</text>`;
       return;
     }
+    const timestampLow = points[0].start;
+    const timestampHigh = points.at(-1).end;
+    const x = timestamp => margin.left + (timestamp - timestampLow) / (timestampHigh - timestampLow) * innerWidth;
     const yExtent = niceExtent(points.flatMap(point => [point.earned, point.spent]));
     const [low, high] = yExtent;
     const y = value => margin.top + (high - value) / (high - low) * innerHeight;
     const yZero = y(0);
-    const groupWidth = innerWidth / points.length;
-    const barWidth = Math.max(1, Math.min(15, groupWidth * 0.32));
-    const center = index => margin.left + groupWidth * (index + 0.5);
     const indexes = tickIndexes(points.length, width < 520 ? 3 : 6);
     const axes = axesMarkup({
       width, height, margin, yExtent,
-      xLabels: indexes.map(index => formatDate(points[index].recordedAt)),
-      xPositions: indexes.map(center), labels, formatNumber
+      xLabels: indexes.map(index => formatDate(points[index].start)),
+      xPositions: indexes.map(index => x((points[index].start + points[index].end) / 2)),
+      labels, formatNumber
     });
-    const bar = (point, index, value, offset, color, label) => {
-      const top = Math.min(y(value), yZero);
-      const barHeight = Math.max(1, Math.abs(y(value) - yZero));
-      return `<rect x="${center(index) + offset - barWidth / 2}" y="${top}" width="${barWidth}" height="${barHeight}" fill="${color}" class="pull-chart-bar"><title>${svgEscape(`${formatDate(point.recordedAt)} — ${label}: ${formatNumber(value)}`)}</title></rect>`;
-    };
-    const bars = points.map((point, index) => `${bar(point, index, point.earned, -barWidth * 0.6, 'var(--viz-series-3)', labels.earned)}${bar(point, index, point.spent, barWidth * 0.6, 'var(--viz-series-2)', labels.spent)}`).join('');
+    const bars = points.map(point => {
+      const left = x(point.start);
+      const right = x(point.end);
+      const availableWidth = Math.max(1, right - left);
+      const gap = Math.min(2, availableWidth * 0.08);
+      const barWidth = Math.max(0.5, (availableWidth - gap * 3) / 2);
+      const bar = (value, offset, color, label) => {
+        const top = Math.min(y(value), yZero);
+        const barHeight = Math.max(1, Math.abs(y(value) - yZero));
+        return `<rect x="${left + gap + offset}" y="${top}" width="${barWidth}" height="${barHeight}" fill="${color}" class="pull-chart-bar"><title>${svgEscape(`${formatDate(point.start)} — ${label}: ${formatNumber(value)}`)}</title></rect>`;
+      };
+      return `${bar(point.earned, 0, 'var(--viz-series-3)', labels.earned)}${bar(point.spent, barWidth + gap, 'var(--viz-series-2)', labels.spent)}`;
+    }).join('');
     svg.innerHTML = `<title>${svgEscape(labels.intervalsTitle)}</title>${axes}<line x1="${margin.left}" x2="${width - margin.right}" y1="${yZero}" y2="${yZero}" class="pull-chart-zero-line"></line>${bars}`;
   };
 
@@ -239,7 +282,7 @@
     if (!points.length) return;
     renderSummary(elements.summary, elements.reconciliation, stats, labels, locale);
     renderCumulativeChart(elements.cumulative, points, labels, locale);
-    renderIntervalChart(elements.intervals, points, labels, locale, elements.intervalNote);
+    renderDailyChart(elements.intervals, points, labels, locale, elements.intervalNote);
     renderWalletChart(elements.wallet, points, labels, locale);
     renderDetails(elements.details, points, labels, locale);
   };

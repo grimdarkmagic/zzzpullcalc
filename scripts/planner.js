@@ -495,7 +495,7 @@
       labels: {
         coverage: t('chartCoverage'), noCoverage: t(allHistory ? 'chartNoCoverage' : 'chartPeriodNoSnapshots'), earnedTotal: t(allHistory ? 'chartEarnedTotal' : 'chartPeriodEarned'), spentTotal: t(allHistory ? 'chartSpentTotal' : 'chartPeriodSpent'), walletChange: t('chartWalletChange'), purchasedTotal: t(allHistory ? 'chartPurchasedTotal' : 'chartPeriodPurchased'), adjustmentTotal: t(allHistory ? 'chartAdjustmentTotal' : 'chartPeriodAdjustments'), dailyAverage: t('chartDailyAverage'), reconciliation: t('chartBalanceReconciliation'), reconciliationWithOpening: t('chartBalanceReconciliationWithOpening'),
         cumulativeTitle: t('chartCumulativeTitle'), intervalsTitle: t('chartIntervalsTitle'), walletTitle: t('chartWalletTitle'), earned: t('chartEarned'), spent: t('chartSpent'), wallet: t('chartWalletBalance'), date: t('chartDate'), pulls: t('chartPulls'),
-        monochromes: t('monochromes'), polychromes: t('polychromes'), tapes: t('encryptedMasterTapes'), latestIntervals: t('chartLatestIntervals'), noIntervals: t('chartNoIntervals')
+        noRateData: t('chartNoRateData'), monochromes: t('monochromes'), polychromes: t('polychromes'), tapes: t('encryptedMasterTapes'), noIntervals: t('chartNoIntervals')
       },
       elements: {
         coverage: els.pullChartsCoverage, empty: els.pullChartsEmpty, content: els.pullChartsContent, summary: els.pullChartsSummary, reconciliation: els.pullChartsReconciliation,

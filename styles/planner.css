@@ -532,6 +532,7 @@
   #zzz-universal-planner .pull-chart-axis-line,
   #zzz-universal-planner .pull-chart-zero-line { stroke: color-mix(in srgb, var(--foreground) 30%, transparent); stroke-width: 1; }
   #zzz-universal-planner .pull-chart-line { stroke-width: 2.25; vector-effect: non-scaling-stroke; }
+  #zzz-universal-planner .pull-chart-hit { pointer-events: all; }
   #zzz-universal-planner .pull-chart-point { stroke: var(--background); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
   #zzz-universal-planner .pull-chart-bar,
   #zzz-universal-planner .pull-chart-area { opacity: 0.84; }
