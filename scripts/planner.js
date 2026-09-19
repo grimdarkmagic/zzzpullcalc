@@ -229,7 +229,8 @@
         const characterDatesValid = /^\d{4}-\d{2}-\d{2}$/.test(character.startDate) && /^\d{4}-\d{2}-\d{2}$/.test(character.endDate);
         const characterEndAtValid = character.endAt === undefined || (typeof character.endAt === 'string' && Number.isFinite(Date.parse(character.endAt)));
         return typeof character.name === 'string' && character.name.length > 0 && typeof character.nameKey === 'string' && character.nameKey.length > 0 &&
-          characterDatesValid && characterEndAtValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' && period && period.phase === character.budget.phase &&
+          characterDatesValid && characterEndAtValid && character.startDate < character.endDate && typeof character.confirmed === 'boolean' &&
+          (character.showUnconfirmedBadge === undefined || typeof character.showUnconfirmedBadge === 'boolean') && period && period.phase === character.budget.phase &&
           period.endDate === character.endDate && period.endAt === character.endAt && Number.isInteger(character.budget.phase) && character.budget.phase >= 0;
       });
       return agentsValid && group && group.mode === pity.mode && validModes.has(pity.mode) && typeof pity.targetType === 'string' &&
@@ -701,7 +702,7 @@
       const provisionalBadge = character.provisional
         ? `<span class="unconfirmed-badge provisional-badge">${t('provisional')}</span>`
         : '';
-      const unconfirmedBadge = !character.provisional && !character.confirmed
+      const unconfirmedBadge = !character.provisional && !character.confirmed && character.showUnconfirmedBadge !== false
         ? `<br><span class="unconfirmed-badge availability-unconfirmed-badge">${t('unconfirmed')}</span>`
         : '';
       const provisionalActions = character.provisional ? `

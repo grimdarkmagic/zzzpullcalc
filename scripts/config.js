@@ -25,8 +25,8 @@
           { id: 'nangong-yu', name: 'Nangong Yu', nameKey: 'agentNameNangongYu', enabled: false, priority: 7, confirmed: true, startDate: '2026-09-09', endDate: '2026-09-30', budget: { periodId: 'claret-end', phase: 1 } },
           { id: 'roxy', name: 'Roxy', nameKey: 'agentNameRoxy', enabled: true, priority: 8, confirmed: true, startDate: '2026-09-30', endDate: '2026-10-21', budget: { periodId: 'roxy-end', phase: 2 } },
           { id: 'promeia', name: 'Promeia', nameKey: 'agentNamePromeia', enabled: false, priority: 9, confirmed: true, startDate: '2026-09-30', endDate: '2026-10-21', budget: { periodId: 'roxy-end', phase: 2 } },
-          { id: 'phoenix', name: 'Phoenix', nameKey: 'agentNamePhoenix', enabled: true, priority: 10, confirmed: false, startDate: '2026-10-21', endDate: '2026-11-11', budget: { periodId: 'phoenix-end', phase: 3 } },
-          { id: 'severian', name: 'Severian', nameKey: 'agentNameSeverian', enabled: true, priority: 11, confirmed: false, startDate: '2026-11-11', endDate: '2026-12-02', budget: { periodId: 'severian-end', phase: 4 } }
+          { id: 'phoenix', name: 'Phoenix', nameKey: 'agentNamePhoenix', enabled: true, priority: 10, confirmed: false, showUnconfirmedBadge: false, startDate: '2026-10-21', endDate: '2026-11-11', budget: { periodId: 'phoenix-end', phase: 3 } },
+          { id: 'severian', name: 'Severian', nameKey: 'agentNameSeverian', enabled: true, priority: 11, confirmed: false, showUnconfirmedBadge: false, startDate: '2026-11-11', endDate: '2026-12-02', budget: { periodId: 'severian-end', phase: 4 } }
         ]
       },
       {
