@@ -292,6 +292,16 @@
   #zzz-universal-planner .pull-history-table td { vertical-align: middle; }
   #zzz-universal-planner .pull-history-earned { white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
   #zzz-universal-planner .pull-history-baseline { color: var(--muted-foreground); }
+  #zzz-universal-planner .pull-history-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    margin-top: 0.55rem;
+  }
+  #zzz-universal-planner .pull-history-pagination[hidden] { display: none; }
+  #zzz-universal-planner .pull-history-pagination .btn { min-width: 5.5rem; }
+  #zzz-universal-planner .pull-history-pagination span { min-width: 7rem; text-align: center; font-variant-numeric: tabular-nums; }
   #zzz-universal-planner .form-control {
     transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   }

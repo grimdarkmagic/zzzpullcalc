@@ -23,6 +23,7 @@
     pullSnapshotSpent: root.querySelector('#t-pull-snapshot-spent'), pullSnapshotPurchased: root.querySelector('#t-pull-snapshot-purchased'), pullSnapshotAdjustment: root.querySelector('#t-pull-snapshot-adjustment'),
     recordPullSnapshot: root.querySelector('#t-record-pull-snapshot'), pullGainTotal: root.querySelector('#t-pull-gain-total'), pullGainSeven: root.querySelector('#t-pull-gain-seven'), pullGainThirty: root.querySelector('#t-pull-gain-thirty'), pullGainAverage: root.querySelector('#t-pull-gain-average'),
     pullHistoryWrap: root.querySelector('#t-pull-history-wrap'), pullHistoryRows: root.querySelector('#t-pull-history-rows'), pullHistoryEmpty: root.querySelector('#t-pull-history-empty'), pullTrackerMessage: root.querySelector('#t-pull-tracker-message'),
+    pullHistoryPagination: root.querySelector('#t-pull-history-pagination'), pullHistoryPrevious: root.querySelector('#t-pull-history-previous'), pullHistoryNext: root.querySelector('#t-pull-history-next'), pullHistoryPageStatus: root.querySelector('#t-pull-history-page-status'),
     exportPullHistory: root.querySelector('#t-export-pull-history'), importPullHistory: root.querySelector('#t-import-pull-history'), importPullHistoryFile: root.querySelector('#t-import-pull-history-file'),
     openPullCharts: root.querySelector('#t-open-pull-charts'), pullChartsDialog: root.querySelector('#t-pull-charts-dialog'), closePullCharts: root.querySelector('#t-close-pull-charts'), pullChartsCoverage: root.querySelector('#t-pull-charts-coverage'),
     pullChartsEmpty: root.querySelector('#t-pull-charts-empty'), pullChartsContent: root.querySelector('#t-pull-charts-content'), pullChartsSummary: root.querySelector('#t-pull-charts-summary'), pullChartsReconciliation: root.querySelector('#t-pull-charts-reconciliation'), pullCumulativeChart: root.querySelector('#t-pull-cumulative-chart'),
@@ -328,6 +329,8 @@
     return new Date(date.getTime() - offset).toISOString().slice(0, 19);
   };
   let pullSnapshotDateManuallyEdited = false;
+  const pullHistoryPageSize = 10;
+  let pullHistoryPage = Number.POSITIVE_INFINITY;
   const syncPullSnapshotDate = () => { els.pullSnapshotDate.value = localDateTimeInputValue(Date.now()); };
   const pullUnitsFromInput = (value, allowNegative = false) => {
     const numeric = Number(value);
@@ -418,6 +421,10 @@
   const renderPullTracker = () => {
     const history = runtime.pullHistory;
     const gains = history.map((entry, index) => pullGainUnits(entry, history[index - 1]));
+    const pageCount = Math.max(1, Math.ceil(history.length / pullHistoryPageSize));
+    pullHistoryPage = Number.isInteger(pullHistoryPage) ? Math.min(Math.max(pullHistoryPage, 1), pageCount) : pageCount;
+    const pageStart = (pullHistoryPage - 1) * pullHistoryPageSize;
+    const pageEntries = history.slice(pageStart, pageStart + pullHistoryPageSize);
     const now = Date.now();
     const tracked = trackedIncomeStats(now);
     const recentTotal = days => {
@@ -434,11 +441,16 @@
     renderProjectionIncome();
     els.pullHistoryWrap.hidden = !history.length;
     els.pullHistoryEmpty.hidden = Boolean(history.length);
+    els.pullHistoryPagination.hidden = history.length <= pullHistoryPageSize;
+    els.pullHistoryPrevious.disabled = pullHistoryPage <= 1;
+    els.pullHistoryNext.disabled = pullHistoryPage >= pageCount;
+    els.pullHistoryPageStatus.textContent = t('snapshotPageStatus').replace('{page}', numberLabel(pullHistoryPage, 0)).replace('{pages}', numberLabel(pageCount, 0));
     els.recordPullSnapshot.textContent = t(history.length ? 'recordSnapshot' : 'startTracking');
     els.pullSnapshotSpent.disabled = !history.length;
     els.pullSnapshotPurchased.disabled = false;
     els.pullSnapshotAdjustment.disabled = false;
-    els.pullHistoryRows.innerHTML = history.map((entry, index) => {
+    els.pullHistoryRows.innerHTML = pageEntries.map((entry, pageIndex) => {
+      const index = pageStart + pageIndex;
       const gain = gains[index];
       return `<tr data-history-id="${escapeHtml(entry.id)}">
         <td><input class="form-control t-pull-history-input t-history-date" data-field="recordedAt" type="datetime-local" step="1" value="${localDateTimeInputValue(entry.recordedAt)}"></td>
@@ -1242,6 +1254,14 @@
     renderCharacterTable();
     updateAndPersist();
   });
+  els.pullHistoryPrevious.addEventListener('click', () => {
+    pullHistoryPage = Math.max(1, pullHistoryPage - 1);
+    renderPullTracker();
+  });
+  els.pullHistoryNext.addEventListener('click', () => {
+    pullHistoryPage += 1;
+    renderPullTracker();
+  });
   const newPullHistoryId = () => globalThis.crypto?.randomUUID?.() || `history-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   els.pullSnapshotDate.addEventListener('input', () => { pullSnapshotDateManuallyEdited = true; });
   els.pullSnapshotForm.addEventListener('submit', event => {
@@ -1266,6 +1286,7 @@
       return;
     }
     runtime.pullHistory = normalizedPullHistory([...runtime.pullHistory, entry]);
+    pullHistoryPage = Math.floor(runtime.pullHistory.findIndex(item => item.id === entry.id) / pullHistoryPageSize) + 1;
     pullSnapshotDateManuallyEdited = false;
     syncPullSnapshotDate();
     els.pullSnapshotSpent.value = '0';
@@ -1300,6 +1321,7 @@
     }
     runtime.pullHistory[index] = entry;
     runtime.pullHistory = normalizedPullHistory(runtime.pullHistory);
+    pullHistoryPage = Math.floor(runtime.pullHistory.findIndex(item => item.id === entry.id) / pullHistoryPageSize) + 1;
     refreshPullHistory();
     setPullTrackerMessage('snapshotUpdated');
   });
@@ -1392,6 +1414,7 @@
       if (!imported) throw new Error('Invalid pull history');
       if (runtime.pullHistory.length && !window.confirm(t('replaceHistoryConfirm'))) return;
       runtime.pullHistory = imported;
+      pullHistoryPage = Number.POSITIVE_INFINITY;
       refreshPullHistory();
       setPullTrackerMessage('historyImported');
     } catch {

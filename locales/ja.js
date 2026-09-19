@@ -17,6 +17,7 @@
       snapshotDate: '記録日時', snapshotTimeHelp: '日時を変更しない限り、保存時の現在時刻が自動で使われます。', pullsSpent: '使用した変調回数', purchasedPulls: '購入分（変調回数換算）', otherBalanceChange: 'その他の残高変動', earnedPulls: '獲得した変調回数分',
       startTracking: '記録を始める', recordSnapshot: '現在の所持数を記録', snapshotAdjustmentHelp: '最初の記録では、開始時の所持数に含まれる購入分と集計外の変動を入力します。以降は前回の記録後の変動を入力します。その他の変動は、追加なら正、減少なら負の値です。購入分とその他の変動は獲得量から除外されます。',
       noPullHistory: '記録はまだありません。現在の所持数を基準として保存すると集計が始まります。', pullHistoryBaseline: '基準', removeSnapshot: '記録を削除', invalidSnapshot: '有効な日時、0以上の整数の所持数と使用回数、および有効な除外対象の残高変動を入力してください。',
+      snapshotPagination: '記録のページ', previousPage: '前へ', nextPage: '次へ', snapshotPageStatus: '{pages}ページ中{page}ページ目',
       snapshotSaved: '現在の所持数を記録しました。', snapshotUpdated: '記録を更新しました。', snapshotRemoved: '記録を削除しました。', historyImported: '変調履歴を読み込みました。', invalidHistoryFile: '有効な変調履歴が含まれていません。', historyLimitReached: '記録できる所持数は500件までです。', replaceHistoryConfirm: '現在の変調履歴を読み込んだ履歴に置き換えますか？', removeSnapshotConfirm: 'この記録を削除しますか？',
       useTrackedIncome: '記録した平均獲得量を予測に使う', trackedIncomeBasis: '{start}から{end}までの記録に基づく1日あたり{rate}回分です。最初の記録後の獲得量を経過時間で割り、開始時の所持数、購入分、その他の残高変動は除外しています。',
       trackedIncomeNeedsHistory: '実績値を計算するには、異なる時刻の過去の記録が2件以上必要です。', trackedIncomeNegative: '記録上の獲得量がマイナスです。予測に使う前に、所持数、使用回数、集計から除外した残高変動を確認してください。', trackedIncomeFallback: '実績値をまだ利用できないため、既定値で計算しています。',
