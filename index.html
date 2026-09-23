@@ -79,7 +79,15 @@
     </div>
     <p id="t-resource-breakdown" class="text-small text-muted resource-breakdown" aria-live="polite"></p>
   </div>
-  <p id="t-income-note" class="text-small text-muted"></p>
+  <div class="income-estimate">
+    <label id="t-income-rate-label" for="t-income-rate" data-i18n="incomeEstimate">Income estimate</label>
+    <div class="income-estimate-control">
+      <input id="t-income-rate" class="form-control" type="number" min="0" max="10000" step="0.01" value="3" aria-describedby="t-income-note">
+      <output id="t-income-rate-value" aria-labelledby="t-income-rate-label" aria-describedby="t-income-note" hidden></output>
+      <span class="text-small text-muted" data-i18n="searchesPerDay">searches/day</span>
+    </div>
+    <p id="t-income-note" class="text-small text-muted"></p>
+  </div>
 
   <details id="t-pull-tracker" class="pull-tracker" aria-labelledby="t-pull-tracker-heading">
     <summary class="pull-tracker-toggle"><h3 id="t-pull-tracker-heading" class="pull-tracker-title" data-i18n="pullTracker">Pull income tracker</h3></summary>
@@ -261,7 +269,7 @@
         <tbody id="t-agent-rows"></tbody>
       </table>
     </div>
-    <p class="text-small text-muted mindscape-help" data-i18n="mindscapeHelp">Set each Agent's current → target Mindscape. Required copies are searched consecutively, and the whole range counts as one of the 15 calculation targets.</p>
+    <p class="text-small text-muted mindscape-help" data-i18n="mindscapeHelp">Set each Agent's current → target Mindscape. Required copies are searched consecutively, and the whole range counts as one of the 15 calculation targets. Use ∞ beside a target to set its pull limit.</p>
     <div class="provisional-controls">
       <button id="t-add-provisional" class="btn provisional-trigger" type="button" data-i18n="addProvisional">+ Add custom target</button>
       <form id="t-provisional-form" class="provisional-form" hidden>
@@ -322,6 +330,19 @@
     </form>
   </dialog>
 
+  <dialog id="t-spend-limit-dialog" class="mindscape-dialog" aria-labelledby="t-spend-limit-dialog-title">
+    <form id="t-spend-limit-form" class="mindscape-dialog-form">
+      <h3 id="t-spend-limit-dialog-title" data-i18n="pullLimit">Pull limit</h3>
+      <p id="t-spend-limit-target-name" class="mindscape-dialog-agent"></p>
+      <label class="spend-limit-field"><span data-i18n="maximumPulls">Maximum pulls for this target</span><input id="t-spend-limit" class="form-control" type="number" min="1" max="10000" step="1" inputmode="numeric" placeholder="∞"></label>
+      <p class="text-small text-muted mindscape-dialog-help" data-i18n="pullLimitHelp">Leave blank for no limit. Once the limit is reached, move to the next target even if this one was missed. An Agent limit covers the whole Mindscape range.</p>
+      <div class="mindscape-dialog-actions">
+        <button class="btn btn-primary" type="submit" data-i18n="savePullLimit">Save limit</button>
+        <button id="t-cancel-spend-limit" class="btn btn-secondary" type="button" data-i18n="cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="t-error" class="text-destructive" role="alert"></div>
   <p class="text-small text-muted" data-i18n="budgetHelp">Each Agent row shows the expected Signal Search balance after earlier targets. Future income accumulates to that Agent's deadline, while availability dates determine which targets can be prioritized against each other.</p>
   <p id="t-order" class="text-small" aria-live="polite"></p>
@@ -334,7 +355,7 @@
       <tbody id="t-target-chances"></tbody>
     </table>
   </div>
-  <p class="text-small text-muted outcome-help" data-i18n="pullRequirementHelp">Search counts are cumulative from now through each target, following the shown priority and current pity and guarantees. Future income affects whether that many searches are available by the deadline, not the requirement itself.</p>
+  <p class="text-small text-muted outcome-help" data-i18n="pullRequirementHelp">Search counts are cumulative from now through each target, following the shown priority and current pity and guarantees. With a pull limit, the count includes stopping after a missed target. Future income affects availability by the deadline, not these counts.</p>
   <p class="text-small text-muted outcome-help" data-i18n="outcomeHelp">“Miss by deadline” is the complement of that target’s acquisition chance. Each row below is one mutually exclusive complete result of the selected strategy.</p>
   <div class="table-responsive">
     <table class="table table-sm">

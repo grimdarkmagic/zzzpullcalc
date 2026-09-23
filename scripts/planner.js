@@ -29,7 +29,7 @@
     pullChartsEmpty: root.querySelector('#t-pull-charts-empty'), pullChartsContent: root.querySelector('#t-pull-charts-content'), pullChartsSummary: root.querySelector('#t-pull-charts-summary'), pullChartsReconciliation: root.querySelector('#t-pull-charts-reconciliation'), pullCumulativeChart: root.querySelector('#t-pull-cumulative-chart'),
     pullIntervalChart: root.querySelector('#t-pull-interval-chart'), pullIntervalChartNote: root.querySelector('#t-pull-interval-chart-note'), pullWalletChart: root.querySelector('#t-pull-wallet-chart'), pullChartDetailsRows: root.querySelector('#t-pull-chart-details-rows'),
     pullChartPeriodForm: root.querySelector('#t-pull-chart-period-form'), pullChartPeriod: root.querySelector('#t-pull-chart-period'), pullChartCustomPeriod: root.querySelector('#t-pull-chart-custom-period'), pullChartPeriodStart: root.querySelector('#t-pull-chart-period-start'), pullChartPeriodEnd: root.querySelector('#t-pull-chart-period-end'), pullChartPeriodError: root.querySelector('#t-pull-chart-period-error'),
-    incomeNote: root.querySelector('#t-income-note'), agentChannelRows: root.querySelector('#t-agent-channel-rows'), wEngineChannelRows: root.querySelector('#t-w-engine-channel-rows'), agentRows: root.querySelector('#t-agent-rows'), error: root.querySelector('#t-error'),
+    incomeRate: root.querySelector('#t-income-rate'), incomeRateValue: root.querySelector('#t-income-rate-value'), incomeNote: root.querySelector('#t-income-note'), agentChannelRows: root.querySelector('#t-agent-channel-rows'), wEngineChannelRows: root.querySelector('#t-w-engine-channel-rows'), agentRows: root.querySelector('#t-agent-rows'), error: root.querySelector('#t-error'),
     order: root.querySelector('#t-order'), summary: root.querySelector('#t-summary'), targetChances: root.querySelector('#t-target-chances'), outcomes: root.querySelector('#t-outcomes'),
     separateWEnginePriorities: root.querySelector('#t-separate-w-engine-priorities'), selectedTargetCount: root.querySelector('#t-selected-target-count'), targetOrderPanel: root.querySelector('#t-target-order-panel'), targetOrderRows: root.querySelector('#t-target-order-rows'),
     addProvisional: root.querySelector('#t-add-provisional'), provisionalForm: root.querySelector('#t-provisional-form'), provisionalFormTitle: root.querySelector('#t-provisional-form-title'),
@@ -38,7 +38,9 @@
     provisionalStart: root.querySelector('#t-provisional-start'), provisionalEnd: root.querySelector('#t-provisional-end'), provisionalNote: root.querySelector('#t-provisional-note'),
     provisionalError: root.querySelector('#t-provisional-error'), cancelProvisional: root.querySelector('#t-cancel-provisional'),
     mindscapeDialog: root.querySelector('#t-mindscape-dialog'), mindscapeForm: root.querySelector('#t-mindscape-form'), mindscapeAgentName: root.querySelector('#t-mindscape-agent-name'),
-    currentMindscape: root.querySelector('#t-current-mindscape'), targetMindscape: root.querySelector('#t-target-mindscape'), cancelMindscape: root.querySelector('#t-cancel-mindscape')
+    currentMindscape: root.querySelector('#t-current-mindscape'), targetMindscape: root.querySelector('#t-target-mindscape'), cancelMindscape: root.querySelector('#t-cancel-mindscape'),
+    spendLimitDialog: root.querySelector('#t-spend-limit-dialog'), spendLimitForm: root.querySelector('#t-spend-limit-form'), spendLimitTargetName: root.querySelector('#t-spend-limit-target-name'),
+    spendLimit: root.querySelector('#t-spend-limit'), cancelSpendLimit: root.querySelector('#t-cancel-spend-limit')
   };
   let language = 'en';
   const t = key => translations[language][key];
@@ -174,13 +176,14 @@
     availableNow: PLANNER_CONFIG.availableNow,
     resourceBalances: { monochromes: 0, polychromes: 0, encryptedMasterTapes: PLANNER_CONFIG.availableNow },
     resourceEnabled: { monochromes: false, polychromes: true, encryptedMasterTapes: true },
-    pullHistory: [], pullTrackerOpen: false, useTrackedIncome: false,
+    pullHistory: [], pullTrackerOpen: false, useTrackedIncome: false, incomeRate: PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay,
     pityGroups: Object.fromEntries([...pityDefaults].map(([id, value]) => [id, { count: value.count, guaranteed: value.guaranteed, specialGuaranteed: value.specialGuaranteed }])),
     customPeriods: [], customCharacters: [],
     enabled: Object.fromEntries(builtInCharacters.map(character => [character.id, character.enabled])),
     agentCurrentMindscapes: Object.fromEntries(builtInCharacters.map(character => [character.id, -1])),
     agentMindscapes: Object.fromEntries(builtInCharacters.map(character => [character.id, 0])),
     wEngineEnabled: Object.fromEntries(builtInCharacters.map(character => [character.id, false])),
+    targetSpendLimits: {},
     characterOrder: defaultCharacterOrder.slice(), targetOrder: defaultTargetOrder.slice(),
     separateWEnginePriorities: false, separateOrderInitialized: false
   };
@@ -208,6 +211,8 @@
       typeof runtime.wEngineEnabled[character.id] === 'boolean' ? runtime.wEngineEnabled[character.id] : false]));
     targets = makeTargets(characters);
     targetById = new Map(targets.map(target => [target.id, target]));
+    runtime.targetSpendLimits = Object.fromEntries(targets.filter(target => Number.isInteger(runtime.targetSpendLimits[target.id]) && runtime.targetSpendLimits[target.id] >= 1 && runtime.targetSpendLimits[target.id] <= 10000)
+      .map(target => [target.id, runtime.targetSpendLimits[target.id]]));
     const knownTargetIds = new Set(targets.map(target => target.id));
     const completeTargetOrder = [...preferredTargetOrder.filter(id => knownTargetIds.has(id)), ...runtime.characterOrder.flatMap(characterId => [targetId('agent', characterId), targetId('w-engine', characterId)]).filter(id => !preferredTargetOrder.includes(id))];
     runtime.targetOrder = constrainOrder(completeTargetOrder, targetById);
@@ -292,6 +297,11 @@
     return target.kind === 'w-engine'
       ? `${name} — ${t('wEngineSuffix')}`
       : runtime.agentMindscapes[target.characterId] > 0 ? `${name} (M${runtime.agentMindscapes[target.characterId]})` : name;
+  };
+  const spendLimitButton = target => {
+    const limit = runtime.targetSpendLimits[target.id];
+    const label = t('editPullLimit').replace('{target}', targetLabel(target));
+    return `<button class="btn btn-secondary spend-limit-button t-edit-spend-limit" data-target-id="${escapeHtml(target.id)}" type="button" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${limit ? `≤${numberLabel(limit, 0)}` : '∞'}</button>`;
   };
   const percentLabel = value => `${new Intl.NumberFormat(localeLoader.intlLocale(language), { maximumFractionDigits: 1 }).format(value * 100)}%`;
   const numberLabel = (value, maximumFractionDigits = 1) => new Intl.NumberFormat(localeLoader.intlLocale(language), { maximumFractionDigits }).format(value);
@@ -394,7 +404,7 @@
     const tracked = trackedIncomeStats();
     const usable = tracked.rate !== null && Number.isFinite(tracked.rate) && tracked.rate >= 0;
     const usingTracked = runtime.useTrackedIncome && usable;
-    return { tracked, usable, usingTracked, rate: usingTracked ? tracked.rate : PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay };
+    return { tracked, usable, usingTracked, rate: usingTracked ? tracked.rate : runtime.incomeRate };
   };
   const incomeRateLabel = rate => rate > 0 && rate < 0.00001 ? `<${numberLabel(0.00001, 5)}` : numberLabel(rate, 5);
   const trackedIncomeText = (key, tracked) => {
@@ -404,13 +414,19 @@
       .replace('{end}', formatter.format(tracked.latest.recordedAt));
   };
   const renderProjectionIncome = (income = projectionIncome()) => {
+    els.incomeRate.value = runtime.incomeRate;
+    els.incomeRate.hidden = runtime.useTrackedIncome;
+    els.incomeRateValue.hidden = !runtime.useTrackedIncome;
+    els.incomeRateValue.textContent = incomeRateLabel(income.rate);
     els.useTrackedIncome.checked = runtime.useTrackedIncome;
     els.trackedIncomeBasis.textContent = income.usable
       ? trackedIncomeText('trackedIncomeBasis', income.tracked)
       : t(income.tracked.rate !== null && income.tracked.rate < 0 ? 'trackedIncomeNegative' : 'trackedIncomeNeedsHistory');
-    els.incomeNote.textContent = income.usingTracked
-      ? trackedIncomeText('trackedIncomeNote', income.tracked)
-      : `${runtime.useTrackedIncome ? `${t('trackedIncomeFallback')} ` : ''}${t('incomeNote').replace('{rate}', incomeRateLabel(income.rate))}`;
+    els.incomeNote.textContent = !runtime.useTrackedIncome
+      ? t('incomeNote').replace('{rate}', incomeRateLabel(income.rate))
+      : income.usingTracked
+        ? trackedIncomeText('trackedIncomeActiveNotice', income.tracked)
+        : `${t('trackedIncomeFallback')} ${t(income.tracked.rate !== null && income.tracked.rate < 0 ? 'trackedIncomeNegative' : 'trackedIncomeNeedsHistory')}`;
   };
   const pullUnitsLabel = units => numberLabel(units / currencyPerSearch, 5);
   const pullUnitsInputValue = units => String(units / currencyPerSearch);
@@ -665,6 +681,22 @@
     else els.mindscapeDialog.setAttribute('open', '');
     els.currentMindscape.focus();
   };
+  let spendLimitDialogTargetId = '';
+  const closeSpendLimitDialog = () => {
+    if (typeof els.spendLimitDialog.close === 'function') els.spendLimitDialog.close();
+    else els.spendLimitDialog.removeAttribute('open');
+    spendLimitDialogTargetId = '';
+  };
+  const openSpendLimitDialog = id => {
+    const target = targetById.get(id);
+    if (!target) return;
+    spendLimitDialogTargetId = id;
+    els.spendLimitTargetName.textContent = targetLabel(target);
+    els.spendLimit.value = runtime.targetSpendLimits[id] || '';
+    if (typeof els.spendLimitDialog.showModal === 'function') els.spendLimitDialog.showModal();
+    else els.spendLimitDialog.setAttribute('open', '');
+    els.spendLimit.focus();
+  };
 
   function renderChannelTable() {
     const renderRows = sourceChannels => sourceChannels.map(channel => {
@@ -710,8 +742,8 @@
           <button class="btn provisional-row-action t-delete-provisional" data-character-id="${escapeHtml(character.id)}" type="button" aria-label="${escapeHtml(`${t('removeTarget')}: ${name}`)}" title="${escapeHtml(t('removeTarget'))}">×</button>` : '';
       return `<tr>
         <td class="priority-column">${runtime.separateWEnginePriorities ? '—' : index + 1}</td>
-        <td><div class="agent-target-control"><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${name} — ${t('agentTarget')}`)}"><button class="btn btn-secondary mindscape-range-button t-edit-mindscape" data-character-id="${escapeHtml(character.id)}" type="button" title="${escapeHtml(t('editMindscapeRange'))}" aria-label="${escapeHtml(`${t('editMindscapeRange')}: ${name}`)}">${escapeHtml(compactMindscapeGoal(character.id))}</button></div></td>
-        <td><input class="form-check-input t-w-engine-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.wEngineEnabled[character.id] ? ' checked' : ''}${limitReached && !runtime.wEngineEnabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${name} — ${t('wEngineTarget')}`)}"></td>
+        <td><div class="agent-target-control"><input class="form-check-input t-character-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.enabled[character.id] ? ' checked' : ''}${limitReached && !runtime.enabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${name} — ${t('agentTarget')}`)}"><button class="btn btn-secondary mindscape-range-button t-edit-mindscape" data-character-id="${escapeHtml(character.id)}" type="button" title="${escapeHtml(t('editMindscapeRange'))}" aria-label="${escapeHtml(`${t('editMindscapeRange')}: ${name}`)}">${escapeHtml(compactMindscapeGoal(character.id))}</button>${spendLimitButton(targetById.get(targetId('agent', character.id)))}</div></td>
+        <td><div class="agent-target-control"><input class="form-check-input t-w-engine-enabled" data-character-id="${escapeHtml(character.id)}" type="checkbox"${runtime.wEngineEnabled[character.id] ? ' checked' : ''}${limitReached && !runtime.wEngineEnabled[character.id] ? ' disabled' : ''} aria-label="${escapeHtml(`${name} — ${t('wEngineTarget')}`)}">${spendLimitButton(targetById.get(targetId('w-engine', character.id)))}</div></td>
         <td>${escapeHtml(name)}${provisionalBadge}</td>
         <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(character))}${unconfirmedBadge}</td>
         <td class="t-agent-estimate t-deadline-estimate" data-deadline="${escapeHtml(deadlineValue(character))}"><strong>${numberLabel(runtime.availableNow + estimate, 0)} <span class="text-muted">(+${numberLabel(estimate, 0)})</span></strong><span class="text-small text-muted config-subtext">${numberLabel(remaining)} ${t('daysLeft')} × ${escapeHtml(incomeRateLabel(income.rate))} ${t('searchesPerDay')}</span></td>
@@ -741,7 +773,7 @@
       const canMoveUp = previous && runsOverlap(target, previous);
       const canMoveDown = next && runsOverlap(target, next);
       return `<tr>
-        <td class="priority-column">${index + 1}</td><td>${escapeHtml(targetLabel(target))}<span class="target-kind-badge">${t(target.kind === 'w-engine' ? 'wEngineTarget' : 'agentTarget')}</span></td>
+        <td class="priority-column">${index + 1}</td><td>${escapeHtml(targetLabel(target))}<span class="target-kind-badge">${t(target.kind === 'w-engine' ? 'wEngineTarget' : 'agentTarget')}</span>${spendLimitButton(target)}</td>
         <td>${escapeHtml(channelLabel(channel))}</td><td>${escapeHtml(characterDates(target))}</td>
         <td class="t-deadline-estimate" data-deadline="${escapeHtml(deadlineValue(target))}">—</td>
         <td><div class="move-buttons"><button class="btn btn-secondary t-move-target" data-target-id="${escapeHtml(id)}" data-direction="-1" type="button"${canMoveUp ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveUp')}: ${targetLabel(target)}`)}">↑</button><button class="btn btn-secondary t-move-target" data-target-id="${escapeHtml(id)}" data-direction="1" type="button"${canMoveDown ? '' : ' disabled'} aria-label="${escapeHtml(`${t('moveDown')}: ${targetLabel(target)}`)}">↓</button></div></td>
@@ -781,6 +813,7 @@
       if ([...els.provisionalChannel.options].some(option => option.value === openChannel)) els.provisionalChannel.value = openChannel;
     }
     if (mindscapeDialogCharacterId && els.mindscapeDialog.open) renderMindscapeDialog();
+    if (spendLimitDialogTargetId && els.spendLimitDialog.open) els.spendLimitTargetName.textContent = targetLabel(targetById.get(spendLimitDialogTargetId));
     if (els.pullChartsDialog.open) renderPullCharts();
     if (persist) { try { localStorage.setItem(languageStorageKey, language); } catch {} }
     if (rerender) render();
@@ -791,11 +824,12 @@
     resourceBalances: { ...runtime.resourceBalances },
     resourceEnabled: { ...runtime.resourceEnabled },
     pullHistory: runtime.pullHistory.map(entry => ({ ...entry, balances: { ...entry.balances } })),
-    pullTrackerOpen: runtime.pullTrackerOpen, useTrackedIncome: runtime.useTrackedIncome,
+    pullTrackerOpen: runtime.pullTrackerOpen, useTrackedIncome: runtime.useTrackedIncome, incomeRate: runtime.incomeRate,
     pityGroups: Object.fromEntries(Object.entries(runtime.pityGroups).map(([id, value]) => [id, { ...value }])),
     customPeriods: runtime.customPeriods.map(period => ({ ...period })),
     customCharacters: runtime.customCharacters.map(character => ({ ...character })),
     enabled: { ...runtime.enabled }, agentCurrentMindscapes: { ...runtime.agentCurrentMindscapes }, agentMindscapes: { ...runtime.agentMindscapes }, wEngineEnabled: { ...runtime.wEngineEnabled },
+    targetSpendLimits: { ...runtime.targetSpendLimits },
     order: runtime.characterOrder.slice(), characterOrder: runtime.characterOrder.slice(), targetOrder: runtime.targetOrder.slice(),
     separateWEnginePriorities: runtime.separateWEnginePriorities, separateOrderInitialized: runtime.separateOrderInitialized
   });
@@ -840,6 +874,7 @@
     runtime.pullHistory = normalizedPullHistory(state.pullHistory);
     runtime.pullTrackerOpen = state.pullTrackerOpen === true;
     runtime.useTrackedIncome = state.useTrackedIncome === true;
+    if (Number.isFinite(+state.incomeRate) && +state.incomeRate >= 0 && +state.incomeRate <= 10000) runtime.incomeRate = +state.incomeRate;
     runtime.availableNow = resourceBudget().searches;
     Object.keys(runtime.pityGroups).forEach(id => {
       const stored = state.pityGroups?.[id] || (id === 'exclusive' ? state.pityGroups?.['normal-exclusive'] : null);
@@ -853,6 +888,8 @@
     runtime.customCharacters = restoredCustom.customCharacters;
     const storedCharacterOrder = Array.isArray(state.characterOrder) ? state.characterOrder : Array.isArray(state.order) ? state.order : runtime.characterOrder;
     rebuildCharacterRegistry(storedCharacterOrder, Array.isArray(state.targetOrder) ? state.targetOrder : runtime.targetOrder);
+    runtime.targetSpendLimits = Object.fromEntries(targets.filter(target => Number.isInteger(state.targetSpendLimits?.[target.id]) && state.targetSpendLimits[target.id] >= 1 && state.targetSpendLimits[target.id] <= 10000)
+      .map(target => [target.id, state.targetSpendLimits[target.id]]));
     characters.forEach(character => { if (typeof state.enabled?.[character.id] === 'boolean') runtime.enabled[character.id] = state.enabled[character.id]; });
     characters.forEach(character => {
       const currentMindscape = +state.agentCurrentMindscapes?.[character.id];
@@ -1000,7 +1037,10 @@
 
   const runUnitCostPhase = (arrivals, simulationTargets, cap) => {
     const latestArrival = arrivals.reduce((latest, bucket, index) => bucket?.size ? index : latest, 0);
-    const maximumTargetSpend = simulationTargets.reduce((sum, target) => sum + target.rules.hardPity * 2, 0);
+    const maximumTargetSpend = simulationTargets.reduce((sum, target, index) => {
+      if (index && target.id === simulationTargets[index - 1].id) return sum;
+      return sum + Math.min(target.limit ?? Infinity, target.copies * target.rules.hardPity * 2);
+    }, 0);
     const effectiveCap = Math.min(cap, latestArrival + maximumTargetSpend);
     const done = Array(effectiveCap + 1);
     let activeTargets = [];
@@ -1008,27 +1048,32 @@
       const arriving = arrivals[spent];
       if (arriving) {
         if (!activeTargets[0]) activeTargets[0] = new Map();
-        arriving.forEach((probability, core) => add(activeTargets[0], core, probability));
+        if (!activeTargets[0].has(0)) activeTargets[0].set(0, new Map());
+        arriving.forEach((probability, core) => add(activeTargets[0].get(0), core, probability));
       }
       if (spent === effectiveCap) {
-        activeTargets.forEach(active => active?.forEach((probability, core) => addBucket(done, effectiveCap, core, probability)));
+        activeTargets.forEach(active => active?.forEach(states => states.forEach((probability, core) => addBucket(done, effectiveCap, core, probability))));
         break;
       }
       const nextTargets = [];
-      activeTargets.forEach((active, targetIndex) => active?.forEach((probability, core) => {
+      activeTargets.forEach((active, targetIndex) => active?.forEach((states, used) => states.forEach((probability, core) => {
         const simulationTarget = simulationTargets[targetIndex];
         const branches = pullTarget(core, simulationTarget);
         for (let index = 0; index < branches.length; index += 3) {
           const nextCore = branches[index];
-          const nextIndex = branches[index + 2] ? targetIndex + 1 : targetIndex;
+          const nextUsed = simulationTarget.limit ? used + 1 : 0;
+          let nextIndex = branches[index + 2] ? targetIndex + 1 : targetIndex;
+          if (simulationTarget.limit && nextUsed >= simulationTarget.limit && simulationTargets[nextIndex]?.id === simulationTarget.id) nextIndex = simulationTarget.afterTargetIndex;
           if (nextIndex >= simulationTargets.length) {
             addBucket(done, spent + 1, nextCore, probability * branches[index + 1]);
           } else {
             if (!nextTargets[nextIndex]) nextTargets[nextIndex] = new Map();
-            add(nextTargets[nextIndex], nextCore, probability * branches[index + 1]);
+            const carriedUsed = simulationTargets[nextIndex].id === simulationTarget.id ? nextUsed : 0;
+            if (!nextTargets[nextIndex].has(carriedUsed)) nextTargets[nextIndex].set(carriedUsed, new Map());
+            add(nextTargets[nextIndex].get(carriedUsed), nextCore, probability * branches[index + 1]);
           }
         }
-      }));
+      })));
       activeTargets = nextTargets;
     }
     return done;
@@ -1042,12 +1087,19 @@
       const target = targetById.get(id);
       const rules = channelById.get(target.channelId).pity;
       const copies = target.kind === 'agent' ? runtime.agentMindscapes[target.characterId] - runtime.agentCurrentMindscapes[target.characterId] : 1;
+      const configuredLimit = runtime.targetSpendLimits[id];
+      const limit = configuredLimit && configuredLimit < copies * rules.hardPity * 2 ? configuredLimit : undefined;
       return Array.from({ length: copies }, (_, copyIndex) => ({
+        id,
         bit: copyIndex === copies - 1 ? bits[target.id] : 0,
         layout: groupPacking[rules.groupId],
-        rules
+        rules,
+        copies,
+        remainingCopies: copies - copyIndex,
+        limit
       }));
     });
+    simulationTargets.forEach((target, index) => { target.afterTargetIndex = index + target.remainingCopies; });
     return runUnitCostPhase(arrivals, simulationTargets, cap);
   }
 
@@ -1255,6 +1307,16 @@
     renderCharacterTable();
     updateAndPersist();
   });
+  els.incomeRate.addEventListener('change', () => {
+    const rate = +els.incomeRate.value;
+    if (!Number.isFinite(rate) || rate < 0 || rate > 10000) {
+      els.incomeRate.value = runtime.incomeRate;
+      return;
+    }
+    runtime.incomeRate = rate;
+    renderCharacterTable();
+    updateAndPersist();
+  });
   els.pullHistoryPrevious.addEventListener('click', () => {
     pullHistoryPage = Math.max(1, pullHistoryPage - 1);
     renderPullTracker();
@@ -1439,6 +1501,20 @@
     renderCharacterTable();
     updateAndPersist();
   });
+  els.cancelSpendLimit.addEventListener('click', closeSpendLimitDialog);
+  els.spendLimitDialog.addEventListener('close', () => { spendLimitDialogTargetId = ''; });
+  els.spendLimitForm.addEventListener('submit', event => {
+    event.preventDefault();
+    if (!targetById.has(spendLimitDialogTargetId)) return;
+    const raw = els.spendLimit.value.trim();
+    const limit = Number(raw);
+    if (raw && (!Number.isInteger(limit) || limit < 1 || limit > 10000)) return;
+    if (raw) runtime.targetSpendLimits[spendLimitDialogTargetId] = limit;
+    else delete runtime.targetSpendLimits[spendLimitDialogTargetId];
+    closeSpendLimitDialog();
+    renderCharacterTable();
+    updateAndPersist();
+  });
   els.provisionalSchedule.addEventListener('change', () => {
     if (els.provisionalSchedule.value === '__custom__' && (!els.provisionalStart.value || !els.provisionalEnd.value)) {
       const suggested = nextScheduleDates();
@@ -1550,6 +1626,11 @@
     if (target.matches('.t-guaranteed, .t-special-guaranteed')) updateAndPersist();
   });
   root.addEventListener('click', event => {
+    const spendLimitButton = event.target.closest('.t-edit-spend-limit');
+    if (spendLimitButton) {
+      openSpendLimitDialog(spendLimitButton.dataset.targetId);
+      return;
+    }
     const mindscapeButton = event.target.closest('.t-edit-mindscape');
     if (mindscapeButton) {
       openMindscapeDialog(mindscapeButton.dataset.characterId);
@@ -1567,6 +1648,8 @@
       runtime.customCharacters = runtime.customCharacters.filter(item => item.id !== character.id);
       delete runtime.enabled[character.id];
       delete runtime.wEngineEnabled[character.id];
+      delete runtime.targetSpendLimits[targetId('agent', character.id)];
+      delete runtime.targetSpendLimits[targetId('w-engine', character.id)];
       runtime.characterOrder = runtime.characterOrder.filter(id => id !== character.id);
       runtime.targetOrder = runtime.targetOrder.filter(id => targetById.get(id)?.characterId !== character.id);
       removeUnusedCustomPeriods();

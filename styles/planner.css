@@ -310,7 +310,19 @@
     border-color: var(--foreground);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 16%, transparent);
   }
-  #zzz-universal-planner #t-income-note { margin: 0.35rem 0 0; color: var(--muted-foreground); }
+  #zzz-universal-planner .income-estimate {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+    gap: 0.35rem 0.75rem;
+    margin-top: 0.55rem;
+  }
+  #zzz-universal-planner .income-estimate > label { font-weight: 600; }
+  #zzz-universal-planner .income-estimate-control { display: flex; align-items: center; gap: 0.5rem; }
+  #zzz-universal-planner .income-estimate-control [hidden] { display: none; }
+  #zzz-universal-planner #t-income-rate { width: 6.5rem; }
+  #zzz-universal-planner #t-income-rate-value { min-width: 3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #zzz-universal-planner #t-income-note { grid-column: 1 / -1; margin: 0; color: var(--muted-foreground); }
   #zzz-universal-planner .configuration-table { margin-top: 0; }
   #zzz-universal-planner .configuration-table table { min-width: 760px; }
   #zzz-universal-planner .configuration-table th { white-space: nowrap; }
@@ -395,6 +407,15 @@
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
+  #zzz-universal-planner .spend-limit-button {
+    min-width: 2.4rem;
+    padding: 0.22rem 0.4rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  #zzz-universal-planner .target-order-table .spend-limit-button { margin-left: 0.4rem; }
+  #zzz-universal-planner .spend-limit-field { display: block; font-size: var(--font-size-small); }
+  #zzz-universal-planner .spend-limit-field .form-control { width: 100%; margin-top: 0.25rem; }
   #zzz-universal-planner .mindscape-help { margin: 0.45rem 0 0; }
   #zzz-universal-planner .mindscape-dialog {
     width: min(420px, calc(100vw - 2rem));
