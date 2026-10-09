@@ -8,8 +8,9 @@
   const localeLoader = window.ZZZLocaleLoader;
   const loadLocale = localeLoader?.load;
   const pullCharts = window.ZZZPullCharts;
+  const signalHistory = window.ZZZSignalHistory;
 
-  if (!PLANNER_CONFIG || !translations || !loadLocale || !pullCharts) {
+  if (!PLANNER_CONFIG || !translations || !loadLocale || !pullCharts || !signalHistory) {
     throw new Error('Planner configuration or locale loader is unavailable.');
   }
 
@@ -25,11 +26,23 @@
     pullHistoryWrap: root.querySelector('#t-pull-history-wrap'), pullHistoryRows: root.querySelector('#t-pull-history-rows'), pullHistoryEmpty: root.querySelector('#t-pull-history-empty'), pullTrackerMessage: root.querySelector('#t-pull-tracker-message'),
     pullHistoryPagination: root.querySelector('#t-pull-history-pagination'), pullHistoryPrevious: root.querySelector('#t-pull-history-previous'), pullHistoryNext: root.querySelector('#t-pull-history-next'), pullHistoryPageStatus: root.querySelector('#t-pull-history-page-status'),
     exportPullHistory: root.querySelector('#t-export-pull-history'), importPullHistory: root.querySelector('#t-import-pull-history'), importPullHistoryFile: root.querySelector('#t-import-pull-history-file'),
+    openMembership: root.querySelector('#t-open-membership'), membershipDialog: root.querySelector('#t-membership-dialog'), membershipForm: root.querySelector('#t-membership-form'),
+    membershipStart: root.querySelector('#t-membership-start'), membershipAddPurchase: root.querySelector('#t-membership-add-purchase'),
+    membershipPurchaseManual: root.querySelector('#t-membership-purchase-manual'), membershipAddCheckin: root.querySelector('#t-membership-add-checkin'),
+    membershipMessage: root.querySelector('#t-membership-message'), membershipList: root.querySelector('#t-membership-list'), closeMembership: root.querySelector('#t-close-membership'),
     openPullCharts: root.querySelector('#t-open-pull-charts'), pullChartsDialog: root.querySelector('#t-pull-charts-dialog'), closePullCharts: root.querySelector('#t-close-pull-charts'), pullChartsCoverage: root.querySelector('#t-pull-charts-coverage'),
     pullChartsEmpty: root.querySelector('#t-pull-charts-empty'), pullChartsContent: root.querySelector('#t-pull-charts-content'), pullChartsSummary: root.querySelector('#t-pull-charts-summary'), pullChartsReconciliation: root.querySelector('#t-pull-charts-reconciliation'), pullCumulativeChart: root.querySelector('#t-pull-cumulative-chart'),
     pullIntervalChart: root.querySelector('#t-pull-interval-chart'), pullIntervalChartNote: root.querySelector('#t-pull-interval-chart-note'), pullWalletChart: root.querySelector('#t-pull-wallet-chart'), pullChartDetailsRows: root.querySelector('#t-pull-chart-details-rows'),
     pullChartPeriodForm: root.querySelector('#t-pull-chart-period-form'), pullChartPeriod: root.querySelector('#t-pull-chart-period'), pullChartCustomPeriod: root.querySelector('#t-pull-chart-custom-period'), pullChartPeriodStart: root.querySelector('#t-pull-chart-period-start'), pullChartPeriodEnd: root.querySelector('#t-pull-chart-period-end'), pullChartPeriodError: root.querySelector('#t-pull-chart-period-error'),
     incomeRate: root.querySelector('#t-income-rate'), incomeRateValue: root.querySelector('#t-income-rate-value'), incomeNote: root.querySelector('#t-income-note'), agentChannelRows: root.querySelector('#t-agent-channel-rows'), wEngineChannelRows: root.querySelector('#t-w-engine-channel-rows'), agentRows: root.querySelector('#t-agent-rows'), error: root.querySelector('#t-error'),
+    openSignalHistory: root.querySelector('#t-open-signal-history'), signalHistoryStatus: root.querySelector('#t-signal-history-status'), signalHistoryDialog: root.querySelector('#t-signal-history-dialog'),
+    openSignalTimeline: root.querySelector('#t-open-signal-timeline'), signalTimelineDialog: root.querySelector('#t-signal-timeline-dialog'), closeSignalTimeline: root.querySelector('#t-close-signal-timeline'),
+    signalTimelineSummary: root.querySelector('#t-signal-timeline-summary'), signalTimelineRank: root.querySelector('#t-signal-timeline-rank'), signalTimelineChannel: root.querySelector('#t-signal-timeline-channel'), signalTimelineOrder: root.querySelector('#t-signal-timeline-order'),
+    signalTimelineComparison: root.querySelector('#t-signal-timeline-comparison'), signalTimelineFiltered: root.querySelector('#t-signal-timeline-filtered'), signalTimelineRows: root.querySelector('#t-signal-timeline-rows'), signalTimelineEmpty: root.querySelector('#t-signal-timeline-empty'),
+    signalTimelinePrevious: root.querySelector('#t-signal-timeline-previous'), signalTimelineNext: root.querySelector('#t-signal-timeline-next'), signalTimelinePage: root.querySelector('#t-signal-timeline-page'),
+    signalHistoryFile: root.querySelector('#t-signal-history-file'), signalHistorySummary: root.querySelector('#t-signal-history-summary'), signalHistoryComplete: root.querySelector('#t-signal-history-complete'),
+    signalHistoryPreview: root.querySelector('#t-signal-history-preview'), signalHistoryRows: root.querySelector('#t-signal-history-rows'), signalHistoryMessage: root.querySelector('#t-signal-history-message'),
+    signalHistoryRemove: root.querySelector('#t-signal-history-remove'), signalHistoryClose: root.querySelector('#t-signal-history-close'), signalHistorySave: root.querySelector('#t-signal-history-save'), signalHistoryApply: root.querySelector('#t-signal-history-apply'),
     order: root.querySelector('#t-order'), summary: root.querySelector('#t-summary'), targetChances: root.querySelector('#t-target-chances'), outcomes: root.querySelector('#t-outcomes'),
     separateWEnginePriorities: root.querySelector('#t-separate-w-engine-priorities'), selectedTargetCount: root.querySelector('#t-selected-target-count'), targetOrderPanel: root.querySelector('#t-target-order-panel'), targetOrderRows: root.querySelector('#t-target-order-rows'),
     addProvisional: root.querySelector('#t-add-provisional'), provisionalForm: root.querySelector('#t-provisional-form'), provisionalFormTitle: root.querySelector('#t-provisional-form-title'),
@@ -117,6 +130,7 @@
   const maximumMindscape = 6;
   const resourceKeys = ['monochromes', 'polychromes', 'encryptedMasterTapes'];
   const maximumPullHistoryEntries = 500;
+  const maximumMemberships = 120;
 
   const agentChannels = PLANNER_CONFIG.channels;
   const visibleAgentChannels = agentChannels.filter(channel => channel.visible !== false);
@@ -176,7 +190,7 @@
     availableNow: PLANNER_CONFIG.availableNow,
     resourceBalances: { monochromes: 0, polychromes: 0, encryptedMasterTapes: PLANNER_CONFIG.availableNow },
     resourceEnabled: { monochromes: false, polychromes: true, encryptedMasterTapes: true },
-    pullHistory: [], pullTrackerOpen: false, useTrackedIncome: false, incomeRate: PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay,
+    pullHistory: [], memberships: [], pullTrackerOpen: false, useTrackedIncome: false, incomeRate: PLANNER_CONFIG.incomeEstimate.limitedSearchesPerDay,
     pityGroups: Object.fromEntries([...pityDefaults].map(([id, value]) => [id, { count: value.count, guaranteed: value.guaranteed, specialGuaranteed: value.specialGuaranteed }])),
     customPeriods: [], customCharacters: [],
     enabled: Object.fromEntries(builtInCharacters.map(character => [character.id, character.enabled])),
@@ -388,8 +402,41 @@
     }
     return normalized;
   };
+  const membershipDay = (start, offset = 0) => {
+    const [year, month, day] = start.split('-').map(Number);
+    return new Date(Date.UTC(year, month - 1, day + offset)).toISOString().slice(0, 10);
+  };
+  const validMembershipDay = day => /^\d{4}-\d{2}-\d{2}$/.test(day) &&
+    day >= '2020-01-01' && day <= '2099-12-31' && membershipDay(day) === day;
+  const membershipDayTime = day => new Date(`${day}T12:00:00`).getTime();
+  const normalizedMemberships = source => {
+    if (!Array.isArray(source)) return [];
+    const ids = new Set();
+    const starts = new Set();
+    return source.slice(0, maximumMemberships).flatMap(item => {
+      if (!item || typeof item !== 'object' || typeof item.id !== 'string' || item.id.length > 100 || ids.has(item.id) ||
+          !validMembershipDay(item.startDate) || starts.has(item.startDate) ||
+          !Number.isInteger(item.purchaseRecordedAt) || item.purchaseRecordedAt < 1577836800000 || item.purchaseRecordedAt >= 4102444800000 ||
+          typeof item.purchaseAddedToWallet !== 'boolean') return [];
+      ids.add(item.id);
+      starts.add(item.startDate);
+      const days = new Set();
+      const checkIns = (Array.isArray(item.checkIns) ? item.checkIns : []).flatMap(claim => {
+        if (!claim || typeof claim.day !== 'string' || days.has(claim.day) ||
+            !Array.from({ length: 30 }, (_, index) => membershipDay(item.startDate, index)).includes(claim.day) ||
+            !Number.isInteger(claim.recordedAt) || claim.recordedAt < 1577836800000 || claim.recordedAt >= 4102444800000 ||
+            typeof claim.addedToWallet !== 'boolean') return [];
+        days.add(claim.day);
+        return [{ day: claim.day, recordedAt: claim.recordedAt, addedToWallet: claim.addedToWallet }];
+      });
+      return [{ id: item.id, startDate: item.startDate, purchaseRecordedAt: item.purchaseRecordedAt,
+        purchaseAddedToWallet: item.purchaseAddedToWallet, purchaseInSnapshots: item.purchaseInSnapshots === true, checkIns }];
+    }).sort((a, b) => a.startDate.localeCompare(b.startDate));
+  };
+  const membershipPurchaseUnits = (entry, previous) => runtime.memberships.reduce((sum, membership) =>
+    sum + (!membership.purchaseInSnapshots && membership.purchaseRecordedAt <= entry.recordedAt && (!previous || membership.purchaseRecordedAt > previous.recordedAt) ? 300 : 0), 0);
   const snapshotBalanceUnits = entry => entry.balances.monochromes + entry.balances.polychromes + entry.balances.encryptedMasterTapes * currencyPerSearch;
-  const pullGainUnits = (entry, previous) => snapshotBalanceUnits(entry) - (previous ? snapshotBalanceUnits(previous) : 0) + entry.spent * currencyPerSearch - entry.purchasedUnits - entry.adjustmentUnits;
+  const pullGainUnits = (entry, previous) => snapshotBalanceUnits(entry) - (previous ? snapshotBalanceUnits(previous) : 0) + entry.spent * currencyPerSearch - entry.purchasedUnits - membershipPurchaseUnits(entry, previous) - entry.adjustmentUnits;
   const trackedIncomeStats = (now = Date.now()) => {
     const history = runtime.pullHistory.filter(entry => entry.recordedAt <= now);
     const first = history[0];
@@ -435,6 +482,34 @@
     els.pullTrackerMessage.textContent = key ? t(key) : '';
     els.pullTrackerMessage.classList.toggle('text-destructive', isError);
   };
+  const renderMemberships = () => {
+    const today = localDateValue(Date.now());
+    els.membershipStart.max = today;
+    els.membershipList.innerHTML = runtime.memberships.length ? runtime.memberships.map(membership => {
+      const claimed = new Set(membership.checkIns.map(item => item.day));
+      const dates = Array.from({ length: 30 }, (_, index) => membershipDay(membership.startDate, index));
+      return `<section class="membership-cycle" data-membership-id="${escapeHtml(membership.id)}">
+        <div class="membership-cycle-heading"><strong>${escapeHtml(membership.startDate)} – ${escapeHtml(dates[29])}</strong>
+          <span>${escapeHtml(t('membershipClaimed').replace('{count}', numberLabel(claimed.size, 0)).replace('{total}', numberLabel(claimed.size * 90, 0)))}</span>
+          <span>${escapeHtml(t('membershipPurchaseRecorded'))}</span>
+          <button class="btn btn-sm t-remove-membership" type="button" aria-label="${escapeHtml(t('membershipRemove'))}" title="${escapeHtml(t('membershipRemove'))}">×</button>
+        </div>
+        <div class="membership-days">${dates.map((day, index) => `<label class="membership-day"><input class="form-check-input t-membership-checkin" type="checkbox" data-day="${day}" ${claimed.has(day) ? 'checked' : ''} ${day > today ? 'disabled' : ''}><span>${index + 1}<small>${day.slice(5)}</small></span></label>`).join('')}</div>
+      </section>`;
+    }).join('') : `<p class="text-small text-muted">${escapeHtml(t('membershipEmpty'))}</p>`;
+  };
+  const setMembershipMessage = (key = '', error = false) => {
+    els.membershipMessage.textContent = key ? t(key) : '';
+    els.membershipMessage.classList.toggle('text-destructive', error);
+  };
+  const refreshMemberships = () => {
+    syncResourceControls();
+    persistPlannerState();
+    renderMemberships();
+    renderPullTracker();
+    if (els.pullChartsDialog.open) renderPullCharts();
+    render();
+  };
   const renderPullTracker = () => {
     const history = runtime.pullHistory;
     const gains = history.map((entry, index) => pullGainUnits(entry, history[index - 1]));
@@ -473,7 +548,7 @@
         <td><input class="form-control t-pull-history-input t-history-date" data-field="recordedAt" type="datetime-local" step="1" value="${localDateTimeInputValue(entry.recordedAt)}"></td>
         ${resourceKeys.map(key => `<td><input class="form-control t-pull-history-input" data-field="${key}" type="number" min="0" max="${key === 'encryptedMasterTapes' ? 600 : 96000}" step="1" value="${entry.balances[key]}"></td>`).join('')}
         <td><input class="form-control t-pull-history-input" data-field="spent" type="number" min="0" max="10000" step="1" value="${entry.spent}" ${index ? '' : 'disabled'}></td>
-        <td><input class="form-control t-pull-history-input" data-field="purchasedUnits" type="number" min="0" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.purchasedUnits)}"></td>
+        <td><input class="form-control t-pull-history-input" data-field="purchasedUnits" type="number" min="0" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.purchasedUnits)}">${membershipPurchaseUnits(entry, history[index - 1]) ? `<small class="membership-purchase-note">${escapeHtml(t('membershipPurchaseIncluded').replace('{amount}', pullUnitsLabel(membershipPurchaseUnits(entry, history[index - 1]))))}</small>` : ''}</td>
         <td><input class="form-control t-pull-history-input" data-field="adjustmentUnits" type="number" min="-10000" max="10000" step="0.00625" value="${pullUnitsInputValue(entry.adjustmentUnits)}"></td>
         <td class="text-end pull-history-earned">${signedPullUnitsLabel(gain)}</td>
         <td><button class="btn btn-sm t-remove-pull-history" type="button" title="${escapeHtml(t('removeSnapshot'))}" aria-label="${escapeHtml(t('removeSnapshot'))}">×</button></td>
@@ -486,7 +561,7 @@
     days: index ? (entry.recordedAt - history[index - 1].recordedAt) / millisecondsPerDay : 0,
     earned: pullGainUnits(entry, history[index - 1]) / currencyPerSearch,
     spent: entry.spent,
-    purchased: entry.purchasedUnits / currencyPerSearch,
+    purchased: (entry.purchasedUnits + membershipPurchaseUnits(entry, history[index - 1])) / currencyPerSearch,
     adjustment: entry.adjustmentUnits / currencyPerSearch,
     balance: snapshotBalanceUnits(entry) / currencyPerSearch,
     monochromes: entry.balances.monochromes / currencyPerSearch,
@@ -718,6 +793,181 @@
     els.wEngineChannelRows.innerHTML = renderRows(visibleWEngineChannels);
   }
 
+  const signalHistoryChannels = [
+    { type: '2', groupId: 'exclusive', labelKey: 'exclusiveChannel', hardPity: 90 },
+    { type: '102', groupId: 'exclusive-rescreening', labelKey: 'exclusiveRescreening', hardPity: 90 },
+    { type: '3', groupId: 'w-engine', labelKey: 'wEngineChannel', hardPity: 80 },
+    { type: '103', groupId: 'w-engine-reverberation', labelKey: 'wEngineReverberation', hardPity: 80 },
+    { type: '1', groupId: null, labelKey: 'signalHistoryStable', hardPity: 90 },
+    { type: '5', groupId: null, labelKey: 'signalHistoryBangboo', hardPity: 80 }
+  ];
+  const signalTimelineRules = Object.fromEntries(signalHistoryChannels.filter(channel => channel.groupId)
+    .map(channel => [channel.type, channelById.get(channel.groupId).pity]));
+  const signalTimelineModeledTypes = Object.keys(signalTimelineRules);
+  const signalTimelineTiming = Object.fromEntries(signalTimelineModeledTypes
+    .map(type => [type, signalHistory.timingModel(signalTimelineRules[type])]));
+  const signalTimelineComparisonCache = new WeakMap();
+  const signalTimelineLuckKey = (early, chance) => {
+    if (chance <= 0.05) return early ? 'signalTimelineVeryLucky' : 'signalTimelineVeryUnlucky';
+    if (chance <= 0.2) return early ? 'signalTimelineLucky' : 'signalTimelineUnlucky';
+    return 'signalTimelineTypical';
+  };
+  const signalTimelineCountComparison = (archive, types) => {
+    let byScope = signalTimelineComparisonCache.get(archive);
+    if (!byScope) { byScope = new Map(); signalTimelineComparisonCache.set(archive, byScope); }
+    const key = types.join(',');
+    if (!byScope.has(key)) byScope.set(key, signalHistory.countComparison(archive, types, signalTimelineRules));
+    return byScope.get(key);
+  };
+  let savedSignalHistory = null;
+  let pendingSignalHistory = null;
+  let selectedSignalHistoryGroups = new Set();
+  let signalHistoryOutcomes = new Map();
+  let signalHistoryBusy = false;
+  let signalHistoryLoadPromise = Promise.resolve();
+  let signalTimelinePage = 1;
+  const signalTimelinePageSize = 50;
+  const currentSignalHistory = () => pendingSignalHistory || savedSignalHistory;
+  const signalHistoryResult = (archive, channel) => ({
+    pity: signalHistory.pity(archive, channel.type, channel.hardPity, els.signalHistoryComplete.checked),
+    guaranteed: signalHistory.guarantee(archive, channel.type, els.signalHistoryComplete.checked, Object.fromEntries(signalHistoryOutcomes))
+  });
+  const signalHistoryDate = value => new Intl.DateTimeFormat(localeLoader.intlLocale(language), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+  const renderSignalHistoryStatus = () => {
+    els.signalHistoryStatus.textContent = savedSignalHistory
+      ? t('signalHistorySavedStatus').replace('{count}', numberLabel(signalHistory.count(savedSignalHistory), 0)).replace('{date}', signalHistoryDate(savedSignalHistory.exportedAt))
+      : '';
+    els.openSignalTimeline.disabled = !savedSignalHistory || signalHistory.count(savedSignalHistory) === 0;
+  };
+  const renderSignalTimeline = () => {
+    const entries = signalHistory.timeline(savedSignalHistory, savedSignalHistory?.completeFromFirstSearch === true);
+    const rankCounts = Object.fromEntries(['4', '3', '2'].map(rank => [rank, entries.filter(entry => entry.record.rank_type === rank).length]));
+    els.signalTimelineSummary.textContent = t('signalTimelineSummary')
+      .replace('{total}', numberLabel(entries.length, 0))
+      .replace('{s}', numberLabel(rankCounts['4'], 0))
+      .replace('{a}', numberLabel(rankCounts['3'], 0))
+      .replace('{b}', numberLabel(rankCounts['2'], 0))
+      .replace('{start}', entries[0]?.record.time.slice(0, 10) || '—')
+      .replace('{end}', entries.at(-1)?.record.time.slice(0, 10) || '—');
+    const rank = els.signalTimelineRank.value;
+    const channel = els.signalTimelineChannel.value;
+    if (channel !== 'all' && !signalTimelineRules[channel]) {
+      els.signalTimelineComparison.textContent = t('signalTimelineUnmodeledChannel');
+    } else if (savedSignalHistory?.completeFromFirstSearch !== true) {
+      els.signalTimelineComparison.textContent = t('signalTimelineIncompleteComparison');
+    } else {
+      const types = channel === 'all' ? signalTimelineModeledTypes : [channel];
+      const compared = signalTimelineCountComparison(savedSignalHistory, types);
+      if (!compared.searches) {
+        els.signalTimelineComparison.textContent = t('signalTimelineNoModeledSearches');
+      } else if (compared.atMost === null) {
+        els.signalTimelineComparison.textContent = t('signalTimelineComparisonTooLarge')
+          .replace('{actual}', numberLabel(compared.actual, 0))
+          .replace('{searches}', numberLabel(compared.searches, 0))
+          .replace('{expected}', numberLabel(compared.expected, 1));
+      } else {
+        const moreThanExpected = compared.actual >= compared.expected;
+        const tail = moreThanExpected ? compared.atLeast : compared.atMost;
+        const scope = channel === 'all' ? t('signalTimelineModeledChannels') : t(signalHistoryChannels.find(item => item.type === channel).labelKey);
+        els.signalTimelineComparison.innerHTML = t('signalTimelineOverallComparison')
+          .replace('{scope}', escapeHtml(scope))
+          .replace('{actual}', numberLabel(compared.actual, 0))
+          .replace('{searches}', numberLabel(compared.searches, 0))
+          .replace('{expected}', numberLabel(compared.expected, 1))
+          .replace('{tail}', t(moreThanExpected ? 'signalTimelineAtLeast' : 'signalTimelineAtMost').replace('{actual}', numberLabel(compared.actual, 0)))
+          .replace('{chance}', pct(tail))
+          .replace('{luck}', t(signalTimelineLuckKey(moreThanExpected, tail)));
+      }
+    }
+    const filtered = entries.filter(entry => (rank === 'all' || entry.record.rank_type === rank) &&
+      (channel === 'all' || entry.channelType === channel));
+    els.signalTimelineFiltered.textContent = t('signalTimelineFiltered')
+      .replace('{count}', numberLabel(filtered.length, 0)).replace('{total}', numberLabel(entries.length, 0));
+    if (els.signalTimelineOrder.value === 'newest') filtered.reverse();
+    const pageCount = Math.max(1, Math.ceil(filtered.length / signalTimelinePageSize));
+    signalTimelinePage = Math.min(Math.max(signalTimelinePage, 1), pageCount);
+    const pageEntries = filtered.slice((signalTimelinePage - 1) * signalTimelinePageSize, signalTimelinePage * signalTimelinePageSize);
+    const rankKeys = { '4': 'signalTimelineSRank', '3': 'signalTimelineARank', '2': 'signalTimelineBRank' };
+    const channelKeys = Object.fromEntries(signalHistoryChannels.map(item => [item.type, item.labelKey]));
+    els.signalTimelineRows.innerHTML = pageEntries.map(entry => {
+      let timingHtml = '—';
+      const timing = signalTimelineTiming[entry.channelType];
+      const searches = entry.cycleSearches;
+      if (entry.record.rank_type === '4' && timing && searches !== null && searches <= signalTimelineRules[entry.channelType].hardPity) {
+        const earlyChance = timing.byPull[searches];
+        const lateChance = 1 - timing.byPull[searches - 1];
+        const early = earlyChance <= lateChance;
+        const tail = early ? earlyChance : lateChance;
+        timingHtml = `<strong>${t('signalTimelineExpectedSearches').replace('{count}', numberLabel(timing.expected, 1))}</strong><br>${t(early ? 'signalTimelineEarlyTail' : 'signalTimelineLateTail').replace('{chance}', pct(tail))} · ${t(signalTimelineLuckKey(early, tail))}`;
+      }
+      return `<tr class="signal-timeline-rank-${entry.record.rank_type}">
+      <td class="signal-timeline-time">${escapeHtml(entry.record.time.slice(0, 16))}</td>
+      <td>${escapeHtml(t(channelKeys[entry.channelType]))}</td>
+      <td>${escapeHtml(entry.record.name || entry.record.item_id)}</td>
+      <td><span class="signal-timeline-rank">${t(rankKeys[entry.record.rank_type])}</span></td>
+      <td class="text-end">${numberLabel(entry.cumulativeSearches, 0)}</td>
+      <td class="text-end">${numberLabel(entry.channelCumulativeSearches, 0)}</td>
+      <td class="text-end">${entry.cycleSearches === null ? '—' : entry.record.rank_type === '4' ? `<strong>${numberLabel(entry.cycleSearches, 0)}</strong>` : numberLabel(entry.cycleSearches, 0)}</td>
+      <td class="signal-timeline-model">${timingHtml}</td>
+    </tr>`;
+    }).join('');
+    els.signalTimelineEmpty.hidden = filtered.length !== 0;
+    els.signalTimelinePrevious.disabled = signalTimelinePage <= 1;
+    els.signalTimelineNext.disabled = signalTimelinePage >= pageCount;
+    els.signalTimelinePage.textContent = t('snapshotPageStatus').replace('{page}', numberLabel(signalTimelinePage, 0)).replace('{pages}', numberLabel(pageCount, 0));
+  };
+  const selectSignalHistoryDifferences = () => {
+    const archive = currentSignalHistory();
+    selectedSignalHistoryGroups = new Set(signalHistoryChannels.filter(channel => {
+      if (!channel.groupId || !archive) return false;
+      const derived = signalHistoryResult(archive, channel);
+      const current = runtime.pityGroups[channel.groupId];
+      return (derived.pity !== null && derived.pity !== current.count) ||
+        (derived.guaranteed !== null && derived.guaranteed !== current.guaranteed);
+    }).map(channel => channel.groupId));
+  };
+  const renderSignalHistoryDialog = () => {
+    const archive = currentSignalHistory();
+    renderSignalHistoryStatus();
+    els.signalHistoryPreview.hidden = !archive;
+    els.signalHistoryRemove.hidden = !savedSignalHistory;
+    els.signalHistoryRemove.disabled = signalHistoryBusy;
+    els.signalHistoryClose.disabled = signalHistoryBusy;
+    els.signalHistoryFile.disabled = signalHistoryBusy;
+    els.signalHistoryComplete.disabled = signalHistoryBusy || !archive;
+    els.signalHistorySave.disabled = signalHistoryBusy || !archive;
+    els.signalHistoryApply.disabled = signalHistoryBusy || !archive || selectedSignalHistoryGroups.size === 0;
+    if (!archive) {
+      els.signalHistorySummary.textContent = t('signalHistoryChooseFile');
+      els.signalHistoryRows.innerHTML = '';
+      return;
+    }
+    els.signalHistorySummary.textContent = t('signalHistorySummary')
+      .replace('{count}', numberLabel(signalHistory.count(archive), 0))
+      .replace('{date}', signalHistoryDate(archive.exportedAt));
+    els.signalHistoryRows.innerHTML = signalHistoryChannels.map(channel => {
+      const records = archive.channels.find(item => item.type === channel.type)?.records || [];
+      const derived = signalHistoryResult(archive, channel);
+      const current = channel.groupId ? runtime.pityGroups[channel.groupId] : null;
+      const changed = current && ((derived.pity !== null && derived.pity !== current.count) ||
+        (derived.guaranteed !== null && derived.guaranteed !== current.guaranteed));
+      const guaranteeText = value => value === null ? t('signalHistoryUnknown') : t(value ? 'signalHistoryYes' : 'signalHistoryNo');
+      const statusText = (pity, guaranteed) => `<span>${t('signalHistoryPityShort')}: ${pity === null ? '—' : numberLabel(pity, 0)}</span>${channel.groupId ? `<br><span>${t('signalHistoryGuaranteeShort')}: ${guaranteeText(guaranteed)}</span>` : ''}`;
+      const latest = channel.groupId ? signalHistory.latestS(archive, channel.type) : null;
+      const canClarify = latest && ['2', '3'].includes(channel.type) &&
+        signalHistory.guarantee(archive, channel.type, els.signalHistoryComplete.checked, {}) === null;
+      const outcomeKey = latest ? `${channel.type}:${latest.id}` : '';
+      const selectedOutcome = signalHistoryOutcomes.get(outcomeKey) || '';
+      const latestLabel = latest ? `<div class="signal-history-latest">${t('signalHistoryLatestS')}: ${escapeHtml(latest.name || latest.item_id)}</div>` : '';
+      const clarification = canClarify ? `<label class="signal-history-outcome-label"><span>${t('signalHistoryClassify')}</span><select class="form-control t-signal-history-outcome" data-outcome-key="${escapeHtml(outcomeKey)}"><option value="">${t('signalHistoryOutcomeUnknown')}</option><option value="featured"${selectedOutcome === 'featured' ? ' selected' : ''}>${t('signalHistoryOutcomeFeatured')}</option><option value="off-banner"${selectedOutcome === 'off-banner' ? ' selected' : ''}>${t('signalHistoryOutcomeOffBanner')}</option></select></label>` : '';
+      const action = !channel.groupId ? t('signalHistoryNotModeled')
+        : derived.pity === null && derived.guaranteed === null ? t('signalHistoryUnknown')
+          : !changed ? t('signalHistoryMatches')
+            : `<label class="form-check"><input class="form-check-input t-signal-history-select" data-pity-group="${escapeHtml(channel.groupId)}" type="checkbox"${selectedSignalHistoryGroups.has(channel.groupId) ? ' checked' : ''}><span class="form-check-label">${t('signalHistoryApply')}</span></label>`;
+      return `<tr><td>${escapeHtml(t(channel.labelKey))}</td><td class="text-end">${numberLabel(records.length, 0)}</td><td>${current ? statusText(current.count, current.guaranteed) : '—'}</td><td>${statusText(derived.pity, derived.guaranteed)}${latestLabel}${clarification}</td><td>${action}</td></tr>`;
+    }).join('');
+  };
+
   function renderCharacterTable() {
     const income = projectionIncome();
     renderProjectionIncome(income);
@@ -806,7 +1056,10 @@
     applyTheme(document.documentElement.dataset.theme);
     renderResourceBalance();
     renderPullTracker();
+    if (els.membershipDialog.open) renderMemberships();
     renderChannelTable(); renderCharacterTable();
+    renderSignalHistoryDialog();
+    if (els.signalTimelineDialog.open) renderSignalTimeline();
     if (!els.provisionalForm.hidden) {
       els.provisionalFormTitle.textContent = t(els.provisionalId.value ? 'editProvisional' : 'addProvisional').replace(/^\+\s*/, '');
       renderProvisionalFormOptions(openSchedule);
@@ -824,6 +1077,7 @@
     resourceBalances: { ...runtime.resourceBalances },
     resourceEnabled: { ...runtime.resourceEnabled },
     pullHistory: runtime.pullHistory.map(entry => ({ ...entry, balances: { ...entry.balances } })),
+    memberships: runtime.memberships.map(item => ({ ...item, checkIns: item.checkIns.map(claim => ({ ...claim })) })),
     pullTrackerOpen: runtime.pullTrackerOpen, useTrackedIncome: runtime.useTrackedIncome, incomeRate: runtime.incomeRate,
     pityGroups: Object.fromEntries(Object.entries(runtime.pityGroups).map(([id, value]) => [id, { ...value }])),
     customPeriods: runtime.customPeriods.map(period => ({ ...period })),
@@ -872,6 +1126,7 @@
       runtime.resourceEnabled.encryptedMasterTapes = true;
     }
     runtime.pullHistory = normalizedPullHistory(state.pullHistory);
+    runtime.memberships = normalizedMemberships(state.memberships);
     runtime.pullTrackerOpen = state.pullTrackerOpen === true;
     runtime.useTrackedIncome = state.useTrackedIncome === true;
     if (Number.isFinite(+state.incomeRate) && +state.incomeRate >= 0 && +state.incomeRate <= 10000) runtime.incomeRate = +state.incomeRate;
@@ -1193,7 +1448,7 @@
     let arrivals = [];
     const requirements = new Map();
     addBucket(arrivals, 0, packCore(cfg.groups, 0), 1);
-    plan.ordered.forEach(id => {
+    plan.ordered.forEach((id, index) => {
       const target = targetById.get(id);
       if (deadlineTime(target) <= renderedAt) {
         requirements.set(id, null);
@@ -1201,6 +1456,11 @@
       }
       arrivals = runPhase(arrivals, [id], Number.POSITIVE_INFINITY, plan.bits);
       requirements.set(id, pullRequirementStats(arrivals));
+      // Retain a channel's pity only while a later target can still use it.
+      const retainedGroupIds = new Set(plan.ordered.slice(index + 1)
+        .filter(nextId => deadlineTime(targetById.get(nextId)) > renderedAt)
+        .map(nextId => targetById.get(nextId).pityGroupId));
+      arrivals = compactArrivals(arrivals, retainedGroupIds);
     });
     return requirements;
   }
@@ -1232,22 +1492,59 @@
     return summarize(arrivals, plan.selected, plan.bits);
   }
 
+  // Keep only the latest summarized result per calculation, never DP states or
+  // browser history. Wallet remainders and translated labels don't change it.
+  const memoizeLastCalculation = () => {
+    let previousKey;
+    let previousResult;
+    return (key, calculate) => {
+      if (key !== previousKey) {
+        const result = calculate();
+        previousKey = key;
+        previousResult = result;
+      }
+      return previousResult;
+    };
+  };
+  const cachedProjection = memoizeLastCalculation();
+  const cachedCurrentBalance = memoizeLastCalculation();
+  const cachedPullRequirements = memoizeLastCalculation();
+  const simulationStateKey = (cfg, plan) => JSON.stringify([
+    cfg.groups,
+    plan.ordered.map(id => {
+      const target = targetById.get(id);
+      return [id, target.channelId,
+        target.kind === 'agent' ? runtime.agentCurrentMindscapes[target.characterId] : null,
+        target.kind === 'agent' ? runtime.agentMindscapes[target.characterId] : null,
+        runtime.targetSpendLimits[id] || 0];
+    })
+  ]);
+
   function render() {
     hideTooltip();
     if (!validAppConfig || !runtimeCharactersValid()) { els.error.textContent = t('invalidAppConfig'); return; }
     const cfg = getConfig();
     const plan = getPlan();
     if (!cfg) { els.error.textContent = t('invalidConfig'); return; }
-    const result = simulate(cfg, plan);
+    const stateKey = simulationStateKey(cfg, plan);
+    const result = cachedProjection(JSON.stringify([stateKey, cfg.now,
+      plan.phases.map(phase => [phase.deadline, phase.estimatedGain, phase.expired, phase.targets])]),
+      () => simulate(cfg, plan));
     renderCharacterProjections(result.phaseBalances);
     if (!plan.selected.size) {
       els.error.textContent = t('selectTarget'); els.order.textContent = ''; els.summary.innerHTML = ''; els.targetChances.innerHTML = ''; els.outcomes.innerHTML = ''; return;
     }
     els.error.textContent = '';
-    const currentBalanceResult = simulateWithCurrentBalance(cfg, plan);
+    const currentBalanceResult = cachedCurrentBalance(JSON.stringify([stateKey, cfg.now,
+      plan.phases.map(phase => [phase.expired, phase.targets])]),
+      () => simulateWithCurrentBalance(cfg, plan));
     const orderedSelected = plan.ordered;
     const renderedAt = Date.now();
-    const pullRequirements = cumulativePullRequirements(cfg, plan, renderedAt);
+    // Cumulative requirements depend on pity, goals, limits, order and expiry;
+    // neither the wallet nor projected income belongs in this cache key.
+    const pullRequirements = cachedPullRequirements(JSON.stringify([stateKey,
+      plan.ordered.map(id => deadlineTime(targetById.get(id)) <= renderedAt)]),
+      () => cumulativePullRequirements(cfg, plan, renderedAt));
     const availableTargetCount = orderedSelected.reduce((count, id) => {
       const target = targetById.get(id);
       return count + (localDeadline(target.startDate) <= renderedAt && deadlineTime(target) > renderedAt ? 1 : 0);
@@ -1285,7 +1582,29 @@
       .map(([mask, probability]) => `<tr><td>${escapeHtml(roster(mask))}</td><td>${escapeHtml(missed(mask))}</td><td class="text-end">${pct(probability)}</td></tr>`).join('');
   }
 
-  const updateAndPersist = () => { persistPlannerState(); render(); };
+  let inputUpdateTimer = null;
+  const cancelPendingInputUpdate = () => {
+    if (inputUpdateTimer === null) return;
+    window.clearTimeout(inputUpdateTimer);
+    inputUpdateTimer = null;
+  };
+  const updateAndPersist = () => {
+    cancelPendingInputUpdate();
+    persistPlannerState();
+    render();
+  };
+  const scheduleInputUpdate = () => {
+    cancelPendingInputUpdate();
+    inputUpdateTimer = window.setTimeout(updateAndPersist, 250);
+  };
+  const flushPendingInputState = () => {
+    // Keep the render queued so a restored/background tab still catches up.
+    if (inputUpdateTimer !== null) persistPlannerState();
+  };
+  window.addEventListener('pagehide', flushPendingInputState);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushPendingInputState();
+  });
   const refreshPullHistory = () => {
     persistPlannerState();
     renderPullTracker();
@@ -1396,6 +1715,99 @@
     refreshPullHistory();
     setPullTrackerMessage('snapshotRemoved');
   });
+  const newMembershipId = () => globalThis.crypto?.randomUUID?.() || `membership-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  els.openMembership.addEventListener('click', () => {
+    els.membershipStart.value = localDateValue(Date.now());
+    els.membershipAddPurchase.checked = true;
+    els.membershipPurchaseManual.checked = false;
+    els.membershipAddCheckin.checked = true;
+    setMembershipMessage();
+    renderMemberships();
+    if (typeof els.membershipDialog.showModal === 'function') els.membershipDialog.showModal();
+    else els.membershipDialog.setAttribute('open', '');
+  });
+  const closeMembership = () => {
+    if (typeof els.membershipDialog.close === 'function') els.membershipDialog.close();
+    else els.membershipDialog.removeAttribute('open');
+  };
+  els.closeMembership.addEventListener('click', closeMembership);
+  els.membershipDialog.addEventListener('click', event => {
+    if (event.target === els.membershipDialog) closeMembership();
+  });
+  els.membershipAddPurchase.addEventListener('change', () => {
+    if (els.membershipAddPurchase.checked) els.membershipPurchaseManual.checked = false;
+  });
+  els.membershipPurchaseManual.addEventListener('change', () => {
+    if (els.membershipPurchaseManual.checked) els.membershipAddPurchase.checked = false;
+  });
+  els.membershipForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const startDate = els.membershipStart.value;
+    const addToWallet = els.membershipAddPurchase.checked;
+    if (!validMembershipDay(startDate) || startDate > localDateValue(Date.now()) ||
+        runtime.memberships.length >= maximumMemberships ||
+        runtime.memberships.some(item => startDate <= membershipDay(item.startDate, 29) && item.startDate <= membershipDay(startDate, 29)) ||
+        (addToWallet && (!Number.isInteger(runtime.resourceBalances.monochromes) || runtime.resourceBalances.monochromes + 300 > 96000))) {
+      setMembershipMessage('membershipInvalid', true);
+      return;
+    }
+    runtime.memberships.push({
+      id: newMembershipId(), startDate,
+      purchaseRecordedAt: addToWallet ? Date.now() : membershipDayTime(startDate),
+      purchaseAddedToWallet: addToWallet, purchaseInSnapshots: els.membershipPurchaseManual.checked, checkIns: []
+    });
+    runtime.memberships.sort((a, b) => a.startDate.localeCompare(b.startDate));
+    if (addToWallet) runtime.resourceBalances.monochromes += 300;
+    refreshMemberships();
+    setMembershipMessage('membershipSaved');
+  });
+  els.membershipList.addEventListener('change', event => {
+    const input = event.target.closest('.t-membership-checkin');
+    if (!input) return;
+    const membership = runtime.memberships.find(item => item.id === input.closest('[data-membership-id]')?.dataset.membershipId);
+    if (!membership) return;
+    const day = input.dataset.day;
+    const existing = membership.checkIns.find(item => item.day === day);
+    if (input.checked && !existing) {
+      const addToWallet = els.membershipAddCheckin.checked;
+      if (day > localDateValue(Date.now()) ||
+          (addToWallet && (!Number.isInteger(runtime.resourceBalances.polychromes) || runtime.resourceBalances.polychromes + 90 > 96000))) {
+        input.checked = false;
+        setMembershipMessage('membershipInvalid', true);
+        return;
+      }
+      membership.checkIns.push({ day, recordedAt: addToWallet ? Date.now() : membershipDayTime(day), addedToWallet: addToWallet });
+      membership.checkIns.sort((a, b) => a.day.localeCompare(b.day));
+      if (addToWallet) runtime.resourceBalances.polychromes += 90;
+    } else if (!input.checked && existing) {
+      if (existing.addedToWallet && runtime.resourceBalances.polychromes < 90) {
+        input.checked = true;
+        setMembershipMessage('membershipCannotUndo', true);
+        return;
+      }
+      if (existing.addedToWallet) runtime.resourceBalances.polychromes -= 90;
+      membership.checkIns = membership.checkIns.filter(item => item.day !== day);
+    }
+    refreshMemberships();
+    setMembershipMessage(input.checked ? 'membershipClaimSaved' : 'membershipClaimRemoved');
+  });
+  els.membershipList.addEventListener('click', event => {
+    const button = event.target.closest('.t-remove-membership');
+    if (!button) return;
+    const membership = runtime.memberships.find(item => item.id === button.closest('[data-membership-id]')?.dataset.membershipId);
+    if (!membership || !window.confirm(t('membershipRemoveConfirm'))) return;
+    const polychromesToRemove = membership.checkIns.filter(item => item.addedToWallet).length * 90;
+    if ((membership.purchaseAddedToWallet && runtime.resourceBalances.monochromes < 300) ||
+        runtime.resourceBalances.polychromes < polychromesToRemove) {
+      setMembershipMessage('membershipCannotUndo', true);
+      return;
+    }
+    if (membership.purchaseAddedToWallet) runtime.resourceBalances.monochromes -= 300;
+    runtime.resourceBalances.polychromes -= polychromesToRemove;
+    runtime.memberships = runtime.memberships.filter(item => item.id !== membership.id);
+    refreshMemberships();
+    setMembershipMessage('membershipRemoved');
+  });
   const closePullCharts = () => {
     if (typeof els.pullChartsDialog.close === 'function') els.pullChartsDialog.close();
     else els.pullChartsDialog.removeAttribute('open');
@@ -1453,7 +1865,7 @@
     });
   });
   els.exportPullHistory.addEventListener('click', () => {
-    const payload = JSON.stringify({ format: 'zzz-pull-history', version: 1, exportedAt: new Date().toISOString(), entries: runtime.pullHistory }, null, 2);
+    const payload = JSON.stringify({ format: 'zzz-pull-history', version: 2, exportedAt: new Date().toISOString(), entries: runtime.pullHistory, memberships: runtime.memberships }, null, 2);
     const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
@@ -1473,16 +1885,179 @@
     }
     try {
       const payload = JSON.parse(await file.text());
-      const imported = payload?.format === 'zzz-pull-history' && payload.version === 1 ? normalizedPullHistory(payload.entries, true) : null;
-      if (!imported) throw new Error('Invalid pull history');
-      if (runtime.pullHistory.length && !window.confirm(t('replaceHistoryConfirm'))) return;
+      const imported = payload?.format === 'zzz-pull-history' && [1, 2].includes(payload.version) ? normalizedPullHistory(payload.entries, true) : null;
+      const importedMemberships = payload?.version === 2 ? normalizedMemberships(payload.memberships) : [];
+      if (!imported || (payload.version === 2 && (!Array.isArray(payload.memberships) ||
+          importedMemberships.length !== payload.memberships.length ||
+          importedMemberships.some((item, index) => item.checkIns.length !== payload.memberships[index].checkIns?.length)))) throw new Error('Invalid pull history');
+      if ((runtime.pullHistory.length || runtime.memberships.length) && !window.confirm(t('replaceHistoryConfirm'))) return;
       runtime.pullHistory = imported;
+      runtime.memberships = importedMemberships;
       pullHistoryPage = Number.POSITIVE_INFINITY;
       refreshPullHistory();
+      if (els.membershipDialog.open) renderMemberships();
       setPullTrackerMessage('historyImported');
     } catch {
       setPullTrackerMessage('invalidHistoryFile', true);
     }
+  });
+  const closeSignalHistoryDialog = () => {
+    if (typeof els.signalHistoryDialog.close === 'function') els.signalHistoryDialog.close();
+    else els.signalHistoryDialog.removeAttribute('open');
+    pendingSignalHistory = null;
+    selectedSignalHistoryGroups = new Set();
+    signalHistoryOutcomes = new Map();
+    els.signalHistoryFile.value = '';
+    els.signalHistoryComplete.checked = savedSignalHistory?.completeFromFirstSearch === true;
+    els.signalHistoryMessage.textContent = '';
+    renderSignalHistoryDialog();
+  };
+  const saveSignalHistoryArchive = async archive => {
+    if (savedSignalHistory?.uid && archive.uid && savedSignalHistory.uid !== archive.uid &&
+        !window.confirm(t('signalHistoryReplaceConfirm'))) return null;
+    const toSave = { ...archive, outcomes: Object.fromEntries(signalHistoryOutcomes), completeFromFirstSearch: els.signalHistoryComplete.checked };
+    try {
+      await signalHistory.save(toSave);
+      savedSignalHistory = toSave;
+      pendingSignalHistory = null;
+      return true;
+    } catch { return false; }
+  };
+  els.openSignalHistory.addEventListener('click', () => {
+    els.signalHistoryComplete.checked = savedSignalHistory?.completeFromFirstSearch === true;
+    signalHistoryOutcomes = new Map(Object.entries(savedSignalHistory?.outcomes || {}));
+    selectSignalHistoryDifferences();
+    els.signalHistoryMessage.textContent = '';
+    renderSignalHistoryDialog();
+    if (typeof els.signalHistoryDialog.showModal === 'function') els.signalHistoryDialog.showModal();
+    else els.signalHistoryDialog.setAttribute('open', '');
+    els.signalHistoryFile.focus();
+  });
+  els.openSignalTimeline.addEventListener('click', () => {
+    if (!savedSignalHistory || !signalHistory.count(savedSignalHistory)) return;
+    signalTimelinePage = 1;
+    renderSignalTimeline();
+    if (typeof els.signalTimelineDialog.showModal === 'function') els.signalTimelineDialog.showModal();
+    else els.signalTimelineDialog.setAttribute('open', '');
+    els.signalTimelineRank.focus();
+  });
+  els.closeSignalTimeline.addEventListener('click', () => {
+    if (typeof els.signalTimelineDialog.close === 'function') els.signalTimelineDialog.close();
+    else els.signalTimelineDialog.removeAttribute('open');
+  });
+  [els.signalTimelineRank, els.signalTimelineChannel, els.signalTimelineOrder].forEach(input => {
+    input.addEventListener('change', () => { signalTimelinePage = 1; renderSignalTimeline(); });
+  });
+  els.signalTimelinePrevious.addEventListener('click', () => { signalTimelinePage -= 1; renderSignalTimeline(); });
+  els.signalTimelineNext.addEventListener('click', () => { signalTimelinePage += 1; renderSignalTimeline(); });
+  els.signalHistoryClose.addEventListener('click', closeSignalHistoryDialog);
+  els.signalHistoryDialog.addEventListener('close', () => {
+    pendingSignalHistory = null;
+    els.signalHistoryFile.value = '';
+  });
+  els.signalHistoryFile.addEventListener('change', async () => {
+    const file = els.signalHistoryFile.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      pendingSignalHistory = null;
+      selectedSignalHistoryGroups = new Set();
+      signalHistoryOutcomes = new Map();
+      els.signalHistoryMessage.textContent = t('signalHistoryInvalidFile');
+      renderSignalHistoryDialog();
+      return;
+    }
+    signalHistoryBusy = true;
+    renderSignalHistoryDialog();
+    try {
+      await signalHistoryLoadPromise;
+      const imported = signalHistory.normalize(JSON.parse(await file.text()));
+      if (!els.signalHistoryDialog.open) return;
+      const sameAccount = savedSignalHistory?.uid && savedSignalHistory.uid === imported.uid;
+      const continuous = sameAccount && signalHistory.overlaps(savedSignalHistory, imported);
+      pendingSignalHistory = sameAccount ? signalHistory.merge(savedSignalHistory, imported) : imported;
+      signalHistoryOutcomes = new Map(Object.entries(pendingSignalHistory.outcomes || {}));
+      els.signalHistoryComplete.checked = continuous && savedSignalHistory.completeFromFirstSearch === true;
+      selectSignalHistoryDifferences();
+      els.signalHistoryMessage.textContent = savedSignalHistory?.uid && !sameAccount ? t('signalHistoryDifferentAccount') : '';
+    } catch {
+      pendingSignalHistory = null;
+      selectedSignalHistoryGroups = new Set();
+      signalHistoryOutcomes = new Map();
+      els.signalHistoryMessage.textContent = t('signalHistoryInvalidFile');
+    } finally {
+      signalHistoryBusy = false;
+      renderSignalHistoryDialog();
+    }
+  });
+  els.signalHistoryComplete.addEventListener('change', () => {
+    selectSignalHistoryDifferences();
+    renderSignalHistoryDialog();
+  });
+  els.signalHistoryRows.addEventListener('change', event => {
+    if (event.target.matches('.t-signal-history-outcome')) {
+      const key = event.target.dataset.outcomeKey;
+      if (event.target.value) signalHistoryOutcomes.set(key, event.target.value);
+      else signalHistoryOutcomes.delete(key);
+      selectSignalHistoryDifferences();
+      renderSignalHistoryDialog();
+      return;
+    }
+    if (!event.target.matches('.t-signal-history-select')) return;
+    const groupId = event.target.dataset.pityGroup;
+    if (event.target.checked) selectedSignalHistoryGroups.add(groupId);
+    else selectedSignalHistoryGroups.delete(groupId);
+    els.signalHistoryApply.disabled = selectedSignalHistoryGroups.size === 0;
+  });
+  els.signalHistorySave.addEventListener('click', async () => {
+    const archive = currentSignalHistory();
+    if (!archive || signalHistoryBusy) return;
+    signalHistoryBusy = true;
+    renderSignalHistoryDialog();
+    const saved = await saveSignalHistoryArchive(archive);
+    signalHistoryBusy = false;
+    els.signalHistoryMessage.textContent = saved === null ? '' : t(saved ? 'signalHistorySaved' : 'signalHistoryStorageError');
+    selectSignalHistoryDifferences();
+    renderSignalHistoryDialog();
+  });
+  els.signalHistoryApply.addEventListener('click', async () => {
+    const archive = currentSignalHistory();
+    if (!archive || signalHistoryBusy) return;
+    const updates = signalHistoryChannels.filter(channel => channel.groupId && selectedSignalHistoryGroups.has(channel.groupId))
+      .map(channel => [channel.groupId, signalHistoryResult(archive, channel)])
+      .filter(([, result]) => result.pity !== null || result.guaranteed !== null);
+    if (!updates.length) return;
+    signalHistoryBusy = true;
+    renderSignalHistoryDialog();
+    const saved = await saveSignalHistoryArchive(archive);
+    if (saved !== null) {
+      updates.forEach(([groupId, result]) => {
+        if (result.pity !== null) runtime.pityGroups[groupId].count = result.pity;
+        if (result.guaranteed !== null) runtime.pityGroups[groupId].guaranteed = result.guaranteed;
+      });
+      renderChannelTable();
+      updateAndPersist();
+    }
+    signalHistoryBusy = false;
+    els.signalHistoryMessage.textContent = saved === null ? '' : t(saved ? 'signalHistoryApplied' : 'signalHistoryAppliedStorageError');
+    selectSignalHistoryDifferences();
+    renderSignalHistoryDialog();
+  });
+  els.signalHistoryRemove.addEventListener('click', async () => {
+    if (!savedSignalHistory || signalHistoryBusy || !window.confirm(t('signalHistoryRemoveConfirm'))) return;
+    signalHistoryBusy = true;
+    renderSignalHistoryDialog();
+    try {
+      await signalHistory.remove();
+      savedSignalHistory = null;
+      pendingSignalHistory = null;
+      selectedSignalHistoryGroups = new Set();
+      signalHistoryOutcomes = new Map();
+      els.signalHistoryFile.value = '';
+      els.signalHistoryComplete.checked = false;
+      els.signalHistoryMessage.textContent = t('signalHistoryRemoved');
+    } catch { els.signalHistoryMessage.textContent = t('signalHistoryStorageError'); }
+    signalHistoryBusy = false;
+    renderSignalHistoryDialog();
   });
   els.addProvisional.addEventListener('click', () => openProvisionalForm());
   els.cancelProvisional.addEventListener('click', closeProvisionalForm);
@@ -1578,7 +2153,7 @@
       runtime.pityGroups[target.dataset.pityGroup].count = +target.value;
       root.querySelectorAll(`.t-pity[data-pity-group="${target.dataset.pityGroup}"]`).forEach(input => { if (input !== target) input.value = target.value; });
     }
-    if (target.matches('.t-resource-amount, .t-pity')) updateAndPersist();
+    if (target.matches('.t-resource-amount, .t-pity')) scheduleInputUpdate();
   });
   root.addEventListener('change', event => {
     const target = event.target;
@@ -1710,6 +2285,16 @@
   persistPlannerState();
   render();
   root.removeAttribute('data-localizing');
+  signalHistoryLoadPromise = signalHistory.load().then(stored => {
+    if (!stored) return;
+    savedSignalHistory = { ...signalHistory.normalize(stored), completeFromFirstSearch: stored.completeFromFirstSearch === true };
+    if (els.signalHistoryDialog.open) {
+      signalHistoryOutcomes = new Map(Object.entries(savedSignalHistory.outcomes || {}));
+      els.signalHistoryComplete.checked = savedSignalHistory.completeFromFirstSearch;
+      selectSignalHistoryDifferences();
+      renderSignalHistoryDialog();
+    } else renderSignalHistoryStatus();
+  }).catch(() => {});
   window.setInterval(() => {
     renderCharacterTable();
     render();

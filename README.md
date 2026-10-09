@@ -12,7 +12,7 @@ A free, unofficial planning tool for **Zenless Zone Zero**. Enter your current r
 4. Arrange your targets in the order you plan to search for them.
 5. Review the calculated chances for each target and the possible overall outcomes.
 
-The planner updates automatically as you make changes. The income estimate defaults to 3 limited Signal Searches per day and can be edited directly. Your settings and pull history are saved in your current browser; export your history occasionally if you want a backup or plan to move to another device.
+The planner updates automatically as you make changes. The income estimate defaults to 3 limited Signal Searches per day and can be edited directly. Your settings and balance snapshots are saved in your current browser; export the snapshots occasionally for backup. You can also import a local Signal Search JSON export to reconcile progress, browse a timeline, and compare S-Rank results with the planner's estimated pity model. Keep the original JSON as a backup; imported records stay in your browser.
 
 Available in English, Russian, and Japanese, with light and dark themes.
 

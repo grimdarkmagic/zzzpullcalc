@@ -13,6 +13,8 @@ You can also run the script from PowerShell in the project folder:
 
 The script prints a record count for each channel and saves a timestamped `zzz-signal-search-*.json` file in your Documents folder. It includes Stable, Exclusive, W-Engine, Bangboo, Exclusive Rescreening, and W-Engine Reverberation records. Keep the file private: it contains your game UID and individual Signal Search results. Do not commit it to the repository.
 
+In the planner, choose **Import Signal Search records**, select the JSON file, then save it in the browser. **Search timeline** lets you browse results by rank and channel, with cumulative searches across all channels and the searches spent within each channel's S-Rank cycle. It also compares S-Rank timing and count with the planner's estimated pity model; the overall count comparison needs a complete archive from the first search.
+
 If the game installation cannot be located from `Player.log`, pass its data folder explicitly:
 
 ```powershell

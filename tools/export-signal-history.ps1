@@ -13,6 +13,37 @@ param(
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Web
 
+function Read-SharedFileBytes([string]$path) {
+    $share = [System.IO.FileShare]([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+    $stream = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, $share)
+    try {
+        $buffer = [System.IO.MemoryStream]::new()
+        try {
+            $stream.CopyTo($buffer)
+            return ,$buffer.ToArray()
+        } finally {
+            $buffer.Dispose()
+        }
+    } finally {
+        $stream.Dispose()
+    }
+}
+
+function Read-SharedFileText([string]$path) {
+    $share = [System.IO.FileShare]([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+    $stream = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, $share)
+    try {
+        $reader = [System.IO.StreamReader]::new($stream, [System.Text.Encoding]::UTF8, $true)
+        try {
+            return $reader.ReadToEnd()
+        } finally {
+            $reader.Dispose()
+        }
+    } finally {
+        $stream.Dispose()
+    }
+}
+
 function Find-GameDataPath {
     $logPaths = @(
         (Join-Path $env:USERPROFILE 'AppData\LocalLow\miHoYo\ZenlessZoneZero\Player.log'),
@@ -22,7 +53,7 @@ function Find-GameDataPath {
     )
     foreach ($logPath in $logPaths) {
         if (-not (Test-Path -LiteralPath $logPath -PathType Leaf)) { continue }
-        $logText = [System.IO.File]::ReadAllText($logPath)
+        $logText = (Read-SharedFileText $logPath)
         $matches = [regex]::Matches($logText, '(?i)[A-Z]:[\\/][^\r\n"<>]*?[\\/]ZenlessZoneZero_Data')
         for ($i = $matches.Count - 1; $i -ge 0; $i--) {
             $path = $matches[$i].Value -replace '/', '\'
@@ -43,7 +74,7 @@ function Find-HistoryUrl([string]$dataPath) {
         if (Test-Path -LiteralPath $candidate -PathType Leaf) { Get-Item -LiteralPath $candidate }
     } | Sort-Object LastWriteTimeUtc -Descending)
     foreach ($file in $files) {
-        $cacheText = [System.Text.Encoding]::UTF8.GetString([System.IO.File]::ReadAllBytes($file.FullName))
+        $cacheText = [System.Text.Encoding]::UTF8.GetString((Read-SharedFileBytes $file.FullName))
         $links = [regex]::Matches($cacheText, 'https?://[^\x00-\x20"''<>]+?authkey=[^\x00-\x20"''<>]+?end_id=')
         for ($i = $links.Count - 1; $i -ge 0; $i--) {
             $candidate = $links[$i].Value + '0'

@@ -98,6 +98,7 @@
       <div class="pull-tracker-backup">
         <div class="pull-tracker-backup-actions">
           <button id="t-open-pull-charts" class="btn btn-sm" type="button" data-i18n="viewCharts">View charts</button>
+          <button id="t-open-membership" class="btn btn-sm" type="button" data-i18n="membershipButton">Inter-Knot Membership</button>
           <button id="t-export-pull-history" class="btn btn-sm" type="button" data-i18n="exportHistory">Export history</button>
           <button id="t-import-pull-history" class="btn btn-sm" type="button" data-i18n="importHistory">Import history</button>
           <input id="t-import-pull-history-file" type="file" accept="application/json,.json" hidden>
@@ -147,6 +148,23 @@
     </nav>
     <p id="t-pull-history-empty" class="text-small text-muted" data-i18n="noPullHistory">No snapshots yet. Save the current wallet as your baseline to begin tracking.</p>
   </details>
+
+  <dialog id="t-membership-dialog" class="membership-dialog" aria-labelledby="t-membership-title">
+    <div class="membership-shell">
+      <h3 id="t-membership-title" data-i18n="membershipTitle">Inter-Knot Membership</h3>
+      <p class="text-small text-muted" data-i18n="membershipHelp">Add a 30-day membership, then mark each day you claim 90 Polychromes. The 300 Monochromes are recorded as a purchase. Choose whether each reward is already included in your wallet.</p>
+      <form id="t-membership-form" class="membership-form">
+        <label><span data-i18n="membershipStart">Start date</span><input id="t-membership-start" class="form-control" type="date" required></label>
+        <label class="membership-wallet-choice"><input id="t-membership-add-purchase" class="form-check-input" type="checkbox" checked><span data-i18n="membershipAddPurchase">Add 300 Monochromes to my wallet</span></label>
+        <label class="membership-wallet-choice"><input id="t-membership-purchase-manual" class="form-check-input" type="checkbox"><span data-i18n="membershipPurchaseManual">I already entered this 300 as purchased in a snapshot</span></label>
+        <button class="btn btn-primary" type="submit" data-i18n="membershipAdd">Add membership</button>
+      </form>
+      <p id="t-membership-message" class="text-small" role="status" aria-live="polite"></p>
+      <label class="membership-wallet-choice"><input id="t-membership-add-checkin" class="form-check-input" type="checkbox" checked><span data-i18n="membershipAddCheckin">Add newly marked 90 Polychromes to my wallet</span></label>
+      <div id="t-membership-list" class="membership-list"></div>
+      <div class="membership-actions"><button id="t-close-membership" class="btn btn-sm" type="button" data-i18n="close">Close</button></div>
+    </div>
+  </dialog>
 
   <dialog id="t-pull-charts-dialog" class="pull-charts-dialog" aria-labelledby="t-pull-charts-title">
     <div class="pull-charts-shell">
@@ -235,6 +253,55 @@
 
   <section aria-labelledby="t-channels-heading">
     <h3 id="t-channels-heading" data-i18n="channels">Channels</h3>
+    <div class="signal-history-controls">
+      <button id="t-open-signal-history" class="btn btn-sm" type="button" data-i18n="importSignalHistory">Import Signal Search records</button>
+      <button id="t-open-signal-timeline" class="btn btn-sm btn-secondary" type="button" data-i18n="signalTimelineOpen" disabled>Search timeline</button>
+      <span id="t-signal-history-status" class="text-small text-muted" role="status"></span>
+    </div>
+    <dialog id="t-signal-history-dialog" class="signal-history-dialog" aria-labelledby="t-signal-history-title">
+      <div class="signal-history-shell">
+        <h3 id="t-signal-history-title" data-i18n="importSignalHistory">Import Signal Search records</h3>
+        <p class="text-small text-muted" data-i18n="signalHistoryHelp">Choose a JSON file made by the local Signal Search exporter. Records stay in this browser. Import a newer file if you searched after its export time. The preview shows pity and any guarantee the records establish; Special Guarantee stays unchanged.</p>
+        <label class="signal-history-file-label"><span data-i18n="signalHistoryFile">Exported JSON file</span><input id="t-signal-history-file" class="form-control" type="file" accept="application/json,.json"></label>
+        <p id="t-signal-history-summary" class="text-small" role="status"></p>
+        <label class="form-check signal-history-complete"><input id="t-signal-history-complete" class="form-check-input" type="checkbox"><span class="form-check-label" data-i18n="signalHistoryComplete">The imported and saved records cover my searches from when I started playing.</span></label>
+        <p class="text-small text-muted" data-i18n="signalHistoryCompleteHelp">If a channel has no S-Rank in the saved records, its pity can be calculated only when those records include that channel from its first search.</p>
+        <div id="t-signal-history-preview" class="table-responsive" hidden>
+          <table class="table table-sm signal-history-table">
+            <thead><tr><th data-i18n="channel">Channel</th><th class="text-end" data-i18n="signalHistoryRecords">Records</th><th data-i18n="signalHistoryCurrent">Current</th><th data-i18n="signalHistoryFromRecords">From records</th><th data-i18n="signalHistoryApply">Apply</th></tr></thead>
+            <tbody id="t-signal-history-rows"></tbody>
+          </table>
+        </div>
+        <p id="t-signal-history-message" class="text-small" role="alert"></p>
+        <div class="signal-history-actions">
+          <button id="t-signal-history-remove" class="btn btn-sm btn-secondary" type="button" data-i18n="signalHistoryRemove" hidden>Remove saved records</button>
+          <button id="t-signal-history-close" class="btn btn-sm btn-secondary" type="button" data-i18n="close">Close</button>
+          <button id="t-signal-history-save" class="btn btn-sm btn-secondary" type="button" data-i18n="signalHistorySave" disabled>Save records only</button>
+          <button id="t-signal-history-apply" class="btn btn-sm btn-primary" type="button" data-i18n="signalHistoryApplySelected" disabled>Apply selected progress</button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="t-signal-timeline-dialog" class="signal-history-dialog signal-timeline-dialog" aria-labelledby="t-signal-timeline-title">
+      <div class="signal-history-shell">
+        <div class="signal-timeline-heading"><h3 id="t-signal-timeline-title" data-i18n="signalTimelineTitle">Signal Search timeline</h3><button id="t-close-signal-timeline" class="btn btn-sm btn-secondary" type="button" data-i18n="close">Close</button></div>
+        <p class="text-small text-muted" data-i18n="signalTimelineHelp">Each record is one search. Total searches include every channel, even when filtered. Channel searches count searches in that row's channel, including results hidden by filters. S-cycle searches show progress since the previous S-Rank on that channel; on an S-Rank row, that number is the cost of the result. An incomplete archive makes the first visible cycle unknown. Times are shown as recorded in the export.</p>
+        <p id="t-signal-timeline-summary" class="text-small" role="status"></p>
+        <div class="signal-timeline-comparison" aria-labelledby="t-signal-timeline-comparison-title">
+          <h4 id="t-signal-timeline-comparison-title" data-i18n="signalTimelineComparisonTitle">Predicted vs observed S-Ranks</h4>
+          <p id="t-signal-timeline-comparison" class="text-small" role="status"></p>
+          <details class="signal-timeline-assumptions"><summary class="text-small" data-i18n="signalTimelineModelDetails">How this comparison works</summary><p class="text-small text-muted" data-i18n="signalTimelineModelHelp">Comparison uses the planner's estimated S-Rank pity curve for Exclusive, Rescreening, W-Engine, and Reverberation. Stable and Bangboo are excluded. It measures S-Rank timing and count, not featured-result wins. The soft-pity curve is an estimate; luck labels use 5% and 20% one-sided chance thresholds. Overall chances treat each channel's search count as fixed; stopping after a win can bias the comparison.</p></details>
+        </div>
+        <div class="signal-timeline-filters">
+          <label><span data-i18n="signalTimelineRankFilter">Rank</span><select id="t-signal-timeline-rank" class="form-control"><option value="all" data-i18n="signalTimelineAllRanks">All ranks</option><option value="4" data-i18n="signalTimelineSRank">S-Rank</option><option value="3" data-i18n="signalTimelineARank">A-Rank</option><option value="2" data-i18n="signalTimelineBRank">B-Rank</option></select></label>
+          <label><span data-i18n="signalTimelineChannelFilter">Channel</span><select id="t-signal-timeline-channel" class="form-control"><option value="all" data-i18n="signalTimelineAllChannels">All channels</option><option value="2" data-i18n="exclusiveChannel">Exclusive Channel</option><option value="102" data-i18n="exclusiveRescreening">Exclusive Rescreening</option><option value="3" data-i18n="wEngineChannel">W-Engine Channel</option><option value="103" data-i18n="wEngineReverberation">W-Engine Reverberation</option><option value="1" data-i18n="signalHistoryStable">Stable Channel</option><option value="5" data-i18n="signalHistoryBangboo">Bangboo Channel</option></select></label>
+          <label><span data-i18n="signalTimelineOrder">Order</span><select id="t-signal-timeline-order" class="form-control"><option value="newest" data-i18n="signalTimelineNewest">Newest first</option><option value="oldest" data-i18n="signalTimelineOldest">Oldest first</option></select></label>
+        </div>
+        <p id="t-signal-timeline-filtered" class="text-small text-muted" role="status"></p>
+        <div class="table-responsive signal-timeline-table-wrap"><table class="table table-sm signal-timeline-table"><thead><tr><th data-i18n="signalTimelineTime">Recorded time</th><th data-i18n="channel">Channel</th><th data-i18n="signalTimelineResult">Result</th><th data-i18n="signalTimelineRankFilter">Rank</th><th class="text-end" data-i18n="signalTimelineCumulative">Total searches</th><th class="text-end" data-i18n="signalTimelineChannelCumulative">Channel searches</th><th class="text-end" data-i18n="signalTimelineCycle">S-cycle searches</th><th data-i18n="signalTimelineModelColumn">S-Rank timing vs model</th></tr></thead><tbody id="t-signal-timeline-rows"></tbody></table></div>
+        <p id="t-signal-timeline-empty" class="text-small text-muted" data-i18n="signalTimelineEmpty" hidden>No results match these filters.</p>
+        <div class="signal-timeline-pagination"><button id="t-signal-timeline-previous" class="btn btn-sm btn-secondary" type="button" data-i18n="previousPage">Previous</button><span id="t-signal-timeline-page" class="text-small" role="status"></span><button id="t-signal-timeline-next" class="btn btn-sm btn-secondary" type="button" data-i18n="nextPage">Next</button></div>
+      </div>
+    </dialog>
     <h4 class="channel-group-heading" data-i18n="agentChannels">Agent channels</h4>
     <div class="table-responsive configuration-table">
       <table class="table table-sm">
@@ -369,6 +436,7 @@
 <script src="locales/manifest.js"></script>
 <script src="scripts/locale-loader.js"></script>
 <script src="scripts/pull-charts.js"></script>
+<script src="scripts/signal-history.js"></script>
 <script src="scripts/planner.js"></script>
 </body>
 </html>

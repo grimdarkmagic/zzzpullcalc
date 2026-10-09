@@ -64,6 +64,51 @@
     padding-top: 0.9rem;
     border-top: 1px dashed color-mix(in srgb, var(--foreground) 18%, var(--border));
   }
+  #zzz-universal-planner .signal-history-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 0.55rem; }
+  #zzz-universal-planner .signal-history-dialog {
+    width: min(800px, calc(100vw - 2rem));
+    max-width: none;
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    padding: 0;
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, var(--foreground) 28%, var(--border));
+    color: var(--foreground);
+    background: var(--planner-surface-strong);
+    box-shadow: 0 18px 60px color-mix(in srgb, #000 38%, transparent);
+  }
+  #zzz-universal-planner .signal-history-dialog::backdrop { background: color-mix(in srgb, #000 58%, transparent); }
+  #zzz-universal-planner .signal-history-shell { padding: clamp(0.8rem, 2vw, 1.1rem); }
+  #zzz-universal-planner .signal-history-file-label { display: block; margin-top: 0.75rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .signal-history-file-label .form-control { width: 100%; margin-top: 0.3rem; }
+  #zzz-universal-planner .signal-history-complete { margin-top: 0.75rem; }
+  #zzz-universal-planner .signal-history-table { margin-top: 0.7rem; }
+  #zzz-universal-planner .signal-history-table td, #zzz-universal-planner .signal-history-table th { vertical-align: middle; }
+  #zzz-universal-planner .signal-history-table td:nth-child(3), #zzz-universal-planner .signal-history-table td:nth-child(4) { min-width: 9rem; }
+  #zzz-universal-planner .signal-history-latest { margin-top: 0.3rem; font-size: var(--font-size-small); color: var(--muted-foreground); }
+  #zzz-universal-planner .signal-history-outcome-label { display: block; margin-top: 0.35rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .signal-history-outcome-label select { width: 100%; margin-top: 0.2rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .signal-history-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.9rem; }
+  #zzz-universal-planner #t-signal-history-remove { margin-right: auto; }
+  #zzz-universal-planner .signal-timeline-dialog { width: min(1040px, calc(100vw - 2rem)); }
+  #zzz-universal-planner .signal-timeline-heading { position: sticky; top: 0; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 0.35rem 0 0.6rem; margin-top: -0.35rem; border-bottom: 1px solid var(--border); background: var(--planner-surface-strong); }
+  #zzz-universal-planner .signal-timeline-heading h3 { margin: 0; }
+  #zzz-universal-planner .signal-timeline-comparison { margin-top: 0.65rem; padding: 0.7rem; border: 1px solid var(--border); background: var(--planner-surface); }
+  #zzz-universal-planner .signal-timeline-comparison h4 { margin: 0 0 0.35rem; font-size: 1rem; }
+  #zzz-universal-planner .signal-timeline-comparison p { margin: 0.3rem 0 0; }
+  #zzz-universal-planner .signal-timeline-assumptions { margin-top: 0.45rem; }
+  #zzz-universal-planner .signal-timeline-assumptions summary { cursor: pointer; color: var(--muted-foreground); }
+  #zzz-universal-planner .signal-timeline-filters { display: flex; flex-wrap: wrap; gap: 0.65rem; margin: 0.75rem 0; }
+  #zzz-universal-planner .signal-timeline-filters label { display: grid; gap: 0.2rem; min-width: 10rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .signal-timeline-table-wrap { margin-top: 0.5rem; }
+  #zzz-universal-planner .signal-timeline-table { min-width: 960px; }
+  #zzz-universal-planner .signal-timeline-table td, #zzz-universal-planner .signal-timeline-table th { vertical-align: middle; }
+  #zzz-universal-planner .signal-timeline-time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #zzz-universal-planner .signal-timeline-rank { white-space: nowrap; font-weight: 600; }
+  #zzz-universal-planner .signal-timeline-model { min-width: 11rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .signal-timeline-rank-4 { background: color-mix(in srgb, var(--accent) 11%, transparent); }
+  #zzz-universal-planner .signal-timeline-rank-3 { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+  #zzz-universal-planner .signal-timeline-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 0.65rem; margin-top: 0.75rem; }
   #zzz-universal-planner section {
     margin-top: 1rem;
     padding: clamp(0.75rem, 1.4vw, 1rem);
@@ -440,6 +485,38 @@
   #zzz-universal-planner .mindscape-range-arrow { padding-bottom: 0.55rem; color: var(--muted-foreground); }
   #zzz-universal-planner .mindscape-dialog-help { margin: 0.7rem 0 0; }
   #zzz-universal-planner .mindscape-dialog-actions { display: flex; justify-content: flex-end; gap: 0.45rem; margin-top: 0.9rem; }
+  #zzz-universal-planner .membership-dialog {
+    width: min(560px, calc(100vw - 1rem));
+    max-width: none;
+    max-height: calc(100dvh - 1rem);
+    margin: auto;
+    padding: 0;
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, var(--foreground) 28%, var(--border));
+    color: var(--foreground);
+    background: var(--planner-surface-strong);
+    box-shadow: 0 18px 60px color-mix(in srgb, #000 38%, transparent);
+  }
+  #zzz-universal-planner .membership-dialog::backdrop { background: color-mix(in srgb, #000 58%, transparent); }
+  #zzz-universal-planner .membership-shell { padding: 1rem; }
+  #zzz-universal-planner .membership-shell h3 { margin: 0 0 0.4rem; }
+  #zzz-universal-planner .membership-form { display: grid; gap: 0.65rem; margin: 0.9rem 0; }
+  #zzz-universal-planner .membership-form > label:first-child { display: grid; gap: 0.25rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .membership-wallet-choice { display: flex; align-items: center; gap: 0.45rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .membership-form .btn { justify-self: start; }
+  #zzz-universal-planner .membership-list { display: grid; gap: 0.8rem; margin-top: 0.8rem; }
+  #zzz-universal-planner .membership-cycle { padding: 0.65rem; border: 1px solid var(--border); background: var(--planner-surface); }
+  #zzz-universal-planner .membership-cycle-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.55rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .membership-cycle-heading > span { color: var(--muted-foreground); }
+  #zzz-universal-planner .membership-cycle-heading .btn { margin-left: auto; }
+  #zzz-universal-planner .membership-days { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.35rem; }
+  #zzz-universal-planner .membership-day { display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.3rem 0.1rem; border: 1px solid var(--border); cursor: pointer; font-size: var(--font-size-small); }
+  #zzz-universal-planner .membership-day:has(input:checked) { background: color-mix(in srgb, var(--planner-green) 16%, transparent); }
+  #zzz-universal-planner .membership-day:has(input:disabled) { opacity: 0.5; cursor: default; }
+  #zzz-universal-planner .membership-day span { display: grid; line-height: 1.05; text-align: center; }
+  #zzz-universal-planner .membership-day small { color: var(--muted-foreground); font-size: 0.65rem; }
+  #zzz-universal-planner .membership-actions { display: flex; justify-content: flex-end; margin-top: 0.8rem; }
+  #zzz-universal-planner .membership-purchase-note { display: block; white-space: nowrap; color: var(--muted-foreground); }
   #zzz-universal-planner .pull-charts-dialog {
     width: min(1180px, calc(100vw - 2rem));
     max-width: none;
