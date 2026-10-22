@@ -38,6 +38,8 @@
     openSignalHistory: root.querySelector('#t-open-signal-history'), signalHistoryStatus: root.querySelector('#t-signal-history-status'), signalHistoryDialog: root.querySelector('#t-signal-history-dialog'),
     openSignalTimeline: root.querySelector('#t-open-signal-timeline'), signalTimelineDialog: root.querySelector('#t-signal-timeline-dialog'), closeSignalTimeline: root.querySelector('#t-close-signal-timeline'),
     signalTimelineSummary: root.querySelector('#t-signal-timeline-summary'), signalTimelineRank: root.querySelector('#t-signal-timeline-rank'), signalTimelineChannel: root.querySelector('#t-signal-timeline-channel'), signalTimelineOrder: root.querySelector('#t-signal-timeline-order'),
+    signalTimelineFrom: root.querySelector('#t-signal-timeline-from'), signalTimelineTo: root.querySelector('#t-signal-timeline-to'), signalTimelineClearDates: root.querySelector('#t-signal-timeline-clear-dates'),
+    signalTimelineDateError: root.querySelector('#t-signal-timeline-date-error'), signalTimelinePeriodSummary: root.querySelector('#t-signal-timeline-period-summary'),
     signalTimelineComparison: root.querySelector('#t-signal-timeline-comparison'), signalTimelineFiltered: root.querySelector('#t-signal-timeline-filtered'), signalTimelineRows: root.querySelector('#t-signal-timeline-rows'), signalTimelineEmpty: root.querySelector('#t-signal-timeline-empty'),
     signalTimelinePrevious: root.querySelector('#t-signal-timeline-previous'), signalTimelineNext: root.querySelector('#t-signal-timeline-next'), signalTimelinePage: root.querySelector('#t-signal-timeline-page'),
     signalHistoryFile: root.querySelector('#t-signal-history-file'), signalHistorySummary: root.querySelector('#t-signal-history-summary'), signalHistoryComplete: root.querySelector('#t-signal-history-complete'),
@@ -879,10 +881,34 @@
           .replace('{luck}', t(signalTimelineLuckKey(moreThanExpected, tail)));
       }
     }
-    const filtered = entries.filter(entry => (rank === 'all' || entry.record.rank_type === rank) &&
-      (channel === 'all' || entry.channelType === channel));
+    const from = els.signalTimelineFrom.value;
+    const to = els.signalTimelineTo.value;
+    const invalidDates = Boolean(from && to && from > to);
+    els.signalTimelineFrom.max = to;
+    els.signalTimelineTo.min = from;
+    els.signalTimelineFrom.setAttribute('aria-invalid', String(invalidDates));
+    els.signalTimelineTo.setAttribute('aria-invalid', String(invalidDates));
+    els.signalTimelineDateError.hidden = !invalidDates;
+    els.signalTimelineDateError.textContent = invalidDates ? t('signalTimelineInvalidDates') : '';
+    els.signalTimelineClearDates.disabled = !from && !to;
+    // Compare recorded calendar dates directly: exports have no timezone offset.
+    // Derive cycles and cumulative totals before filtering to preserve their scope.
+    const periodEntries = entries.filter(entry => {
+      const date = entry.record.time.slice(0, 10);
+      return !invalidDates && (!from || date >= from) && (!to || date <= to) &&
+        (channel === 'all' || entry.channelType === channel);
+    });
+    const periodRankCounts = { '4': 0, '3': 0, '2': 0 };
+    periodEntries.forEach(entry => { periodRankCounts[entry.record.rank_type] += 1; });
+    els.signalTimelinePeriodSummary.hidden = invalidDates;
+    els.signalTimelinePeriodSummary.textContent = t('signalTimelinePeriodSummary')
+      .replace('{total}', numberLabel(periodEntries.length, 0))
+      .replace('{s}', numberLabel(periodRankCounts['4'], 0))
+      .replace('{a}', numberLabel(periodRankCounts['3'], 0))
+      .replace('{b}', numberLabel(periodRankCounts['2'], 0));
+    const filtered = periodEntries.filter(entry => rank === 'all' || entry.record.rank_type === rank);
     els.signalTimelineFiltered.textContent = t('signalTimelineFiltered')
-      .replace('{count}', numberLabel(filtered.length, 0)).replace('{total}', numberLabel(entries.length, 0));
+      .replace('{count}', numberLabel(filtered.length, 0)).replace('{total}', numberLabel(periodEntries.length, 0));
     if (els.signalTimelineOrder.value === 'newest') filtered.reverse();
     const pageCount = Math.max(1, Math.ceil(filtered.length / signalTimelinePageSize));
     signalTimelinePage = Math.min(Math.max(signalTimelinePage, 1), pageCount);
@@ -1945,8 +1971,14 @@
     if (typeof els.signalTimelineDialog.close === 'function') els.signalTimelineDialog.close();
     else els.signalTimelineDialog.removeAttribute('open');
   });
-  [els.signalTimelineRank, els.signalTimelineChannel, els.signalTimelineOrder].forEach(input => {
+  [els.signalTimelineRank, els.signalTimelineChannel, els.signalTimelineOrder, els.signalTimelineFrom, els.signalTimelineTo].forEach(input => {
     input.addEventListener('change', () => { signalTimelinePage = 1; renderSignalTimeline(); });
+  });
+  els.signalTimelineClearDates.addEventListener('click', () => {
+    els.signalTimelineFrom.value = '';
+    els.signalTimelineTo.value = '';
+    signalTimelinePage = 1;
+    renderSignalTimeline();
   });
   els.signalTimelinePrevious.addEventListener('click', () => { signalTimelinePage -= 1; renderSignalTimeline(); });
   els.signalTimelineNext.addEventListener('click', () => { signalTimelinePage += 1; renderSignalTimeline(); });

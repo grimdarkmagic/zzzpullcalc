@@ -100,6 +100,7 @@
   #zzz-universal-planner .signal-timeline-assumptions summary { cursor: pointer; color: var(--muted-foreground); }
   #zzz-universal-planner .signal-timeline-filters { display: flex; flex-wrap: wrap; gap: 0.65rem; margin: 0.75rem 0; }
   #zzz-universal-planner .signal-timeline-filters label { display: grid; gap: 0.2rem; min-width: 10rem; font-size: var(--font-size-small); }
+  #zzz-universal-planner .signal-timeline-filters button { align-self: flex-end; }
   #zzz-universal-planner .signal-timeline-table-wrap { margin-top: 0.5rem; }
   #zzz-universal-planner .signal-timeline-table { min-width: 960px; }
   #zzz-universal-planner .signal-timeline-table td, #zzz-universal-planner .signal-timeline-table th { vertical-align: middle; }
